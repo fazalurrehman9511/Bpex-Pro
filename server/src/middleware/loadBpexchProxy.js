@@ -1,6 +1,7 @@
 /**
  * Load BPEXCH proxy from project root (works when cPanel app root is the repo
  * or the server/ folder with parent repo present).
+ * Fail soft — API/SPA must still boot if proxy files are missing.
  */
 import path from 'path'
 import { pathToFileURL, fileURLToPath } from 'url'
@@ -10,17 +11,29 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 function resolvePluginPath() {
   const candidates = [
-    path.join(__dirname, '../../../vite-plugin-bpexch-proxy.js'), // server/src → repo root
-    path.join(__dirname, '../../vite-plugin-bpexch-proxy.js'), // if nested differently
+    path.join(__dirname, '../../../vite-plugin-bpexch-proxy.js'),
+    path.join(__dirname, '../../vite-plugin-bpexch-proxy.js'),
   ]
   for (const p of candidates) {
     if (fs.existsSync(p)) return p
   }
-  return candidates[0]
+  return null
 }
 
-const pluginUrl = pathToFileURL(resolvePluginPath()).href
-const mod = await import(pluginUrl)
+let createBpexchProxyMiddleware = null
+let createStrayBpexchApiRewrite = null
 
-export const createBpexchProxyMiddleware = mod.createBpexchProxyMiddleware
-export const createStrayBpexchApiRewrite = mod.createStrayBpexchApiRewrite
+const pluginPath = resolvePluginPath()
+if (pluginPath) {
+  try {
+    const mod = await import(pathToFileURL(pluginPath).href)
+    createBpexchProxyMiddleware = mod.createBpexchProxyMiddleware
+    createStrayBpexchApiRewrite = mod.createStrayBpexchApiRewrite
+  } catch (err) {
+    console.error('[bpexch-proxy] Failed to load plugin:', err.message)
+  }
+} else {
+  console.warn('[bpexch-proxy] vite-plugin-bpexch-proxy.js not found — /bpexch proxy disabled')
+}
+
+export { createBpexchProxyMiddleware, createStrayBpexchApiRewrite }

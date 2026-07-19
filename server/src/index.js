@@ -147,10 +147,12 @@ app.use(
 )
 
 // BPEXCH same-origin proxy (cPanel-friendly — no nginx sub_filter needed)
-if (config.enableBpexchProxy) {
-  app.use(
-    createStrayBpexchApiRewrite(),
-  )
+if (
+  config.enableBpexchProxy &&
+  typeof createBpexchProxyMiddleware === 'function' &&
+  typeof createStrayBpexchApiRewrite === 'function'
+) {
+  app.use(createStrayBpexchApiRewrite())
   app.use(
     createBpexchProxyMiddleware({
       brandName: config.embedBrandName,
@@ -158,6 +160,8 @@ if (config.enableBpexchProxy) {
       apiBaseUrl: config.apiBaseUrl,
     }),
   )
+} else if (config.enableBpexchProxy) {
+  console.warn('[warn] BPEXCH proxy requested but middleware unavailable')
 }
 
 // Production SPA (Vite dist) — typical cPanel Node.js App layout
@@ -203,13 +207,19 @@ expirePendingTransactions()
 setInterval(expirePendingTransactions, 60_000)
 startLiveEventsPoller()
 
-const server = app.listen(config.port, '0.0.0.0', () => {
-  console.log(`BpxPro API running on http://0.0.0.0:${config.port} (${config.nodeEnv})`)
+// CloudLinux / Passenger sets PORT — do not bind host explicitly (avoids 503)
+const port = config.port
+const onListen = () => {
+  console.log(`BpxPro API listening on port ${port} (${config.nodeEnv})`)
   console.log(`Database: ${config.databasePath}`)
   console.log(`Uploads: ${path.resolve(config.uploadsDir)}`)
   if (hasDist) console.log(`Frontend: ${config.distDir}`)
   if (config.enableBpexchProxy) console.log('BPEXCH proxy: enabled at /bpexch/')
-})
+}
+
+const server = process.env.PORT
+  ? app.listen(port, onListen)
+  : app.listen(port, '0.0.0.0', onListen)
 
 function shutdown(signal) {
   console.log(`\n${signal} received — shutting down`)
