@@ -8,7 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-dist
+# dist is committed for cPanel shared hosting (Vite/Rolldown cannot build there)
 dist-ssr
 *.local
 .env
@@ -16,6 +16,9 @@ server/.env
 server/data/
 server/uploads/
 server/node_modules/
+!dist/
+!dist/**
+
 
 # Editor directories and files
 .vscode/*
