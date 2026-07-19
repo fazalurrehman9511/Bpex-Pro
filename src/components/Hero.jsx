@@ -70,7 +70,7 @@ export default function Hero() {
               href={ANDROID_APK_URL}
               download
               type="application/vnd.android.package-archive"
-              className="inline-flex w-full items-center justify-center gap-2 rounded border border-border px-8 py-3.5 text-sm font-bold text-muted hover:border-accent/40 hover:text-text transition-colors sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded border border-yellow-400 bg-yellow-400 px-8 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-yellow-400/20 hover:bg-yellow-300 hover:border-yellow-300 transition-colors sm:w-auto"
             >
               <Download className="h-4 w-4" />
               Install App
