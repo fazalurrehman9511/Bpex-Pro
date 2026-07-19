@@ -1,0 +1,36 @@
+---
+description: BPEXCH Cloudflare, DataImpulse proxy, and cPanel outbound ports
+alwaysApply: true
+---
+
+# BPEXCH + Cloudflare + residential proxy
+
+## Root cause
+- Production host (`bpexpro.com` / cPanel on Hetzner) **datacenter IP** is blocked by Cloudflare when calling `bpexch.xyz` (403 / challenge).
+- Browser users often work; **server-side** sync, cash approve, and `/bpexch` iframe proxy fail without a residential exit.
+
+## DataImpulse is already wired
+- Env: `BPEXCH_HTTP_PROXY=http://USER:PASS@gw.dataimpulse.com:823` (sticky often port `10000`).
+- Code: `server/src/services/bpexchHttp.js` + `/bpexch` proxy via `vite-plugin-bpexch-proxy.js`.
+- If proxy connect fails, code may fall back to direct fetch → still CF 403.
+
+## Why residential “is not used”
+Shared hosting often **refuses outbound** to DataImpulse ports:
+
+```bash
+curl -x "http://USER:PASS@gw.dataimpulse.com:823" -sS --max-time 30 https://api.ipify.org/
+# Connection refused = hosting firewall, not bad credentials
+```
+
+Need outbound TCP to `gw.dataimpulse.com`: **823**, **824**, **10000–20000**.
+
+## Do / Don’t
+- **Do** ask hosting to allow those outbound ports, or move Node to a VPS that allows them, then keep DataImpulse.
+- **Do** keep URL `bpexpro.com/dashboard` via same-origin `/bpexch` iframe (not top-level `bpexch.xyz`) once proxy works.
+- **Don’t** assume a new Hetzner/Tencent/Cloudflare Worker fixes CF by itself (still datacenter).
+- **Don’t** recommend buying another residential provider until outbound to the gateway works.
+- **Don’t** login site users with agent/admin BPEXCH accounts — bettor only (`verifyBpexchUserForLogin`).
+
+## Cheap workarounds until ports open
+- PC scripts for sync/import / manual ops.
+- Laptop tunnel as HTTP proxy if always online.
