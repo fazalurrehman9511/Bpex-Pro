@@ -160,9 +160,8 @@ export default function TransactionPanel({
   const [tab, setTab] = useState('form')
   const [methodId, setMethodId] = useState(initialPaymentMethod)
   const [amount, setAmount] = useState('')
-  const [name, setName] = useState(() => getBpexchUsername())
-  const [lockedUsername, setLockedUsername] = useState(() => Boolean(getBpexchUsername()))
   const [phone, setPhone] = useState('')
+  const [bpexchUsername, setBpexchUsernameState] = useState(() => getBpexchUsername())
   const [countryCode, setCountryCode] = useState('PK')
   const [payoutTitle, setPayoutTitle] = useState('')
   const [payoutNumber, setPayoutNumber] = useState('')
@@ -193,12 +192,7 @@ export default function TransactionPanel({
 
   useEffect(() => {
     return subscribeBpexchUsername((username) => {
-      if (!username) {
-        setLockedUsername(false)
-        return
-      }
-      setName(username)
-      setLockedUsername(true)
+      setBpexchUsernameState(String(username || '').trim())
     })
   }, [])
 
@@ -206,9 +200,7 @@ export default function TransactionPanel({
     document.title = isDeposit ? 'Deposit — BpxPro' : 'Withdraw — BpxPro'
     setTab('form')
     setAmount('')
-    const savedUser = getBpexchUsername()
-    setName(savedUser)
-    setLockedUsername(Boolean(savedUser))
+    setBpexchUsernameState(getBpexchUsername())
     setPhone('')
     setPayoutTitle('')
     setPayoutNumber('')
@@ -223,6 +215,7 @@ export default function TransactionPanel({
   const validate = () => {
     const next = {}
     const num = parseFloat(amount)
+    const username = (bpexchUsername || getBpexchUsername()).trim()
 
     if (!methodId) next.method = 'Select a payment method'
     if (!amount.trim() || Number.isNaN(num) || num <= 0) {
@@ -247,7 +240,9 @@ export default function TransactionPanel({
       if (!payoutNumber.trim()) next.payoutNumber = 'Account / wallet number is required'
     }
 
-    if (!name.trim()) next.name = 'BPEXCH username is required'
+    if (!username) {
+      next.form = 'Pehle BPEXCH login karo — username auto attach hota hai.'
+    }
     if (!phone.trim()) next.phone = 'Phone number is required'
     else if (!/^[\d\s+\-()]{7,}$/.test(phone.trim())) {
       next.phone = 'Enter a valid phone number'
@@ -276,6 +271,7 @@ export default function TransactionPanel({
     e.preventDefault()
     if (!validate()) return
 
+    const username = (bpexchUsername || getBpexchUsername()).trim()
     setSubmitting(true)
     try {
       const tx = await submitTransaction({
@@ -289,7 +285,7 @@ export default function TransactionPanel({
         screenshot: isDeposit ? screenshot : null,
         payoutAccountTitle: isDeposit ? '' : payoutTitle.trim(),
         payoutAccountNumber: isDeposit ? '' : payoutNumber.trim(),
-        name: name.trim(),
+        name: username,
         phone: phone.trim(),
         availableBalance: availableBalanceProp ?? null,
       })
@@ -507,55 +503,20 @@ export default function TransactionPanel({
                 </div>
               )}
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className="block text-xs font-semibold text-text mb-1.5">
-                    BPEXCH Username
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => {
-                      if (lockedUsername) return
-                      setName(e.target.value)
-                    }}
-                    readOnly={lockedUsername}
-                    placeholder="Login wala username"
-                    autoComplete="username"
-                    className={`w-full rounded border border-border px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50 ${
-                      lockedUsername
-                        ? 'bg-navy cursor-not-allowed text-accent'
-                        : 'bg-navy-dark'
-                    }`}
-                  />
-                  {lockedUsername ? (
-                    <p className="mt-1 text-[11px] text-muted">
-                      Login se save — BPEXCH pe isi username pe credit hoga.
-                    </p>
-                  ) : (
-                    <p className="mt-1 text-[11px] text-muted">
-                      Apna BPEXCH login username likho (full name nahi).
-                    </p>
-                  )}
-                  {errors.name && (
-                    <p className="mt-1 text-xs text-red-400">{errors.name}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-text mb-1.5">
-                    Phone ({selectedCountry.dialCode})
-                  </label>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder={selectedCountry.phonePlaceholder}
-                    className="w-full rounded border border-border bg-navy-dark px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
-                  />
-                  {errors.phone && (
-                    <p className="mt-1 text-xs text-red-400">{errors.phone}</p>
-                  )}
-                </div>
+              <div>
+                <label className="block text-xs font-semibold text-text mb-1.5">
+                  Phone ({selectedCountry.dialCode})
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={selectedCountry.phonePlaceholder}
+                  className="w-full rounded border border-border bg-navy-dark px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+                />
+                {errors.phone && (
+                  <p className="mt-1 text-xs text-red-400">{errors.phone}</p>
+                )}
               </div>
 
               <button
