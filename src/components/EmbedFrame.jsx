@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { setEmbedAvailableBalance, NARROW_BREAKPOINT } from '../utils/embedBalance'
-import { setBpexchLoggedIn } from '../utils/bpexchAuth'
+import { setBpexchLoggedIn, setBpexchUsername } from '../utils/bpexchAuth'
 import {
   normalizePublicPath,
   shouldSyncPublicPath,
@@ -173,6 +173,21 @@ export default function EmbedFrame({
           }
           return next
         })
+        return
+      }
+
+      if (action === 'auth-username' && data.username) {
+        const u = String(data.username || '').trim()
+        if (u) {
+          setBpexchUsername(u)
+          setBpexchLoggedIn(true, u)
+        }
+        return
+      }
+
+      if (action === 'auth-logout') {
+        setBpexchUsername('')
+        setBpexchLoggedIn(false)
         return
       }
 

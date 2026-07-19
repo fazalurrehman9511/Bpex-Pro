@@ -1,4 +1,5 @@
 const FLAG_KEY = 'flowexch_bpexch_logged_in'
+const USERNAME_KEY = 'flowexch_bpexch_username'
 const EVENT = 'flowexch-auth-change'
 
 function readCookie(name) {
@@ -16,6 +17,32 @@ export function getBpexchAuthToken() {
   return readCookie('wex3authtoken') || readCookie('wex3reftoken') || ''
 }
 
+export function getBpexchUsername() {
+  if (typeof window === 'undefined') return ''
+  try {
+    return String(sessionStorage.getItem(USERNAME_KEY) || '').trim()
+  } catch {
+    return ''
+  }
+}
+
+export function setBpexchUsername(username) {
+  const u = String(username || '').trim()
+  try {
+    if (u) sessionStorage.setItem(USERNAME_KEY, u)
+    else sessionStorage.removeItem(USERNAME_KEY)
+  } catch {
+    /* ignore */
+  }
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(EVENT, {
+        detail: { loggedIn: isBpexchLoggedIn(), username: u },
+      }),
+    )
+  }
+}
+
 export function isBpexchLoggedIn() {
   if (typeof window === 'undefined') return false
   if (getBpexchAuthToken()) return true
@@ -26,23 +53,55 @@ export function isBpexchLoggedIn() {
   }
 }
 
-export function setBpexchLoggedIn(loggedIn) {
+export function setBpexchLoggedIn(loggedIn, username) {
   try {
-    if (loggedIn) sessionStorage.setItem(FLAG_KEY, '1')
-    else sessionStorage.removeItem(FLAG_KEY)
+    if (loggedIn) {
+      sessionStorage.setItem(FLAG_KEY, '1')
+      const u = String(username || '').trim()
+      if (u) sessionStorage.setItem(USERNAME_KEY, u)
+    } else {
+      // Keep username — deposit/withdraw still need last BPEXCH login id.
+      // Cleared only via setBpexchUsername('') or logout rewrite.
+      sessionStorage.removeItem(FLAG_KEY)
+    }
   } catch {
     /* ignore */
   }
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(EVENT, { detail: { loggedIn: Boolean(loggedIn) } }))
+    window.dispatchEvent(
+      new CustomEvent(EVENT, {
+        detail: {
+          loggedIn: Boolean(loggedIn),
+          username: getBpexchUsername(),
+        },
+      }),
+    )
   }
 }
 
-/** React hook-friendly subscription */
+/** React hook-friendly subscription — calls listener(loggedIn) */
 export function subscribeBpexchAuth(listener) {
   const onChange = () => listener(isBpexchLoggedIn())
   const onStorage = (e) => {
-    if (e.key === FLAG_KEY) onChange()
+    if (e.key === FLAG_KEY || e.key === USERNAME_KEY) onChange()
+  }
+  window.addEventListener(EVENT, onChange)
+  window.addEventListener('storage', onStorage)
+  window.addEventListener('focus', onChange)
+  document.addEventListener('visibilitychange', onChange)
+  return () => {
+    window.removeEventListener(EVENT, onChange)
+    window.removeEventListener('storage', onStorage)
+    window.removeEventListener('focus', onChange)
+    document.removeEventListener('visibilitychange', onChange)
+  }
+}
+
+/** Subscribe to stored BPEXCH username changes */
+export function subscribeBpexchUsername(listener) {
+  const onChange = () => listener(getBpexchUsername())
+  const onStorage = (e) => {
+    if (e.key === USERNAME_KEY) onChange()
   }
   window.addEventListener(EVENT, onChange)
   window.addEventListener('storage', onStorage)

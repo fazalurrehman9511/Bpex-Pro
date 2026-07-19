@@ -29,6 +29,10 @@ import {
 import { screenshotUrl } from '../utils/api'
 import { detectCountryCode } from '../utils/detectCountry'
 import { getCountryByCode } from '../data/countries'
+import {
+  getBpexchUsername,
+  subscribeBpexchUsername,
+} from '../utils/bpexchAuth'
 
 const statusStyles = {
   pending: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
@@ -156,7 +160,8 @@ export default function TransactionPanel({
   const [tab, setTab] = useState('form')
   const [methodId, setMethodId] = useState(initialPaymentMethod)
   const [amount, setAmount] = useState('')
-  const [name, setName] = useState('')
+  const [name, setName] = useState(() => getBpexchUsername())
+  const [lockedUsername, setLockedUsername] = useState(() => Boolean(getBpexchUsername()))
   const [phone, setPhone] = useState('')
   const [countryCode, setCountryCode] = useState('PK')
   const [payoutTitle, setPayoutTitle] = useState('')
@@ -187,10 +192,23 @@ export default function TransactionPanel({
   }, [])
 
   useEffect(() => {
+    return subscribeBpexchUsername((username) => {
+      if (!username) {
+        setLockedUsername(false)
+        return
+      }
+      setName(username)
+      setLockedUsername(true)
+    })
+  }, [])
+
+  useEffect(() => {
     document.title = isDeposit ? 'Deposit — BpxPro' : 'Withdraw — BpxPro'
     setTab('form')
     setAmount('')
-    setName('')
+    const savedUser = getBpexchUsername()
+    setName(savedUser)
+    setLockedUsername(Boolean(savedUser))
     setPhone('')
     setPayoutTitle('')
     setPayoutNumber('')
@@ -229,7 +247,7 @@ export default function TransactionPanel({
       if (!payoutNumber.trim()) next.payoutNumber = 'Account / wallet number is required'
     }
 
-    if (!name.trim()) next.name = 'Name is required'
+    if (!name.trim()) next.name = 'BPEXCH username is required'
     if (!phone.trim()) next.phone = 'Phone number is required'
     else if (!/^[\d\s+\-()]{7,}$/.test(phone.trim())) {
       next.phone = 'Enter a valid phone number'
@@ -492,15 +510,33 @@ export default function TransactionPanel({
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-semibold text-text mb-1.5">
-                    Your Name
+                    BPEXCH Username
                   </label>
                   <input
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Full name"
-                    className="w-full rounded border border-border bg-navy-dark px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+                    onChange={(e) => {
+                      if (lockedUsername) return
+                      setName(e.target.value)
+                    }}
+                    readOnly={lockedUsername}
+                    placeholder="Login wala username"
+                    autoComplete="username"
+                    className={`w-full rounded border border-border px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50 ${
+                      lockedUsername
+                        ? 'bg-navy cursor-not-allowed text-accent'
+                        : 'bg-navy-dark'
+                    }`}
                   />
+                  {lockedUsername ? (
+                    <p className="mt-1 text-[11px] text-muted">
+                      Login se save — BPEXCH pe isi username pe credit hoga.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-[11px] text-muted">
+                      Apna BPEXCH login username likho (full name nahi).
+                    </p>
+                  )}
                   {errors.name && (
                     <p className="mt-1 text-xs text-red-400">{errors.name}</p>
                   )}

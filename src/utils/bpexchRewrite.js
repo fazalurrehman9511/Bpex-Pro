@@ -271,6 +271,34 @@ function createInjectScript(brandName, syncSecret = '') {
     if(path===_lastPublicPath)return;
     _lastPublicPath=path;
     try{window.parent.postMessage({source:'flowexch-embed',action:'embed-path',path:path},location.origin);}catch(e){}
+    if(path.indexOf('/dashboard')===0)reportUsernameToParent();
+  }
+  function pickLoginUsername(root){
+    var scope=root||document;
+    var sel='input[name="user.Username"],input[name="Username"],input[name="username"],input[id="Username"],input[id="user_Username"],input[name="user.UserName"],input[name="LoginName"],input[name="login"]';
+    var inp=scope.querySelector?scope.querySelector(sel):null;
+    if(inp&&inp.value)return String(inp.value).trim();
+    if(scope!==document){
+      inp=document.querySelector(sel);
+      if(inp&&inp.value)return String(inp.value).trim();
+    }
+    return '';
+  }
+  function guessProfileUsername(){
+    var nodes=document.querySelectorAll('.header .dropdown-toggle,.app-header .dropdown-toggle,.navbar .dropdown-toggle,a.nav-link.dropdown-toggle,.dropdown-toggle');
+    for(var i=0;i<nodes.length;i++){
+      var t=(nodes[i].textContent||'').replace(/\\s+/g,' ').trim();
+      t=t.replace(/\\s*\\([^)]*\\)\\s*$/,'').trim();
+      t=t.replace(/\\s*(Profile|Logout|Account|Menu)\\s*$/i,'').trim();
+      if(t&&t.length>=2&&t.length<=40&&!/balance|credit|liable|menu|home|deposit|withdraw/i.test(t))return t;
+    }
+    return '';
+  }
+  function reportUsernameToParent(forced){
+    if(window.parent===window)return;
+    var u=String(forced||'').trim()||pickLoginUsername()||guessProfileUsername();
+    if(!u)return;
+    try{window.parent.postMessage({source:'flowexch-embed',action:'auth-username',username:u},location.origin);}catch(e){}
   }
   function keepLinksInFrame(){
     document.addEventListener('click',function(e){
@@ -283,6 +311,8 @@ function createInjectScript(brandName, syncSecret = '') {
     document.addEventListener('submit',function(e){
       var f=e.target;
       if(f&&(f.target==='_top'||f.target==='_parent'))f.target='_self';
+      var u=pickLoginUsername(f);
+      if(u&&(isLoginScreen()||/login/i.test(location.pathname||'')))reportUsernameToParent(u);
     },true);
   }
   /*
@@ -312,6 +342,7 @@ function createInjectScript(brandName, syncSecret = '') {
         e.stopPropagation();
         var href=logout.getAttribute('href')||'/Common/Logout';
         try{localStorage.setItem('logout-event','logout'+Math.random());}catch(err){}
+        try{window.parent.postMessage({source:'flowexch-embed',action:'auth-logout'},location.origin);}catch(err2){}
         location.assign(fix(href));
         return;
       }
@@ -668,6 +699,7 @@ function createInjectScript(brandName, syncSecret = '') {
   /* Slow poll only — fast re-posts made parent overlay re-render and ate profile clicks */
   setInterval(function(){
     bootActionBar();
+    if(!isLoginScreen())reportUsernameToParent();
   },2500);
   if(window.MutationObserver&&document.body){
     var _abMoTimer;
