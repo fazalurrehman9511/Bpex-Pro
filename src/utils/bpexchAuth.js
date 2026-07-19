@@ -61,7 +61,7 @@ export function setBpexchLoggedIn(loggedIn, username) {
       if (u) sessionStorage.setItem(USERNAME_KEY, u)
     } else {
       // Keep username — deposit/withdraw still need last BPEXCH login id.
-      // Cleared only via setBpexchUsername('') or logout rewrite.
+      // Cleared only via setBpexchUsername('') or clearBpexchSession().
       sessionStorage.removeItem(FLAG_KEY)
     }
   } catch {
@@ -74,6 +74,34 @@ export function setBpexchLoggedIn(loggedIn, username) {
           loggedIn: Boolean(loggedIn),
           username: getBpexchUsername(),
         },
+      }),
+    )
+  }
+}
+
+function expireCookie(name) {
+  try {
+    document.cookie = `${name}=; Max-Age=0; path=/`
+    document.cookie = `${name}=; Max-Age=0; path=/; domain=${location.hostname}`
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Full local logout — clears login flag, username, and auth cookies */
+export function clearBpexchSession() {
+  try {
+    sessionStorage.removeItem(FLAG_KEY)
+    sessionStorage.removeItem(USERNAME_KEY)
+  } catch {
+    /* ignore */
+  }
+  expireCookie('wex3authtoken')
+  expireCookie('wex3reftoken')
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(EVENT, {
+        detail: { loggedIn: false, username: '' },
       }),
     )
   }
