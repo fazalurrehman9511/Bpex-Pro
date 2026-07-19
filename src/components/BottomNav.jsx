@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, LogIn, UserPlus, Wallet, MessageCircle } from 'lucide-react'
+import { Home, LayoutDashboard, LogIn, UserPlus, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
@@ -65,15 +65,9 @@ export default function BottomNav() {
         },
         {
           icon: UserPlus,
-          label: 'Self',
+          label: 'Register',
           active: false,
-          action: () => openModal('register', { registerPath: 'self' }),
-        },
-        {
-          icon: MessageCircle,
-          label: 'WhatsApp',
-          active: false,
-          action: () => openModal('register', { registerPath: 'whatsapp' }),
+          action: () => openModal('register'),
           accent: true,
         },
       ]

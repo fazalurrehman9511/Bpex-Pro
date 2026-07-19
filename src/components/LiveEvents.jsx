@@ -119,7 +119,7 @@ export default function LiveEvents() {
                 <button
                   key={event.id || event.teams}
                   type="button"
-                  onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                  onClick={() => openModal('register')}
                   className="text-left transition-transform hover:scale-[1.01] active:scale-[0.99]"
                 >
                   <EventCard

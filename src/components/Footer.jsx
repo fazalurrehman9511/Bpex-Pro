@@ -71,18 +71,10 @@ export default function Footer() {
                 )
               )}
               <button
-                type="button"
-                onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                onClick={() => openModal('register')}
                 className="text-left text-xs text-accent font-semibold hover:underline"
               >
-                Register via WhatsApp
-              </button>
-              <button
-                type="button"
-                onClick={() => openModal('register', { registerPath: 'self' })}
-                className="text-left text-xs text-accent font-semibold hover:underline"
-              >
-                Self Register
+                WhatsApp Register
               </button>
             </div>
           </div>

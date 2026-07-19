@@ -1,4 +1,4 @@
-import { MessageCircle, Shield, Zap, Clock, Smartphone, Download, UserPlus } from 'lucide-react'
+import { MessageCircle, Shield, Zap, Clock, Smartphone, Wallet, Download } from 'lucide-react'
 import { useModal } from '../context/ModalContext'
 import { scrollToSection } from '../utils/detectCountry'
 import { ANDROID_APK_URL, ANDROID_APK_AVAILABLE } from '../config/androidApp'
@@ -51,31 +51,24 @@ export default function Hero() {
         <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
           <button
             type="button"
-            onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+            onClick={() => openModal('register')}
             className="inline-flex w-full items-center justify-center gap-2.5 rounded bg-accent px-8 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/25 hover:bg-accent-hover transition-all active:scale-[0.98] sm:w-auto"
           >
             <MessageCircle className="h-5 w-5" fill="currentColor" strokeWidth={0} />
-            Register via WhatsApp
-          </button>
-          <button
-            type="button"
-            onClick={() => openModal('register', { registerPath: 'self' })}
-            className="inline-flex w-full items-center justify-center gap-2 rounded border border-accent/40 bg-accent/10 px-8 py-3.5 text-sm font-bold text-accent hover:bg-accent/20 transition-colors sm:w-auto"
-          >
-            <UserPlus className="h-4 w-4" />
-            Self Register
+            WhatsApp Register
           </button>
           {ANDROID_APK_AVAILABLE ? (
             <a
               href={ANDROID_APK_URL}
               download
               type="application/vnd.android.package-archive"
-              className="inline-flex w-full items-center justify-center gap-2 rounded border border-yellow-200 bg-yellow-200 px-8 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-yellow-200/25 hover:bg-yellow-100 hover:border-yellow-100 transition-colors sm:w-auto"
+              className="inline-flex w-full items-center justify-center gap-2 rounded border border-accent/40 bg-accent/10 px-8 py-3.5 text-sm font-bold text-accent hover:bg-accent/20 transition-colors sm:w-auto"
             >
               <Download className="h-4 w-4" />
               Install App
             </a>
           ) : null}
+          
         </div>
       </div>
     </section>

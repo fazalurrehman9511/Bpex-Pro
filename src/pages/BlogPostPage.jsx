@@ -116,7 +116,7 @@ export default function BlogPostPage() {
               Share Article
             </button>
             <button
-              onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+              onClick={() => openModal('register')}
               className="inline-flex items-center justify-center gap-2 rounded bg-accent px-6 py-2.5 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors"
             >
               <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />

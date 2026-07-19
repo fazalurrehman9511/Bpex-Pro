@@ -5,7 +5,7 @@ import { useModal } from '../context/ModalContext'
 const faqs = [
   {
     q: 'How do I register?',
-    a: 'Two separate options: (1) Self Register — site pe password set karein, username auto banega. (2) Register via WhatsApp — apne country agent se WhatsApp pe account banwayein.',
+    a: 'Two ways: (1) Create Myself — pick username/password on the site and your BPEXCH account is created instantly. (2) WhatsApp Agent — message your local agent and they set up your account. Same options work after installing the Android app.',
   },
   {
     q: 'How can I add balance?',

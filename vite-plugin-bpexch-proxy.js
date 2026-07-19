@@ -4,55 +4,6 @@ import { toPublicPath } from './src/utils/platformPaths.js'
 
 const BPEXCH_TARGET = 'https://bpexch.xyz'
 
-async function outboundFetch(url, options) {
-  try {
-    const mod = await import('./server/src/services/bpexchHttp.js')
-    if (mod.isBpexchProxyConfigured?.()) {
-      try {
-        return await mod.bpexchHttpFetch(url, options)
-      } catch (err) {
-        /* Shared hosting often blocks proxy ports (823) — fall back to direct */
-        console.warn('[bpexch-proxy] Outbound proxy failed, using direct:', err.message)
-        return fetch(url, options)
-      }
-    }
-    return fetch(url, options)
-  } catch {
-    return fetch(url, options)
-  }
-}
-
-function sendProxyUnavailable(res, detail = '') {
-  const safe = String(detail || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-  const html = `<!doctype html>
-<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Exchange unavailable</title>
-<style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-font-family:system-ui,sans-serif;background:#0f1923;color:#e8eef5;padding:24px}
-.box{max-width:440px;width:100%;border:1px solid #2a3a4d;border-radius:12px;background:#1a2634;padding:24px}
-h1{margin:0 0 8px;font-size:18px;color:#25d366}p{margin:0 0 10px;font-size:13px;line-height:1.55;color:#9aa8b8}
-code{color:#e8eef5;font-size:12px}
-a{display:inline-block;margin-top:8px;margin-right:12px;color:#25d366;font-weight:700;text-decoration:none}
-</style></head><body><div class="box">
-<h1>Exchange temporarily unavailable</h1>
-<p>URL <code>bpexpro.com/dashboard</code> theek hai — lekin server se BPEXCH abhi connect nahi ho sakti (Cloudflare / proxy ports).</p>
-${safe ? `<p><code>${safe}</code></p>` : ''}
-<p>Deposit / Withdraw BpxPro pe chalte hain. Exchange ke liye hosting outbound ports (823) ya open VPS chahiye.</p>
-<a href="/deposit">Deposit</a>
-<a href="/withdraw">Withdraw</a>
-<a href="/">Home</a>
-</div></body></html>`
-  res.writeHead(503, {
-    'content-type': 'text/html; charset=utf-8',
-    'cache-control': 'no-store',
-  })
-  res.end(html)
-}
-
 function getProxyOptions(pluginOptions = {}) {
   return {
     brandName: getEmbedBrandName(pluginOptions.brandName),
@@ -315,7 +266,7 @@ async function proxyBpexch(req, res, proxyOptions = {}) {
     if (req.headers[key]) forwardHeaders[key] = req.headers[key]
   }
 
-  const response = await outboundFetch(targetUrl, {
+  const response = await fetch(targetUrl, {
     method: req.method,
     headers: forwardHeaders,
     body: body?.length ? body : undefined,
@@ -336,18 +287,6 @@ async function proxyBpexch(req, res, proxyOptions = {}) {
   let responseBody = isRewriteable
     ? rewriteBpexchContent(await response.text(), contentType, proxyOptions)
     : Buffer.from(await response.arrayBuffer())
-
-  /* Cloudflare challenge on hosting IP — show clear page inside iframe, keep /dashboard URL */
-  if (
-    typeof responseBody === 'string' &&
-    (response.status === 403 ||
-      /just a moment|cf-browser-verification|cf-challenge|challenge-platform|cf-mitigated/i.test(
-        responseBody.slice(0, 8000),
-      ))
-  ) {
-    sendProxyUnavailable(res, `Upstream status ${response.status}`)
-    return
-  }
 
   const setCookies = getSetCookies(response)
   const { headers: outHeaders, cookies: rewrittenCookies } = rewriteBpexchHeaders(
@@ -427,7 +366,8 @@ export function createBpexchProxyMiddleware(options = {}) {
     } catch (err) {
       console.error('[bpexch-proxy]', err.message)
       if (!res.headersSent) {
-        sendProxyUnavailable(res, err.message || 'proxy error')
+        res.writeHead(502, { 'content-type': 'text/plain' })
+        res.end('BPEXCH proxy error')
       }
     }
   }

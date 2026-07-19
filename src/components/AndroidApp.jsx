@@ -178,19 +178,19 @@ export default function AndroidApp() {
               <div className="mt-2.5 grid grid-cols-1 gap-2">
                 <button
                   type="button"
-                  onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-2.5 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} />
-                  Register via WhatsApp
-                </button>
-                <button
-                  type="button"
                   onClick={() => openModal('register', { registerPath: 'self' })}
                   className="flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-xs font-semibold text-text hover:border-accent/40 transition-colors"
                 >
                   <UserPlus className="h-3.5 w-3.5 text-accent" />
-                  Self Register
+                  Create Account (App / Site)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 text-xs font-semibold text-text hover:border-accent/40 transition-colors"
+                >
+                  <MessageCircle className="h-3.5 w-3.5 text-accent" fill="currentColor" strokeWidth={0} />
+                  WhatsApp Agent
                 </button>
               </div>
 
