@@ -50,6 +50,9 @@ async function bpexchFetch(session, pathName, options = {}) {
     ...(options.headers || {}),
   }
   if (session.cookies) headers.Cookie = session.cookies
+  if (session.authToken && !headers.Authorization) {
+    headers.Authorization = `Bearer ${session.authToken}`
+  }
 
   const res = await fetch(`${BPEXCH_ORIGIN}${pathName}`, {
     ...options,
@@ -73,27 +76,67 @@ async function loginAgent(session) {
     throw new Error('BPEXCH agent credentials are not configured')
   }
 
-  const loginPage = await bpexchFetch(session, '/Users/Login')
+  /* Form/session login (needed for Clients List + Cash HTML pages) */
+  const loginPage = await bpexchFetch(session, '/Users/Login', {
+    accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  })
   const html = await loginPage.text()
-  const token = extractAntiForgery(html)
+  const anti = extractAntiForgery(html)
+  const body = new URLSearchParams()
+  body.set('user.Username', username)
+  body.set('user.Password', password)
+  body.set('Device', 'BpxPro-Server')
+  body.set('UtcOffset', String(-new Date().getTimezoneOffset()))
+  if (anti) body.set('__RequestVerificationToken', anti)
 
-  const res = await bpexchFetch(session, '/Users/Login', {
+  const formRes = await bpexchFetch(session, '/Users/Login', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       Origin: BPEXCH_ORIGIN,
       Referer: `${BPEXCH_ORIGIN}/Users/Login`,
     },
-    body: new URLSearchParams({
-      __RequestVerificationToken: token,
-      'user.Username': username,
-      'user.Password': password,
-    }),
+    accept: 'text/html,application/xhtml+xml',
+    body: body.toString(),
   })
 
-  if (res.status !== 302 && res.status !== 200) {
-    throw new Error(`BPEXCH agent login failed (${res.status})`)
+  const loc = formRes.headers.get('location') || ''
+  const formOk =
+    (formRes.status >= 300 && formRes.status < 400 && !/login/i.test(loc)) ||
+    formRes.status === 200
+
+  /* API token — many hosts block HTML login (403) but allow JSON auth */
+  const apiRes = await bpexchFetch(session, '/api/Users/authenticate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    accept: 'application/json',
+    body: JSON.stringify({ username, password, identity: 'BpxPro-Server' }),
+  })
+  const data = await apiRes.json().catch(() => ({}))
+  if (apiRes.ok) {
+    session.authToken =
+      data.token || data.accessToken || data.authToken || data.wex3authtoken || ''
+    if (session.authToken) {
+      session.cookies = session.cookies
+        ? `${session.cookies}; wex3authtoken=${session.authToken}`
+        : `wex3authtoken=${session.authToken}`
+    }
+    return data
   }
+
+  if (!formOk) {
+    const hint =
+      formRes.status === 403
+        ? ' — hosting IP blocked / wrong password / WAF. Password dobara Save karo; warna host se bpexch.xyz allowlist poocho.'
+        : ''
+    throw new Error(
+      data.error ||
+        data.message ||
+        `BPEXCH agent login failed (${formRes.status || apiRes.status})${hint}`,
+    )
+  }
+
+  return data
 }
 
 /**
