@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">BpxPro</string>
+    <string name="title_activity_main">BpxPro</string>
+    <string name="package_name">com.flowexch.app</string>
+    <string name="custom_url_scheme">com.flowexch.app</string>
+    <string name="nav_home">Home</string>
+    <string name="nav_profile">Profile</string>
+    <string name="whatsapp_support">WhatsApp Support</string>
+    <string name="support_whatsapp_number">923001234567</string>
+</resources>

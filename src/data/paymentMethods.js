@@ -1,0 +1,46 @@
+export const paymentMethods = [
+  {
+    id: 'jazzcash',
+    name: 'JazzCash',
+    description: 'Instant mobile wallet deposit — funds added in minutes.',
+    accent: '#DC1F26',
+    badge: 'Popular',
+    minDeposit: 'Rs. 500',
+    processing: '~2 min',
+    countries: ['PK'],
+  },
+  {
+    id: 'easypaisa',
+    name: 'EasyPaisa',
+    description: 'Secure wallet top-up directly from your EasyPaisa account.',
+    accent: '#00A651',
+    badge: 'Fast',
+    minDeposit: 'Rs. 500',
+    processing: '~2 min',
+    countries: ['PK'],
+  },
+  {
+    id: 'bank',
+    name: 'Bank Transfer',
+    description: 'Direct bank deposit — HBL, Meezan, UBL & all major banks.',
+    accent: '#2563a8',
+    badge: 'Secure',
+    minDeposit: 'Rs. 1,000',
+    processing: '~15 min',
+    countries: ['PK', 'AE', 'SA', 'GB', 'BD', 'IN'],
+  },
+  {
+    id: 'crypto',
+    name: 'Crypto (USDT)',
+    description: 'Deposit via USDT, BTC or other crypto — 24/7 processing.',
+    accent: '#F7931A',
+    badge: 'Global',
+    minDeposit: '$10',
+    processing: '~10 min',
+    countries: ['PK', 'AE', 'SA', 'GB', 'BD', 'IN'],
+  },
+]
+
+export function getPaymentMethod(id) {
+  return paymentMethods.find((m) => m.id === id)
+}

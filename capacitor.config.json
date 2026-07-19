@@ -1,0 +1,28 @@
+{
+  "appId": "com.flowexch.app",
+  "appName": "BpxPro",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http",
+    "cleartext": true,
+    "allowNavigation": [
+      "bpexpro.com",
+      "*.bpexpro.com",
+      "https://bpexpro.com/*",
+      "https://www.bpexpro.com/*",
+      "bpexch.xyz",
+      "*.bpexch.xyz",
+      "https://bpexch.xyz/*",
+      "http://192.168.1.3/*",
+      "http://192.168.1.3:3001/*"
+    ]
+  },
+  "android": {
+    "allowMixedContent": true
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

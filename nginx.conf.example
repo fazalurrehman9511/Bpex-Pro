@@ -1,0 +1,56 @@
+# Production nginx — BPEXCH embed with login support
+
+location /bpexch/ {
+    proxy_pass https://bpexch.xyz/;
+    proxy_set_header Host bpexch.xyz;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_ssl_server_name on;
+
+    proxy_hide_header X-Frame-Options;
+    proxy_hide_header Content-Security-Policy;
+
+    # Rewrite HTML/CSS/JS paths
+    sub_filter 'https://bpexch.xyz' '/bpexch';
+    sub_filter 'http://bpexch.xyz' '/bpexch';
+    sub_filter 'href="/' 'href="/bpexch/';
+    sub_filter 'src="/' 'src="/bpexch/';
+    sub_filter 'action="/' 'action="/bpexch/';
+    sub_filter '"\/api/' '"/bpexch/api/';
+    sub_filter '"\/Users/' '"/bpexch/Users/';
+    sub_filter '"\/Home/' '"/bpexch/Home/';
+    sub_filter "url('/" "url('/bpexch/";
+    sub_filter 'url(/' 'url(/bpexch/';
+    # Do NOT sub_filter BPEXCH → FlowExch here — it breaks BPEXCH-style.css and theme colors
+    sub_filter_once off;
+    sub_filter_types text/html text/css application/javascript;
+    # Do NOT sub_filter application/json — breaks Wallet/API responses
+
+    # Session cookies — critical for login
+    proxy_cookie_domain bpexch.xyz $host;
+    proxy_cookie_path / /;
+
+    # Redirect after login stays on your domain
+    proxy_redirect https://bpexch.xyz/ /bpexch/;
+    proxy_redirect http://bpexch.xyz/ /bpexch/;
+}
+
+location / {
+    try_files $uri $uri/ /index.html;
+}
+
+# FlowExch API backend
+location /api/ {
+    proxy_pass http://127.0.0.1:3001;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    client_max_body_size 2m;
+}
+
+location /uploads/ {
+    proxy_pass http://127.0.0.1:3001;
+    proxy_set_header Host $host;
+}
