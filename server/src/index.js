@@ -68,6 +68,9 @@ function isAllowedCorsOrigin(origin) {
   try {
     const host = new URL(origin).hostname.toLowerCase()
     if (host === 'bpexpro.com' || host.endsWith('.bpexpro.com')) return true
+    if (config.corsAllowVercel && (host === 'vercel.app' || host.endsWith('.vercel.app'))) {
+      return true
+    }
   } catch {
     /* ignore */
   }
@@ -164,11 +167,11 @@ if (
   console.warn('[warn] BPEXCH proxy requested but middleware unavailable')
 }
 
-// Production SPA (Vite dist) — typical cPanel Node.js App layout
+// Production SPA — skip when SERVE_FRONTEND=0 (Vercel hosts UI)
 const distIndex = path.join(config.distDir, 'index.html')
 const hasDist = fs.existsSync(distIndex)
 
-if (hasDist) {
+if (hasDist && config.serveFrontend) {
   app.use(
     express.static(config.distDir, {
       index: false,
@@ -189,9 +192,11 @@ if (hasDist) {
     if (req.method !== 'GET' && req.method !== 'HEAD') return next()
     res.sendFile(distIndex)
   })
-} else if (config.isProduction) {
+} else if (config.isProduction && config.serveFrontend && !hasDist) {
   console.warn(`[warn] Frontend dist not found at ${config.distDir}`)
   console.warn('[warn] Run `npm run build` in project root, then restart the Node app.')
+} else if (config.isProduction && !config.serveFrontend) {
+  console.log('Frontend: skipped (SERVE_FRONTEND=0 — use Vercel)')
 }
 
 // Global error handler — never leak stack traces in production
@@ -213,12 +218,13 @@ const onListen = () => {
   )
   console.log(`Database: ${config.databasePath}`)
   console.log(`Uploads: ${path.resolve(config.uploadsDir)}`)
-  if (hasDist) console.log(`Frontend: ${config.distDir}`)
+  if (hasDist && config.serveFrontend) console.log(`Frontend: ${config.distDir}`)
   if (config.enableBpexchProxy) console.log('BPEXCH proxy: enabled at /bpexch/')
 }
 
-// Prefer PORT (CloudLinux/LiteSpeed). Avoid listen('passenger') — breaks on many LSWS hosts.
-const server = app.listen(config.port, '127.0.0.1', onListen)
+// Prefer PORT. BIND_HOST=0.0.0.0 on bare VPS if needed; default 127.0.0.1 behind nginx.
+const bindHost = process.env.BIND_HOST || '127.0.0.1'
+const server = app.listen(config.port, bindHost, onListen)
 
 function shutdown(signal) {
   console.log(`\n${signal} received — shutting down`)

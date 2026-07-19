@@ -27,13 +27,21 @@ cd server && NODE_ENV=production npm start
 
 Express serves `dist/`, `/api`, `/uploads`, and `/bpexch` when `dist/` exists.
 
-## Deploy (cPanel)
+## Deploy (recommended: Vercel + Hetzner)
 
-See **[deploy/cpanel.md](./deploy/cpanel.md)** for step-by-step Setup Node.js App instructions.
+See **[deploy/vercel-hetzner.md](./deploy/vercel-hetzner.md)**:
+
+- Frontend → Vercel (`bpexpro.com`)
+- API + `/bpexch` + DataImpulse → Hetzner (`api.bpexpro.com`)
+- Vercel rewrites keep `/api` and `/bpexch` same-origin for the browser
+
+## Deploy (cPanel all-in-one)
+
+See **[deploy/cpanel.md](./deploy/cpanel.md)** for Setup Node.js App on shared hosting.
 
 ## Optional: nginx (VPS)
 
-If you use nginx instead of cPanel Node routing, see `nginx.conf.example` for `/bpexch`, `/api`, and SPA `try_files` snippets. Set `ENABLE_BPEXCH_PROXY=0` on the Node app if nginx already proxies `/bpexch/`.
+If you use nginx instead of cPanel Node routing, see `nginx.conf.example` for `/bpexch`, `/api`, and SPA `try_files` snippets. Set `ENABLE_BPEXCH_PROXY=0` on the Node app if nginx already proxies `/bpexch/`. For the Vercel + `api.*` layout, use the nginx snippet in `deploy/vercel-hetzner.md`.
 
 ## Security checklist (production)
 

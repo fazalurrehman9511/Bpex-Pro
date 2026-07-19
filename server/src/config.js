@@ -35,6 +35,10 @@ export const config = {
   apiBaseUrl: process.env.API_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`,
   /** Enable /bpexch reverse proxy in production (needed on cPanel without nginx) */
   enableBpexchProxy: process.env.ENABLE_BPEXCH_PROXY !== '0',
+  /** When 0, API-only mode (Vercel hosts frontend). Default: serve dist if present */
+  serveFrontend: process.env.SERVE_FRONTEND !== '0',
+  /** Allow https://*.vercel.app preview/prod frontends hitting API directly */
+  corsAllowVercel: process.env.CORS_ALLOW_VERCEL !== '0',
   embedBrandName: process.env.EMBED_BRAND_NAME || process.env.VITE_EMBED_BRAND_NAME || 'BPEXCH',
 }
 
