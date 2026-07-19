@@ -19,6 +19,10 @@
     {
       "source": "/uploads/:path*",
       "destination": "https://api.bpexpro.com/uploads/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
