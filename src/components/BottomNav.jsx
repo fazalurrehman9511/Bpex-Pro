@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, LogIn, UserPlus, Wallet } from 'lucide-react'
+import { Home, LayoutDashboard, LogIn, UserPlus, Wallet, ArrowUpFromLine } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
@@ -38,10 +38,16 @@ export default function BottomNav() {
         },
         {
           icon: Wallet,
-          label: 'Add Balance',
+          label: 'Deposit',
           active: location.pathname === '/deposit',
           action: () => navigate('/deposit'),
           accent: true,
+        },
+        {
+          icon: ArrowUpFromLine,
+          label: 'Withdraw',
+          active: location.pathname === '/withdraw',
+          action: () => navigate('/withdraw'),
         },
       ]
     : [

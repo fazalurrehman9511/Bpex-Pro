@@ -1,4 +1,4 @@
-import { Menu, X, LayoutDashboard, Wallet } from 'lucide-react'
+import { Menu, X, LayoutDashboard, Wallet, ArrowUpFromLine } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
@@ -94,17 +94,30 @@ export function HeaderBar() {
 
         <div className="flex items-center gap-2">
           {loggedIn ? (
-            <Link
-              to="/deposit"
-              className={`inline-flex items-center gap-1.5 rounded border px-3.5 py-1.5 text-xs font-bold transition-colors sm:px-4 ${
-                isActive('/deposit')
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-border bg-navy-light text-text hover:border-accent/40'
-              }`}
-            >
-              <Wallet className="h-3.5 w-3.5 text-accent" />
-              Add Balance
-            </Link>
+            <>
+              <Link
+                to="/deposit"
+                className={`inline-flex items-center gap-1.5 rounded border px-3.5 py-1.5 text-xs font-bold transition-colors sm:px-4 ${
+                  isActive('/deposit')
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-border bg-navy-light text-text hover:border-accent/40'
+                }`}
+              >
+                <Wallet className="h-3.5 w-3.5 text-accent" />
+                Deposit
+              </Link>
+              <Link
+                to="/withdraw"
+                className={`inline-flex items-center gap-1.5 rounded border px-3.5 py-1.5 text-xs font-bold transition-colors sm:px-4 ${
+                  isActive('/withdraw')
+                    ? 'border-accent bg-accent/10 text-accent'
+                    : 'border-border bg-navy-light text-text hover:border-accent/40'
+                }`}
+              >
+                <ArrowUpFromLine className="h-3.5 w-3.5 text-accent" />
+                Withdraw
+              </Link>
+            </>
           ) : (
             <>
               <Link
@@ -159,14 +172,24 @@ export function HeaderBar() {
             )
           )}
           {loggedIn ? (
-            <Link
-              to="/deposit"
-              onClick={() => setMenuOpen(false)}
-              className="mt-1 flex w-full items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
-            >
-              <Wallet className="h-4 w-4 text-accent" />
-              Add Balance
-            </Link>
+            <>
+              <Link
+                to="/deposit"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 flex w-full items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+              >
+                <Wallet className="h-4 w-4 text-accent" />
+                Deposit
+              </Link>
+              <Link
+                to="/withdraw"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 flex w-full items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+              >
+                <ArrowUpFromLine className="h-4 w-4 text-accent" />
+                Withdraw
+              </Link>
+            </>
           ) : (
             <Link
               to="/login"
