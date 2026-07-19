@@ -207,19 +207,29 @@ expirePendingTransactions()
 setInterval(expirePendingTransactions, 60_000)
 startLiveEventsPoller()
 
-// CloudLinux / Passenger sets PORT — do not bind host explicitly (avoids 503)
-const port = config.port
 const onListen = () => {
-  console.log(`BpxPro API listening on port ${port} (${config.nodeEnv})`)
+  const bind = globalThis.PhusionPassenger
+    ? 'passenger'
+    : process.env.PORT
+      ? `port ${process.env.PORT}`
+      : `0.0.0.0:${config.port}`
+  console.log(`BpxPro API listening (${bind}) [${config.nodeEnv}]`)
   console.log(`Database: ${config.databasePath}`)
   console.log(`Uploads: ${path.resolve(config.uploadsDir)}`)
   if (hasDist) console.log(`Frontend: ${config.distDir}`)
   if (config.enableBpexchProxy) console.log('BPEXCH proxy: enabled at /bpexch/')
 }
 
-const server = process.env.PORT
-  ? app.listen(port, onListen)
-  : app.listen(port, '0.0.0.0', onListen)
+// CloudLinux / LiteSpeed Passenger injects PhusionPassenger global
+let server
+if (typeof globalThis.PhusionPassenger !== 'undefined') {
+  globalThis.PhusionPassenger.configure({ autoInstall: false })
+  server = app.listen('passenger', onListen)
+} else if (process.env.PORT) {
+  server = app.listen(Number(process.env.PORT), onListen)
+} else {
+  server = app.listen(config.port, '0.0.0.0', onListen)
+}
 
 function shutdown(signal) {
   console.log(`\n${signal} received — shutting down`)
