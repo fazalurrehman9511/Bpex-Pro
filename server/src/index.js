@@ -208,28 +208,17 @@ setInterval(expirePendingTransactions, 60_000)
 startLiveEventsPoller()
 
 const onListen = () => {
-  const bind = globalThis.PhusionPassenger
-    ? 'passenger'
-    : process.env.PORT
-      ? `port ${process.env.PORT}`
-      : `0.0.0.0:${config.port}`
-  console.log(`BpxPro API listening (${bind}) [${config.nodeEnv}]`)
+  console.log(
+    `BpxPro API listening on port ${config.port} (${config.nodeEnv})`,
+  )
   console.log(`Database: ${config.databasePath}`)
   console.log(`Uploads: ${path.resolve(config.uploadsDir)}`)
   if (hasDist) console.log(`Frontend: ${config.distDir}`)
   if (config.enableBpexchProxy) console.log('BPEXCH proxy: enabled at /bpexch/')
 }
 
-// CloudLinux / LiteSpeed Passenger injects PhusionPassenger global
-let server
-if (typeof globalThis.PhusionPassenger !== 'undefined') {
-  globalThis.PhusionPassenger.configure({ autoInstall: false })
-  server = app.listen('passenger', onListen)
-} else if (process.env.PORT) {
-  server = app.listen(Number(process.env.PORT), onListen)
-} else {
-  server = app.listen(config.port, '0.0.0.0', onListen)
-}
+// Prefer PORT (CloudLinux/LiteSpeed). Avoid listen('passenger') — breaks on many LSWS hosts.
+const server = app.listen(config.port, '127.0.0.1', onListen)
 
 function shutdown(signal) {
   console.log(`\n${signal} received — shutting down`)
