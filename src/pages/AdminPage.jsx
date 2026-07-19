@@ -195,10 +195,12 @@ function DetailRow({ label, value, mono = false }) {
   )
 }
 
-function TransactionDetailModal({ tx, onClose, onApprove, onReject }) {
+function TransactionDetailModal({ tx, onClose, onApprove, onReject, acting = null }) {
   const [notes, setNotes] = useState(tx.adminNotes || '')
-  const [actionBusy, setActionBusy] = useState(null) // 'approve' | 'reject' | null
+  const [localBusy, setLocalBusy] = useState(null) // instant UI lock before parent re-render
   const isPending = tx.status === 'pending'
+  const actionBusy =
+    localBusy || (acting?.id === tx.id ? acting.kind : null)
   const busy = Boolean(actionBusy)
 
   const handleClose = () => {
@@ -208,25 +210,25 @@ function TransactionDetailModal({ tx, onClose, onApprove, onReject }) {
 
   const runReject = async () => {
     if (busy) return
-    setActionBusy('reject')
+    setLocalBusy('reject')
     try {
       await onReject(tx.id, notes)
     } catch {
-      /* parent shows alert */
+      /* parent alerts */
     } finally {
-      setActionBusy(null)
+      setLocalBusy(null)
     }
   }
 
   const runApprove = async () => {
     if (busy) return
-    setActionBusy('approve')
+    setLocalBusy('approve')
     try {
       await onApprove(tx.id, notes)
     } catch {
-      /* parent shows alert */
+      /* parent alerts */
     } finally {
-      setActionBusy(null)
+      setLocalBusy(null)
     }
   }
 
@@ -364,7 +366,7 @@ function TransactionDetailModal({ tx, onClose, onApprove, onReject }) {
                   type="button"
                   onClick={runReject}
                   disabled={busy}
-                  className="flex cursor-pointer items-center justify-center gap-1.5 rounded border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/20 disabled:cursor-wait disabled:opacity-60"
+                  className="flex cursor-pointer items-center justify-center gap-1.5 rounded border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition-colors hover:cursor-pointer hover:bg-red-500/20 disabled:cursor-wait disabled:opacity-60"
                 >
                   {actionBusy === 'reject' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -377,7 +379,7 @@ function TransactionDetailModal({ tx, onClose, onApprove, onReject }) {
                   type="button"
                   onClick={runApprove}
                   disabled={busy}
-                  className="flex cursor-pointer items-center justify-center gap-1.5 rounded bg-accent px-4 py-2.5 text-sm font-bold text-navy-dark transition-colors hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60"
+                  className="flex cursor-pointer items-center justify-center gap-1.5 rounded bg-accent px-4 py-2.5 text-sm font-bold text-navy-dark transition-colors hover:cursor-pointer hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60"
                 >
                   {actionBusy === 'approve' ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -668,8 +670,11 @@ function AdminSidebar({ activeTab, onTabChange, counts, onLogout, mobileOpen, on
   )
 }
 
-function TransactionTable({ transactions, onSelect, onApprove, onReject }) {
+function TransactionTable({ transactions, onSelect, onApprove, onReject, acting = null }) {
   if (!transactions.length) return null
+
+  const rowBusy = (id) => acting?.id === id
+  const rowKind = (id) => (acting?.id === id ? acting.kind : null)
 
   return (
     <>
@@ -688,7 +693,10 @@ function TransactionTable({ transactions, onSelect, onApprove, onReject }) {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {transactions.map((tx) => (
+            {transactions.map((tx) => {
+              const busy = rowBusy(tx.id)
+              const kind = rowKind(tx.id)
+              return (
               <tr key={tx.id} className="bg-navy/50 hover:bg-surface-hover/20">
                 <td className="px-3 py-3">
                   <p className="font-mono text-[10px] text-accent">{tx.id}</p>
@@ -750,7 +758,8 @@ function TransactionTable({ transactions, onSelect, onApprove, onReject }) {
                     <button
                       type="button"
                       onClick={() => onSelect(tx)}
-                      className="rounded p-1.5 text-muted hover:bg-surface-hover hover:text-accent transition-colors"
+                      disabled={busy}
+                      className="cursor-pointer rounded p-1.5 text-muted transition-colors hover:cursor-pointer hover:bg-surface-hover hover:text-accent disabled:cursor-wait disabled:opacity-50"
                       title="View details"
                     >
                       <Eye className="h-4 w-4" />
@@ -760,31 +769,45 @@ function TransactionTable({ transactions, onSelect, onApprove, onReject }) {
                         <button
                           type="button"
                           onClick={() => onApprove(tx.id)}
-                          className="rounded p-1.5 text-muted hover:bg-accent/10 hover:text-accent transition-colors"
+                          disabled={busy || Boolean(acting)}
+                          className="cursor-pointer rounded p-1.5 text-muted transition-colors hover:cursor-pointer hover:bg-accent/10 hover:text-accent disabled:cursor-wait disabled:opacity-50"
                           title="Approve"
                         >
-                          <Check className="h-4 w-4" />
+                          {kind === 'approve' ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                          ) : (
+                            <Check className="h-4 w-4" />
+                          )}
                         </button>
                         <button
                           type="button"
                           onClick={() => onReject(tx.id)}
-                          className="rounded p-1.5 text-muted hover:bg-red-500/10 hover:text-red-300 transition-colors"
+                          disabled={busy || Boolean(acting)}
+                          className="cursor-pointer rounded p-1.5 text-muted transition-colors hover:cursor-pointer hover:bg-red-500/10 hover:text-red-300 disabled:cursor-wait disabled:opacity-50"
                           title="Reject"
                         >
-                          <X className="h-4 w-4" />
+                          {kind === 'reject' ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-red-300" />
+                          ) : (
+                            <X className="h-4 w-4" />
+                          )}
                         </button>
                       </>
                     )}
                   </div>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>
 
       <div className="space-y-3 lg:hidden">
-        {transactions.map((tx) => (
+        {transactions.map((tx) => {
+          const busy = rowBusy(tx.id)
+          const kind = rowKind(tx.id)
+          return (
           <div
             key={tx.id}
             className="rounded-lg border border-border bg-navy-light p-4"
@@ -821,7 +844,8 @@ function TransactionTable({ transactions, onSelect, onApprove, onReject }) {
               <button
                 type="button"
                 onClick={() => onSelect(tx)}
-                className="flex-1 rounded border border-border py-2 text-xs font-semibold text-muted hover:border-accent/40 hover:text-accent transition-colors"
+                disabled={busy}
+                className="flex-1 cursor-pointer rounded border border-border py-2 text-xs font-semibold text-muted transition-colors hover:cursor-pointer hover:border-accent/40 hover:text-accent disabled:cursor-wait disabled:opacity-50"
               >
                 View Details
               </button>
@@ -830,22 +854,31 @@ function TransactionTable({ transactions, onSelect, onApprove, onReject }) {
                   <button
                     type="button"
                     onClick={() => onApprove(tx.id)}
-                    className="rounded bg-accent px-3 py-2 text-xs font-bold text-navy-dark"
+                    disabled={busy || Boolean(acting)}
+                    className="inline-flex cursor-pointer items-center gap-1 rounded bg-accent px-3 py-2 text-xs font-bold text-navy-dark hover:cursor-pointer disabled:cursor-wait disabled:opacity-60"
                   >
-                    Approve
+                    {kind === 'approve' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : null}
+                    {kind === 'approve' ? '…' : 'Approve'}
                   </button>
                   <button
                     type="button"
                     onClick={() => onReject(tx.id)}
-                    className="rounded border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-300"
+                    disabled={busy || Boolean(acting)}
+                    className="inline-flex cursor-pointer items-center gap-1 rounded border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-300 hover:cursor-pointer disabled:cursor-wait disabled:opacity-60"
                   >
-                    Reject
+                    {kind === 'reject' ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : null}
+                    {kind === 'reject' ? '…' : 'Reject'}
                   </button>
                 </>
               )}
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
     </>
   )
@@ -2387,6 +2420,7 @@ function AdminDashboard({ onLogout }) {
   const [search, setSearch] = useState('')
   const [selectedTx, setSelectedTx] = useState(null)
   const statusLockRef = useRef(null)
+  const [acting, setActing] = useState(null) // { id, kind: 'approve'|'reject' }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showBlogForm, setShowBlogForm] = useState(false)
   const [blogForm, setBlogForm] = useState(EMPTY_BLOG_FORM)
@@ -2784,6 +2818,7 @@ function AdminDashboard({ onLogout }) {
       throw new Error('Pehle wali approve/reject request abhi puri nahi hui.')
     }
     statusLockRef.current = id
+    setActing({ id, kind: status === 'approved' ? 'approve' : 'reject' })
     try {
       const updated = await updateAdminTransaction(id, status, notes)
       setAllTransactions((prev) => prev.map((tx) => (tx.id === id ? updated : tx)))
@@ -2799,6 +2834,7 @@ function AdminDashboard({ onLogout }) {
       throw err
     } finally {
       statusLockRef.current = null
+      setActing(null)
     }
   }
 
@@ -3392,6 +3428,7 @@ function AdminDashboard({ onLogout }) {
               onSelect={setSelectedTx}
               onApprove={(id) => handleStatus(id, 'approved')}
               onReject={(id) => handleStatus(id, 'rejected')}
+              acting={acting}
             />
           )}
 
@@ -3421,6 +3458,7 @@ function AdminDashboard({ onLogout }) {
           onClose={() => setSelectedTx(null)}
           onApprove={(id, notes) => handleStatus(id, 'approved', notes)}
           onReject={(id, notes) => handleStatus(id, 'rejected', notes)}
+          acting={acting}
         />
       )}
     </div>
