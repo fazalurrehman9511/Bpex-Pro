@@ -9,6 +9,8 @@ function getProxyOptions(pluginOptions = {}) {
     brandName: getEmbedBrandName(pluginOptions.brandName),
     syncSecret: pluginOptions.syncSecret || process.env.BPEXCH_SYNC_SECRET || '',
     apiBaseUrl: pluginOptions.apiBaseUrl || process.env.API_BASE_URL || 'http://localhost:3001',
+    /** Optional undici/proxy-aware fetch (server passes bpexchHttpFetch) */
+    fetchImpl: typeof pluginOptions.fetchImpl === 'function' ? pluginOptions.fetchImpl : null,
   }
 }
 
@@ -266,7 +268,8 @@ async function proxyBpexch(req, res, proxyOptions = {}) {
     if (req.headers[key]) forwardHeaders[key] = req.headers[key]
   }
 
-  const response = await fetch(targetUrl, {
+  const doFetch = proxyOptions.fetchImpl || fetch
+  const response = await doFetch(targetUrl, {
     method: req.method,
     headers: forwardHeaders,
     body: body?.length ? body : undefined,
