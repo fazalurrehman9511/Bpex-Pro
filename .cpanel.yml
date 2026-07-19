@@ -1,0 +1,6 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/bpexproc/bpexpro
+    - /bin/mkdir -p $DEPLOYPATH
+    - /usr/bin/rsync -a --delete --exclude='.git' --exclude='node_modules' --exclude='server/node_modules' --exclude='server/data' --exclude='server/uploads' --exclude='.env' --exclude='server/.env' --exclude='bpexpro-deploy.zip' --exclude='dist/frontend-build.zip' ./ $DEPLOYPATH/
