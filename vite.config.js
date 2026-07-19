@@ -80,7 +80,13 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
-          navigateFallbackDenylist: [/^\/bpexch/, /^\/api/, /^\/uploads/, /^\/app/],
+          navigateFallbackDenylist: [
+            /^\/bpexch/,
+            /^\/api/,
+            /^\/uploads/,
+            /^\/app/,
+            /^\/admin/,
+          ],
           runtimeCaching: [
             {
               urlPattern: /^https?:\/\/[^/]+\/bpexch\/.*/i,

@@ -21,16 +21,50 @@ const API_BASE = resolveApiBase()
 const TOKEN_KEY = 'flowexch_admin_token'
 const USER_PHONE_KEY = 'flowexch_user_phone'
 
+function storageGet(key) {
+  try {
+    return localStorage.getItem(key) || sessionStorage.getItem(key) || ''
+  } catch {
+    return ''
+  }
+}
+
+function storageSet(key, value) {
+  try {
+    localStorage.setItem(key, value)
+    sessionStorage.removeItem(key)
+  } catch {
+    try {
+      sessionStorage.setItem(key, value)
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
+function storageRemove(key) {
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    /* ignore */
+  }
+  try {
+    sessionStorage.removeItem(key)
+  } catch {
+    /* ignore */
+  }
+}
+
 export function getAdminToken() {
-  return sessionStorage.getItem(TOKEN_KEY)
+  return storageGet(TOKEN_KEY)
 }
 
 export function setAdminToken(token) {
-  sessionStorage.setItem(TOKEN_KEY, token)
+  storageSet(TOKEN_KEY, token)
 }
 
 export function clearAdminToken() {
-  sessionStorage.removeItem(TOKEN_KEY)
+  storageRemove(TOKEN_KEY)
 }
 
 export function setUserPhone(phone) {
@@ -79,6 +113,9 @@ async function apiFetch(path, options = {}) {
   }
 
   if (!res.ok) {
+    if (res.status === 401 && path.startsWith('/api/admin') && !path.includes('/login')) {
+      clearAdminToken()
+    }
     throw new Error(data.error || `Request failed (${res.status})`)
   }
 

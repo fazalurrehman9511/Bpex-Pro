@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, Component } from 'react'
 import {
   Shield,
   LogOut,
@@ -2627,6 +2627,7 @@ function AdminDashboard({ onLogout }) {
     const rows = Array.isArray(tabTransactions) ? tabTransactions : []
 
     return rows.filter((tx) => {
+      if (!tx || typeof tx !== 'object') return false
       if (statusFilter !== 'all' && tx.status !== statusFilter) return false
       if (methodFilter !== 'all') {
         const mid = String(tx.paymentMethodId || '').toLowerCase()
@@ -2640,14 +2641,17 @@ function AdminDashboard({ onLogout }) {
         if (toMs != null && t > toMs) return false
       }
       if (!q) return true
-      return (
-        tx.id.toLowerCase().includes(q) ||
-        tx.name.toLowerCase().includes(q) ||
-        tx.phone.toLowerCase().includes(q) ||
-        String(tx.paymentMethodLabel || '').toLowerCase().includes(q) ||
-        String(tx.accountNumber || '').toLowerCase().includes(q) ||
-        String(tx.payoutAccountNumber || '').toLowerCase().includes(q)
-      )
+      const hay = [
+        tx.id,
+        tx.name,
+        tx.phone,
+        tx.paymentMethodLabel,
+        tx.accountNumber,
+        tx.payoutAccountNumber,
+      ]
+        .map((v) => String(v || '').toLowerCase())
+        .join(' ')
+      return hay.includes(q)
     })
   }, [tabTransactions, statusFilter, methodFilter, dateFrom, dateTo, search])
 
@@ -3358,6 +3362,45 @@ function AdminDashboard({ onLogout }) {
   )
 }
 
+class AdminErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+
+  componentDidCatch(error) {
+    console.error('[admin]', error)
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-navy-dark px-4 text-center">
+          <p className="text-sm font-semibold text-red-300">Admin panel crashed</p>
+          <p className="max-w-md text-xs text-muted">
+            {this.state.error?.message || 'Unknown error'}
+          </p>
+          <button
+            type="button"
+            className="rounded bg-accent px-4 py-2 text-xs font-bold text-navy-dark"
+            onClick={() => {
+              this.setState({ error: null })
+              this.props.onReset?.()
+            }}
+          >
+            Back to login
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
+}
+
 export default function AdminPage() {
   const [authed, setAuthed] = useState(() => isAdminAuthenticated())
 
@@ -3366,9 +3409,26 @@ export default function AdminPage() {
     setAuthed(false)
   }
 
+  useEffect(() => {
+    if (!authed) return undefined
+    const onReject = (event) => {
+      const msg = String(event?.reason?.message || event?.reason || '')
+      if (/401|Authentication required|Invalid or expired token/i.test(msg)) {
+        logoutAdmin()
+        setAuthed(false)
+      }
+    }
+    window.addEventListener('unhandledrejection', onReject)
+    return () => window.removeEventListener('unhandledrejection', onReject)
+  }, [authed])
+
   if (!authed) {
     return <AdminLogin onLogin={() => setAuthed(true)} />
   }
 
-  return <AdminDashboard onLogout={handleLogout} />
+  return (
+    <AdminErrorBoundary onReset={handleLogout}>
+      <AdminDashboard onLogout={handleLogout} />
+    </AdminErrorBoundary>
+  )
 }
