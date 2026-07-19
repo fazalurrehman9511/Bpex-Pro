@@ -2379,44 +2379,51 @@ function AdminDashboard({ onLogout }) {
   const isFinanceTab = isPnlTab || isExpensesTab
   const isSettingsPanel = isAccountsTab || isWhatsappTab || isFinanceTab
 
-  const loadTransactions = async () => {
+  const loadTransactions = async ({ silent = false } = {}) => {
     if (isUsersTab || isBlogTab || isSettingsPanel) return
-    setLoading(true)
-    setLoadError('')
+    if (!silent) {
+      setLoading(true)
+      setLoadError('')
+    }
     try {
       const list = await fetchAdminTransactions({ status: statusFilter })
       setAllTransactions(Array.isArray(list) ? list : [])
     } catch (err) {
       setAllTransactions([])
-      setLoadError(err.message)
+      if (!silent) setLoadError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
-  const loadUsers = async () => {
+  const loadUsers = async ({ silent = false } = {}) => {
     if (!isUsersTab) return
-    setLoading(true)
-    setLoadError('')
+    if (!silent) {
+      setLoading(true)
+      setLoadError('')
+    }
     try {
       const [list, agent] = await Promise.all([
         fetchBpexchUsers(),
         fetchAdminBpexchAgent().catch(() => null),
       ])
       setBpexchUsers(Array.isArray(list) ? list : [])
-      if (agent) {
+      if (agent && !silent) {
+        // Only hydrate agent form on initial/manual load — never wipe while typing
         setBpexchAgent(agent)
         setBpexchAgentForm((prev) => ({
-          username: agent.username || '',
+          username: agent.username || prev.username || '',
           password: '',
           label: agent.label || prev.label || '',
         }))
+      } else if (agent && silent) {
+        setBpexchAgent(agent)
       }
     } catch (err) {
       setBpexchUsers([])
-      setLoadError(err.message)
+      if (!silent) setLoadError(err.message)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -2567,8 +2574,9 @@ function AdminDashboard({ onLogout }) {
   useEffect(() => {
     document.title = 'Admin — BpxPro'
     if (isUsersTab) {
-      loadUsers()
-      const tick = setInterval(loadUsers, 10000)
+      loadUsers({ silent: false })
+      // Silent list refresh only — do not reset agent form / full-page loading
+      const tick = setInterval(() => loadUsers({ silent: true }), 60_000)
       return () => clearInterval(tick)
     }
     if (isBlogTab) {
@@ -2591,8 +2599,8 @@ function AdminDashboard({ onLogout }) {
       loadProfitLossAdmin()
       return undefined
     }
-    loadTransactions()
-    const tick = setInterval(loadTransactions, 10000)
+    loadTransactions({ silent: false })
+    const tick = setInterval(() => loadTransactions({ silent: true }), 60_000)
     return () => clearInterval(tick)
   }, [statusFilter, activeTab, financeDateFrom, financeDateTo])
 
