@@ -295,14 +295,14 @@ export default function FloatingWhatsApp() {
                   onClick={openSelfRegister}
                   className="rounded-full border border-accent/40 bg-accent/10 px-2.5 py-1.5 text-left text-[10px] font-semibold text-accent hover:bg-accent/20 transition-colors"
                 >
-                  Create account myself
+                  Self Register
                 </button>
                 <button
                   type="button"
                   onClick={openWhatsAppWithAnswers}
                   className="rounded-full border border-border bg-navy-dark px-2.5 py-1.5 text-left text-[10px] font-semibold text-muted hover:border-accent/40 hover:text-text transition-colors"
                 >
-                  Continue on WhatsApp with agent
+                  Register via WhatsApp
                 </button>
               </div>
             )}
@@ -343,7 +343,7 @@ export default function FloatingWhatsApp() {
             <div className="border-t border-border bg-navy-dark px-3 py-2.5">
               <p className="text-center text-[10px] text-muted">
                 {showCreateChoices
-                  ? 'Pick Create Myself or WhatsApp Agent'
+                  ? 'Pick Self Register or Register via WhatsApp'
                   : done
                     ? 'Tap Restart to begin again'
                     : blocked

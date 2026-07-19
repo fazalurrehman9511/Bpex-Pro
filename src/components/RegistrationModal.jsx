@@ -30,9 +30,8 @@ const inputClass =
   'w-full rounded border border-border bg-navy-dark px-4 py-3 text-sm text-text placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors'
 
 export default function RegistrationModal() {
-  const { isOpen, intent, modalOptions, closeModal } = useModal()
+  const { isOpen, intent, modalOptions, closeModal, openModal } = useModal()
   const navigate = useNavigate()
-  const [path, setPath] = useState('whatsapp')
   const [countryCode, setCountryCode] = useState('PK')
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -53,11 +52,12 @@ export default function RegistrationModal() {
   const selectedCountry = getCountryByCode(countryCode)
   const selfDial = getCountryByCode('PK')
   const isRegister = intent === 'register'
+  /** Locked by openModal(..., { registerPath }) — no in-modal tabs */
+  const path = modalOptions.registerPath === 'self' ? 'self' : 'whatsapp'
 
   useEffect(() => {
     if (!isOpen) return
     const nextPath = modalOptions.registerPath === 'self' ? 'self' : 'whatsapp'
-    setPath(nextPath)
     setCountryCode(nextPath === 'self' ? 'PK' : detectCountryCode())
     setName('')
     setPhone('')
@@ -76,7 +76,7 @@ export default function RegistrationModal() {
       }
     })
 
-    if (intent === 'register') {
+    if (intent === 'register' && nextPath === 'self') {
       fetchRegisterStatus()
         .then((data) => setSelfAvailable(data.selfRegisterAvailable !== false))
         .catch(() => setSelfAvailable(true))
@@ -215,42 +215,6 @@ export default function RegistrationModal() {
           </h2>
         </div>
 
-        {isRegister && !created && (
-          <div className="mb-4 grid grid-cols-2 gap-1.5 rounded-lg border border-border bg-navy-dark p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setPath('whatsapp')
-                setErrors({})
-                setSubmitError('')
-                const codes = agentCountries.map((c) => c.code)
-                setCountryCode((prev) =>
-                  codes.includes(prev) ? prev : agentCountries[0]?.code || detectCountryCode(),
-                )
-              }}
-              className={`rounded-md px-2 py-2 text-[11px] font-bold transition-colors ${
-                path === 'whatsapp' ? 'bg-accent text-navy-dark' : 'text-muted hover:text-text'
-              }`}
-            >
-              WhatsApp Agent
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPath('self')
-                setCountryCode('PK')
-                setErrors({})
-                setSubmitError('')
-              }}
-              className={`rounded-md px-2 py-2 text-[11px] font-bold transition-colors ${
-                path === 'self' ? 'bg-accent text-navy-dark' : 'text-muted hover:text-text'
-              }`}
-            >
-              Create Myself
-            </button>
-          </div>
-        )}
-
         <p className="mb-4 text-xs text-muted">
           {created
             ? 'Your BpxPro account is ready'
@@ -315,8 +279,7 @@ export default function RegistrationModal() {
           <form onSubmit={handleSelfRegister} className="space-y-3.5" noValidate>
             {!selfAvailable && (
               <p className="rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-200">
-                Self-register needs a Master agent account on the server. You can still use WhatsApp
-                Agent.
+                Self Register abhi available nahi. Neeche se Register via WhatsApp use karein.
               </p>
             )}
 
@@ -406,10 +369,10 @@ export default function RegistrationModal() {
                 </p>
                 <button
                   type="button"
-                  onClick={() => setPath('whatsapp')}
+                  onClick={() => openModal('register', { registerPath: 'whatsapp' })}
                   className="text-[11px] font-semibold text-accent hover:underline"
                 >
-                  Use WhatsApp Agent instead →
+                  Register via WhatsApp →
                 </button>
               </div>
             )}

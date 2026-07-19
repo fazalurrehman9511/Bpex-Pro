@@ -1,4 +1,4 @@
-import { Menu, X, LayoutDashboard, Wallet } from 'lucide-react'
+import { Menu, X, LayoutDashboard, Wallet, MessageCircle, UserPlus } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
@@ -118,10 +118,21 @@ export function HeaderBar() {
                 Login
               </Link>
               <button
-                onClick={() => openModal('register')}
-                className="rounded bg-accent px-3.5 py-1.5 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors sm:px-4"
+                type="button"
+                onClick={() => openModal('register', { registerPath: 'self' })}
+                className="hidden sm:inline-flex items-center gap-1 rounded border border-border px-3 py-1.5 text-xs font-semibold text-text hover:border-accent/40 transition-colors"
               >
-                Register
+                <UserPlus className="h-3.5 w-3.5 text-accent" />
+                Self Register
+              </button>
+              <button
+                type="button"
+                onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                className="inline-flex items-center gap-1 rounded bg-accent px-3.5 py-1.5 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors sm:px-4"
+              >
+                <MessageCircle className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} />
+                <span className="sm:hidden">WhatsApp</span>
+                <span className="hidden sm:inline">Register via WhatsApp</span>
               </button>
             </>
           )}
@@ -168,13 +179,37 @@ export function HeaderBar() {
               Add Balance
             </Link>
           ) : (
-            <Link
-              to="/login"
-              onClick={() => setMenuOpen(false)}
-              className="mt-1 block w-full rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 block w-full rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+              >
+                Login
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  openModal('register', { registerPath: 'self' })
+                }}
+                className="mt-1 flex w-full items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+              >
+                <UserPlus className="h-4 w-4 text-accent" />
+                Self Register
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  openModal('register', { registerPath: 'whatsapp' })
+                }}
+                className="mt-1 flex w-full items-center gap-2 rounded bg-accent px-3 py-2.5 text-left text-sm font-bold text-navy-dark"
+              >
+                <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
+                Register via WhatsApp
+              </button>
+            </>
           )}
         </div>
       )}

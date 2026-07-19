@@ -37,7 +37,7 @@ export default function Categories() {
           {categories.map(({ icon: Icon, label, color, hot }) => (
             <button
               key={label}
-              onClick={() => openModal('register')}
+              onClick={() => openModal('register', { registerPath: 'whatsapp' })}
               className="relative flex shrink-0 w-[72px] flex-col items-center gap-1.5 rounded border border-border bg-navy-light p-2.5 hover:border-accent/40 hover:bg-surface-hover transition-all active:scale-95 sm:w-auto sm:p-3"
             >
               {hot && (

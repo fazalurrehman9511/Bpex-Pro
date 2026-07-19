@@ -187,7 +187,7 @@ export default function BlogPage() {
               </div>
               <button
                 type="button"
-                onClick={() => openModal('register')}
+                onClick={() => openModal('register', { registerPath: 'whatsapp' })}
                 className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-accent px-8 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
               >
                 <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
