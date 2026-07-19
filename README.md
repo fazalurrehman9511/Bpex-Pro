@@ -1,16 +1,45 @@
-# React + Vite
+# BpxPro
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Production stack: **Vite/React frontend** + **Express API** (SQLite) + **BPEXCH embed proxy**.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+cp .env.example .env
+cp server/.env.example server/.env
+# Edit secrets in both files
 
-## React Compiler
+npm install
+cd server && npm install && cd ..
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+npm run dev:all
+```
 
-## Expanding the Oxlint configuration
+- Frontend: http://localhost:5173  
+- API: http://localhost:3001  
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Production build
+
+```bash
+npm run build
+cd server && NODE_ENV=production npm start
+```
+
+Express serves `dist/`, `/api`, `/uploads`, and `/bpexch` when `dist/` exists.
+
+## Deploy (cPanel)
+
+See **[deploy/cpanel.md](./deploy/cpanel.md)** for step-by-step Setup Node.js App instructions.
+
+## Optional: nginx (VPS)
+
+If you use nginx instead of cPanel Node routing, see `nginx.conf.example` for `/bpexch`, `/api`, and SPA `try_files` snippets. Set `ENABLE_BPEXCH_PROXY=0` on the Node app if nginx already proxies `/bpexch/`.
+
+## Security checklist (production)
+
+- Strong `ADMIN_PASSWORD` (12+ chars)
+- Unique `JWT_SECRET` (32+ chars)
+- Unique `BPEXCH_SYNC_SECRET` (16+ chars) — never leave empty
+- `CORS_ORIGIN` limited to your HTTPS domains
+- Never commit `.env` or `server/.env`
+- Backup `server/data/` and `server/uploads/` regularly

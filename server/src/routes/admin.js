@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import {
   db,
@@ -40,10 +41,14 @@ router.post('/login', (req, res) => {
   if (!username?.trim() || !password) {
     return res.status(400).json({ error: 'Username and password are required' })
   }
-  if (
-    username.trim() !== config.adminUsername ||
-    password !== config.adminPassword
-  ) {
+
+  const userOk = username.trim() === config.adminUsername
+  const passBuf = Buffer.from(String(password))
+  const expectedBuf = Buffer.from(String(config.adminPassword))
+  const passOk =
+    passBuf.length === expectedBuf.length && crypto.timingSafeEqual(passBuf, expectedBuf)
+
+  if (!userOk || !passOk) {
     return res.status(401).json({ error: 'Incorrect username or password' })
   }
 

@@ -5,7 +5,11 @@ function resolveApiBase() {
   if (fromEnv) return fromEnv
   try {
     if (Capacitor.isNativePlatform()) {
-      return (import.meta.env.VITE_NATIVE_API_URL || 'http://192.168.1.3:3001').replace(/\/$/, '')
+      const native = (import.meta.env.VITE_NATIVE_API_URL || '').trim().replace(/\/$/, '')
+      if (native) return native
+      // Same site as production web when native API is not set
+      const site = (import.meta.env.VITE_SITE_URL || '').trim().replace(/\/$/, '')
+      if (site) return site
     }
   } catch {
     /* ignore */

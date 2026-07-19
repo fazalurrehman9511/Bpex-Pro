@@ -9,8 +9,13 @@
     "dev:all": "npm run dev:server & npm run dev",
     "build": "vite build",
     "build:apk": "npm run build && npx cap sync android && node scripts/build-apk.mjs",
+    "start": "npm start --prefix server",
+    "start:prod": "NODE_ENV=production npm start --prefix server",
     "lint": "oxlint",
     "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",

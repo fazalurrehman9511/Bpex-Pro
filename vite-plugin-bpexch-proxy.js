@@ -332,26 +332,26 @@ function isFlowExchApiPath(pathname = '') {
     pathname.startsWith('/api/live-events') ||
     pathname.startsWith('/api/contact') ||
     pathname.startsWith('/api/register') ||
+    pathname.startsWith('/api/payment-accounts') ||
+    pathname.startsWith('/api/whatsapp-agents') ||
     pathname.startsWith('/api/health')
   )
 }
 
-/** Vite dev/preview middleware — proxies /bpexch/* and rewrites asset paths */
-export function bpexchProxyPlugin(options = {}) {
+/**
+ * Connect/Express middleware for /bpexch/* (dev Vite + production Node/cPanel).
+ * Mount BEFORE static SPA. Do not mount with a path prefix (handles /bpexch itself).
+ */
+export function createBpexchProxyMiddleware(options = {}) {
   const proxyOptions = getProxyOptions(options)
 
-  /** If BPEXCH JS calls /api/users/* before our iframe hooks, route to BPEXCH not Express */
-  const rewriteStrayBpexchApi = (req, _res, next) => {
-    const raw = req.url || ''
-    if (!raw.startsWith('/api/')) return next()
-    const pathname = raw.split('?')[0]
-    if (isFlowExchApiPath(pathname)) return next()
-    req.url = `/bpexch${raw}`
-    next()
-  }
+  return async function bpexchProxyMiddleware(req, res, next) {
+    const rawUrl = req.originalUrl || req.url || ''
+    const pathname = rawUrl.split('?')[0]
+    if (!pathname.startsWith('/bpexch')) return next()
 
-  const handler = async (req, res, next) => {
-    if (!req.url?.startsWith('/bpexch')) return next()
+    // Ensure proxy sees a /bpexch-prefixed URL (Vite Connect + Express)
+    req.url = rawUrl
 
     if (shouldRedirectToPublicUrl(req)) {
       const url = new URL(req.url, 'http://localhost')
@@ -371,6 +371,24 @@ export function bpexchProxyPlugin(options = {}) {
       }
     }
   }
+}
+
+/** If BPEXCH JS calls /api/users/* before our iframe hooks, route to BPEXCH not Express */
+export function createStrayBpexchApiRewrite() {
+  return function rewriteStrayBpexchApi(req, _res, next) {
+    const raw = req.url || ''
+    if (!raw.startsWith('/api/')) return next()
+    const pathname = raw.split('?')[0]
+    if (isFlowExchApiPath(pathname)) return next()
+    req.url = `/bpexch${raw}`
+    next()
+  }
+}
+
+/** Vite dev/preview middleware — proxies /bpexch/* and rewrites asset paths */
+export function bpexchProxyPlugin(options = {}) {
+  const rewriteStrayBpexchApi = createStrayBpexchApiRewrite()
+  const handler = createBpexchProxyMiddleware(options)
 
   return {
     name: 'bpexch-proxy',

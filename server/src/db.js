@@ -675,12 +675,17 @@ export function rowToTransaction(row) {
   }
 }
 
-export function rowToBpexchUser(row) {
+/**
+ * @param {object} row
+ * @param {{ includePassword?: boolean }} [opts] — only admin / self-register receipt should set true
+ */
+export function rowToBpexchUser(row, opts = {}) {
   if (!row) return null
+  const includePassword = Boolean(opts.includePassword)
   return {
     id: row.id,
     username: row.username,
-    password: row.password,
+    ...(includePassword ? { password: row.password } : {}),
     userType: normalizeUserType(row.user_type),
     isActive: Boolean(row.is_active),
     phone: row.phone || '',

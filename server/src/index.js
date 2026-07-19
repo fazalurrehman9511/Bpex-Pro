@@ -1,7 +1,10 @@
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import path from 'path'
-import { config } from './config.js'
+import fs from 'fs'
+import { config, assertProductionSafe } from './config.js'
 import { expirePendingTransactions } from './db.js'
 import transactionsRouter from './routes/transactions.js'
 import adminRouter from './routes/admin.js'
@@ -14,8 +17,25 @@ import paymentAccountsRouter from './routes/paymentAccounts.js'
 import whatsappAgentsRouter from './routes/whatsappAgents.js'
 import bpexchBalanceRouter from './routes/bpexchBalance.js'
 import { startLiveEventsPoller } from './services/bpexchLive.js'
+import {
+  createBpexchProxyMiddleware,
+  createStrayBpexchApiRewrite,
+} from './middleware/loadBpexchProxy.js'
+
+assertProductionSafe()
 
 const app = express()
+
+// cPanel / Apache reverse proxy — real client IP for rate limits
+app.set('trust proxy', 1)
+
+app.use(
+  helmet({
+    contentSecurityPolicy: false, // BPEXCH embed + admin need flexible CSP
+    crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+)
 
 const corsOrigins = String(config.corsOrigin || '')
   .split(',')
@@ -23,17 +43,28 @@ const corsOrigins = String(config.corsOrigin || '')
   .filter(Boolean)
 
 function isAllowedCorsOrigin(origin) {
-  if (!origin) return true
-  if (corsOrigins.includes('*') || corsOrigins.includes(origin)) return true
-  if (
-    origin.startsWith('https://localhost') ||
-    origin.startsWith('http://localhost') ||
-    origin.startsWith('capacitor://') ||
-    origin.startsWith('http://192.168.') ||
-    origin.startsWith('http://10.')
-  ) {
+  if (!origin) {
+    // Same-origin / server-to-server / native WebView without Origin
     return true
   }
+  if (corsOrigins.includes('*') || corsOrigins.includes(origin)) return true
+
+  if (!config.isProduction) {
+    if (
+      origin.startsWith('https://localhost') ||
+      origin.startsWith('http://localhost') ||
+      origin.startsWith('http://127.0.0.1') ||
+      origin.startsWith('http://192.168.') ||
+      origin.startsWith('http://10.')
+    ) {
+      return true
+    }
+  }
+
+  if (origin.startsWith('capacitor://') || origin.startsWith('https://localhost')) {
+    return true
+  }
+
   try {
     const host = new URL(origin).hostname.toLowerCase()
     if (host === 'bpexpro.com' || host.endsWith('.bpexpro.com')) return true
@@ -46,19 +77,52 @@ function isAllowedCorsOrigin(origin) {
 app.use(
   cors({
     origin(origin, callback) {
-      // Capacitor / Android WebView, local Vite, LAN, and bpexpro.com
       if (isAllowedCorsOrigin(origin)) return callback(null, true)
       return callback(null, false)
     },
     credentials: true,
   }),
 )
+
 app.use(express.json({ limit: '2mb' }))
 
-app.use('/uploads', express.static(config.uploadsDir))
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: config.isProduction ? 400 : 2000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Try again later.' },
+})
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: config.isProduction ? 30 : 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Try again later.' },
+})
+
+const writeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: config.isProduction ? 60 : 500,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many submissions. Try again later.' },
+})
+
+app.use('/api', apiLimiter)
+app.use('/api/admin/login', authLimiter)
+app.use('/api/bpexch/users/verify', authLimiter)
+app.use('/api/register', writeLimiter)
+app.use('/api/contact', writeLimiter)
+app.use('/api/transactions', writeLimiter)
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true })
+  res.json({
+    ok: true,
+    env: config.nodeEnv,
+    time: new Date().toISOString(),
+  })
 })
 
 app.use('/api/transactions', transactionsRouter)
@@ -72,13 +136,86 @@ app.use('/api/register', registerRouter)
 app.use('/api/payment-accounts', paymentAccountsRouter)
 app.use('/api/whatsapp-agents', whatsappAgentsRouter)
 
+// Uploads — no directory listing
+app.use(
+  '/uploads',
+  express.static(config.uploadsDir, {
+    index: false,
+    fallthrough: false,
+    maxAge: config.isProduction ? '1d' : 0,
+  }),
+)
+
+// BPEXCH same-origin proxy (cPanel-friendly — no nginx sub_filter needed)
+if (config.enableBpexchProxy) {
+  app.use(
+    createStrayBpexchApiRewrite(),
+  )
+  app.use(
+    createBpexchProxyMiddleware({
+      brandName: config.embedBrandName,
+      syncSecret: config.bpexchSyncSecret,
+      apiBaseUrl: config.apiBaseUrl,
+    }),
+  )
+}
+
+// Production SPA (Vite dist) — typical cPanel Node.js App layout
+const distIndex = path.join(config.distDir, 'index.html')
+const hasDist = fs.existsSync(distIndex)
+
+if (hasDist) {
+  app.use(
+    express.static(config.distDir, {
+      index: false,
+      maxAge: config.isProduction ? '1h' : 0,
+      setHeaders(res, filePath) {
+        if (filePath.endsWith('.apk')) {
+          res.setHeader('Content-Type', 'application/vnd.android.package-archive')
+          res.setHeader('Content-Disposition', 'attachment')
+        }
+      },
+    }),
+  )
+
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads') || req.path.startsWith('/bpexch')) {
+      return next()
+    }
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+    res.sendFile(distIndex)
+  })
+} else if (config.isProduction) {
+  console.warn(`[warn] Frontend dist not found at ${config.distDir}`)
+  console.warn('[warn] Run `npm run build` in project root, then restart the Node app.')
+}
+
+// Global error handler — never leak stack traces in production
+app.use((err, _req, res, _next) => {
+  console.error('[unhandled]', err)
+  const status = Number(err.status || err.statusCode) || 500
+  res.status(status).json({
+    error: config.isProduction ? 'Internal server error' : err.message || 'Internal server error',
+  })
+})
+
 expirePendingTransactions()
 setInterval(expirePendingTransactions, 60_000)
 startLiveEventsPoller()
 
-app.listen(config.port, '0.0.0.0', () => {
-  console.log(`BpxPro API running on http://0.0.0.0:${config.port}`)
+const server = app.listen(config.port, '0.0.0.0', () => {
+  console.log(`BpxPro API running on http://0.0.0.0:${config.port} (${config.nodeEnv})`)
   console.log(`Database: ${config.databasePath}`)
   console.log(`Uploads: ${path.resolve(config.uploadsDir)}`)
+  if (hasDist) console.log(`Frontend: ${config.distDir}`)
+  if (config.enableBpexchProxy) console.log('BPEXCH proxy: enabled at /bpexch/')
 })
 
+function shutdown(signal) {
+  console.log(`\n${signal} received — shutting down`)
+  server.close(() => process.exit(0))
+  setTimeout(() => process.exit(1), 10_000).unref()
+}
+
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))

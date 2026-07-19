@@ -118,7 +118,7 @@ router.post('/', async (req, res) => {
 
     res.status(201).json({
       ok: true,
-      user: rowToBpexchUser(row),
+      user: rowToBpexchUser(row, { includePassword: true }),
       loginPath: '/login',
       message: 'Account created on BPEXCH. You can log in now.',
     })

@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import crypto from 'crypto'
 import { db, rowToBpexchUser, updateBpexchUserBalance, verifyBpexchUserForLogin, getBpexchAgentConfig } from '../db.js'
 import { config } from '../config.js'
 import { extractUserFromFields, normalizeUserType } from '../utils/bpexchUser.js'
@@ -12,8 +13,17 @@ import {
 const router = Router()
 
 function checkSyncSecret(req) {
-  if (!config.bpexchSyncSecret) return true
-  return req.headers['x-sync-secret'] === config.bpexchSyncSecret
+  // Fail closed — never allow open sync in any environment
+  if (!config.bpexchSyncSecret) return false
+  const provided = String(req.headers['x-sync-secret'] || '')
+  if (!provided || provided.length !== config.bpexchSyncSecret.length) return false
+  try {
+    const a = Buffer.from(provided)
+    const b = Buffer.from(config.bpexchSyncSecret)
+    return crypto.timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
 }
 
 /** Public — app / web login must pass this before BPEXCH auth */
@@ -103,6 +113,9 @@ function upsertUser(user) {
 
 router.post('/sync', (req, res) => {
   try {
+    if (!config.bpexchSyncSecret) {
+      return res.status(503).json({ error: 'BPEXCH sync secret is not configured on the server' })
+    }
     if (!checkSyncSecret(req)) {
       return res.status(403).json({ error: 'Invalid sync secret' })
     }
@@ -156,7 +169,7 @@ router.get('/', requireAdmin, (req, res) => {
         `)
         .all()
     }
-    res.json(rows.map(rowToBpexchUser))
+    res.json(rows.map((row) => rowToBpexchUser(row, { includePassword: true })))
   } catch (err) {
     console.error('List bpexch users error:', err)
     res.status(500).json({ error: 'Failed to fetch users' })
@@ -221,7 +234,7 @@ router.post('/sync-balances', requireAdmin, async (_req, res) => {
       agentUsername: agent || '',
       total: names.length,
       updated,
-      users: fresh.map(rowToBpexchUser),
+      users: fresh.map((row) => rowToBpexchUser(row, { includePassword: true })),
     })
   } catch (err) {
     console.error('Sync balances error:', err)
@@ -336,7 +349,7 @@ router.post('/sync-from-bpexch', requireAdmin, async (req, res) => {
       created,
       updated,
       balancesUpdated,
-      users: fresh.map(rowToBpexchUser),
+      users: fresh.map((row) => rowToBpexchUser(row, { includePassword: true })),
     })
   } catch (err) {
     console.error('Sync from BPEXCH error:', err)
@@ -374,7 +387,7 @@ router.post('/', requireAdmin, (req, res) => {
 
     const row = createUser(user, 'manual')
     console.log(`[bpexch-admin] User manually added: ${user.username}`)
-    res.status(201).json(rowToBpexchUser(row))
+    res.status(201).json(rowToBpexchUser(row, { includePassword: true }))
   } catch (err) {
     console.error('Manual bpexch user create error:', err)
     res.status(500).json({ error: 'Failed to save user' })
