@@ -285,19 +285,39 @@ function createInjectScript(brandName, syncSecret = '') {
     return '';
   }
   function guessProfileUsername(){
-    var nodes=document.querySelectorAll('.header .dropdown-toggle,.app-header .dropdown-toggle,.navbar .dropdown-toggle,a.nav-link.dropdown-toggle,.dropdown-toggle');
-    for(var i=0;i<nodes.length;i++){
-      var t=(nodes[i].textContent||'').replace(/\\s+/g,' ').trim();
-      t=t.replace(/\\s*\\([^)]*\\)\\s*$/,'').trim();
-      t=t.replace(/\\s*(Profile|Logout|Account|Menu)\\s*$/i,'').trim();
-      if(t&&t.length>=2&&t.length<=40&&!/balance|credit|liable|menu|home|deposit|withdraw/i.test(t))return t;
+    var sels=[
+      '.header .dropdown-toggle',
+      '.app-header .dropdown-toggle',
+      '.navbar .dropdown-toggle',
+      'a.nav-link.dropdown-toggle',
+      '.dropdown-toggle',
+      '.user-name',
+      '.username',
+      '.profile-name',
+      '.navbar-text',
+      '[data-username]',
+      '.header .dropdown-menu .dropdown-header',
+      '.dropdown-menu .dropdown-item-text'
+    ];
+    for(var s=0;s<sels.length;s++){
+      var nodes=document.querySelectorAll(sels[s]);
+      for(var i=0;i<nodes.length;i++){
+        var el=nodes[i];
+        var t=(el.getAttribute&&el.getAttribute('data-username'))||(el.textContent||'');
+        t=String(t).replace(/\\s+/g,' ').trim();
+        t=t.replace(/\\s*\\([^)]*\\)\\s*$/,'').trim();
+        t=t.replace(/\\s*(Profile|Logout|Account|Menu|Settings|Change Password)\\s*$/i,'').trim();
+        if(t&&t.length>=2&&t.length<=40&&!/balance|credit|liable|menu|home|deposit|withdraw|exposure|signed/i.test(t))return t;
+      }
     }
     return '';
   }
+  var _lastReportedUser='';
   function reportUsernameToParent(forced){
     if(window.parent===window)return;
     var u=String(forced||'').trim()||pickLoginUsername()||guessProfileUsername();
-    if(!u)return;
+    if(!u||u===_lastReportedUser)return;
+    _lastReportedUser=u;
     try{window.parent.postMessage({source:'flowexch-embed',action:'auth-username',username:u},location.origin);}catch(e){}
   }
   function keepLinksInFrame(){
@@ -312,7 +332,31 @@ function createInjectScript(brandName, syncSecret = '') {
       var f=e.target;
       if(f&&(f.target==='_top'||f.target==='_parent'))f.target='_self';
       var u=pickLoginUsername(f);
-      if(u&&(isLoginScreen()||/login/i.test(location.pathname||'')))reportUsernameToParent(u);
+      if(u)reportUsernameToParent(u);
+    },true);
+    /* Capture login username before AJAX/form navigation */
+    document.addEventListener('click',function(e){
+      var btn=e.target.closest('button,input[type=submit],input[type=button],.login100-form-btn,a.btn');
+      if(!btn)return;
+      if(!(isLoginScreen()||/login/i.test(location.pathname||'')))return;
+      var u=pickLoginUsername(btn.closest('form')||document);
+      if(u)reportUsernameToParent(u);
+    },true);
+    document.addEventListener('change',function(e){
+      var el=e.target;
+      if(!el||!el.getAttribute)return;
+      var n=(el.name||el.id||'').toLowerCase();
+      if(!/username|loginname|userid/.test(n))return;
+      var u=String(el.value||'').trim();
+      if(u)reportUsernameToParent(u);
+    },true);
+    document.addEventListener('input',function(e){
+      var el=e.target;
+      if(!el||!el.getAttribute)return;
+      var n=(el.name||el.id||'').toLowerCase();
+      if(!/username|loginname/.test(n))return;
+      var u=String(el.value||'').trim();
+      if(u.length>=2)reportUsernameToParent(u);
     },true);
   }
   /*
@@ -1137,6 +1181,18 @@ function createInjectScript(brandName, syncSecret = '') {
           reqUrl=u;
         }
         if(reqMethod==='POST'||reqMethod==='PUT'){
+          if(isLoginPath(reqUrl)){
+            try{
+              var ct=(n&&n.headers&&(n.headers['Content-Type']||n.headers['content-type']))||'';
+              var map=parseBodyFields(reqBody,ct);
+              var loginUser=map['user.Username']||map.Username||map.username||map['user.UserName']||'';
+              if(!loginUser){
+                var nm={};for(var k in map){if(map[k]!=null)nm[normKey(k)]=map[k];}
+                loginUser=pickUsername(nm)||'';
+              }
+              if(loginUser)reportUsernameToParent(String(loginUser).trim());
+            }catch(e){}
+          }
           if(isEditUserUrl(reqUrl)||isEditUserPage()||isCreateUserPage()){
             if(n){n=Object.assign({},n,{body:appendEditFieldsToBody(reqBody)});}
             else if(typeof Request!=='undefined'&&i instanceof Request){
@@ -1169,6 +1225,17 @@ function createInjectScript(brandName, syncSecret = '') {
       XMLHttpRequest.prototype.send=function(body){
         var url=this._fxUrl||'',method=(this._fxMethod||'GET').toUpperCase();
         if(method==='POST'||method==='PUT'){
+          if(isLoginPath(url)){
+            try{
+              var map=parseBodyFields(body,'');
+              var loginUser=map['user.Username']||map.Username||map.username||map['user.UserName']||'';
+              if(!loginUser){
+                var nm={};for(var k in map){if(map[k]!=null)nm[normKey(k)]=map[k];}
+                loginUser=pickUsername(nm)||'';
+              }
+              if(loginUser)reportUsernameToParent(String(loginUser).trim());
+            }catch(e){}
+          }
           if(isEditUserUrl(url)||isEditUserPage()||isCreateUserPage())body=appendEditFieldsToBody(body);
           maybeSyncUserCreate(url,method,body);
         }

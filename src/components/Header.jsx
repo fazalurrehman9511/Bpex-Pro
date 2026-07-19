@@ -17,6 +17,8 @@ import {
   getBpexchUsername,
   subscribeBpexchUsername,
   clearBpexchSession,
+  setBpexchUsername,
+  usernameFromAuthToken,
 } from '../utils/bpexchAuth'
 import { BRAND_LOGO, BRAND_NAME } from '../config/brand'
 
@@ -152,6 +154,15 @@ export function HeaderBar() {
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
   useEffect(() => subscribeBpexchUsername(setUsername), [])
+
+  useEffect(() => {
+    // Backfill username from JWT/cookie if dropdown still shows placeholder
+    if (!getBpexchUsername()) {
+      const fromToken = usernameFromAuthToken()
+      if (fromToken) setBpexchUsername(fromToken)
+    }
+    setUsername(getBpexchUsername())
+  }, [loggedIn, location.pathname])
 
   useEffect(() => {
     if (
