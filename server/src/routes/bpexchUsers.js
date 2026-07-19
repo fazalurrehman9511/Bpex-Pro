@@ -357,6 +357,101 @@ router.post('/sync-from-bpexch', requireAdmin, async (req, res) => {
   }
 })
 
+/**
+ * Import clients scraped from BPEXCH on an admin's PC (bypasses Cloudflare on hosting IP).
+ * Body: { clients: [{ userId, username, isActive }], agentUsername? }
+ */
+router.post('/import-clients', requireAdmin, (req, res) => {
+  try {
+    const clients = Array.isArray(req.body?.clients) ? req.body.clients : []
+    if (!clients.length) {
+      return res.status(400).json({ error: 'clients array is required' })
+    }
+
+    const agentUsername =
+      String(req.body?.agentUsername || getBpexchAgentConfig().username || '').trim()
+    if (!agentUsername) {
+      return res.status(400).json({
+        error: 'agentUsername required — pehle admin mein Agent save karo',
+      })
+    }
+
+    const now = new Date().toISOString()
+    let created = 0
+    let updated = 0
+    let skipped = 0
+
+    const findByUsername = db.prepare(
+      'SELECT * FROM bpexch_users WHERE lower(username) = lower(?)',
+    )
+    const insert = db.prepare(`
+      INSERT INTO bpexch_users (
+        username, password, user_type, is_active, phone,
+        reference, notes, parent_id, source, bpexch_id,
+        agent_username, created_at, updated_at
+      ) VALUES (?, '', 'Bettor', ?, '', '', '', ?, 'bpexch', ?, ?, ?, ?)
+    `)
+    const patch = db.prepare(`
+      UPDATE bpexch_users SET
+        bpexch_id = COALESCE(?, bpexch_id),
+        is_active = COALESCE(?, is_active),
+        agent_username = ?,
+        parent_id = CASE WHEN IFNULL(parent_id, '') = '' THEN ? ELSE parent_id END,
+        updated_at = ?,
+        source = CASE WHEN source = 'manual' THEN source ELSE 'bpexch' END
+      WHERE id = ?
+    `)
+
+    const syncTx = db.transaction((list) => {
+      for (const raw of list) {
+        const username = String(raw?.username || '').trim()
+        if (!username) {
+          skipped += 1
+          continue
+        }
+        const userId = raw?.userId != null ? String(raw.userId).trim() : null
+        const isActive = raw?.isActive === false || raw?.is_active === false ? 0 : 1
+        const existing = findByUsername.get(username)
+        if (existing) {
+          patch.run(userId, isActive, agentUsername, agentUsername, now, existing.id)
+          updated += 1
+        } else {
+          insert.run(username, isActive, agentUsername, userId, agentUsername, now, now)
+          created += 1
+        }
+      }
+    })
+    syncTx(clients)
+
+    const fresh = db
+      .prepare(`
+        SELECT * FROM bpexch_users
+        WHERE lower(agent_username) = lower(?)
+           OR (IFNULL(agent_username, '') = '' AND source IN ('self-register', 'manual'))
+        ORDER BY created_at DESC
+        LIMIT 2000
+      `)
+      .all(agentUsername)
+
+    console.log(
+      `[bpexch-admin] PC import for agent=${agentUsername}: created=${created} updated=${updated} skipped=${skipped}`,
+    )
+
+    res.json({
+      ok: true,
+      agentUsername,
+      fetched: clients.length,
+      created,
+      updated,
+      skipped,
+      users: fresh.map((row) => rowToBpexchUser(row, { includePassword: true })),
+    })
+  } catch (err) {
+    console.error('Import clients error:', err)
+    res.status(500).json({ error: err.message || 'Failed to import clients' })
+  }
+})
+
 router.post('/', requireAdmin, (req, res) => {
   try {
     const username = String(req.body?.username || '').trim()
