@@ -8,7 +8,6 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { createPortal } from 'react-dom'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
 import { navigateToSection } from '../utils/detectCountry'
@@ -73,8 +72,7 @@ function formatBalanceLabel(raw) {
 
 function ProfileMenu({ username, balanceLabel, balanceLoading, onLogout, onRefreshBalance }) {
   const [open, setOpen] = useState(false)
-  const triggerRef = useRef(null)
-  const panelRef = useRef(null)
+  const rootRef = useRef(null)
   const display = username || 'User'
   const initial = display.charAt(0).toUpperCase()
   const balText = balanceLoading && !balanceLabel ? '…' : balanceLabel || '—'
@@ -82,9 +80,7 @@ function ProfileMenu({ username, balanceLabel, balanceLoading, onLogout, onRefre
   useEffect(() => {
     if (!open) return undefined
     const onDoc = (e) => {
-      if (triggerRef.current?.contains(e.target)) return
-      if (panelRef.current?.contains(e.target)) return
-      setOpen(false)
+      if (!rootRef.current?.contains(e.target)) setOpen(false)
     }
     const onKey = (e) => {
       if (e.key === 'Escape') setOpen(false)
@@ -101,119 +97,82 @@ function ProfileMenu({ username, balanceLabel, balanceLoading, onLogout, onRefre
     if (open) onRefreshBalance?.()
   }, [open, onRefreshBalance])
 
-  const menu = open
-    ? createPortal(
-        <div className="fixed inset-0 z-[80]" role="presentation">
-          <button
-            type="button"
-            aria-label="Close profile menu"
-            className="absolute inset-0 bg-black/50 backdrop-blur-[2px]"
-            onClick={() => setOpen(false)}
-          />
-          <div
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Profile"
-            className="absolute right-3 top-16 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-border bg-navy-dark shadow-2xl sm:right-6"
-          >
-            <div className="flex items-start gap-3 border-b border-border bg-navy-light/40 px-4 py-4">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-accent text-lg font-bold text-navy-dark">
-                {initial}
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-                  Signed in
-                </p>
-                <p className="truncate text-base font-bold text-accent">{display}</p>
-                <p className="mt-1 text-sm text-text">
-                  <span className="text-muted">Balance:</span>{' '}
-                  <span className="font-semibold text-accent">{balText}</span>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="cursor-pointer rounded p-1 text-muted hover:bg-navy-light hover:text-text"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <div className="py-1">
-              <Link
-                to="/dashboard"
-                onClick={() => setOpen(false)}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-3 text-left text-sm text-text hover:bg-navy-light"
-              >
-                <LayoutDashboard className="h-4 w-4 text-accent" />
-                Dashboard
-              </Link>
-              <Link
-                to="/deposit"
-                onClick={() => setOpen(false)}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-3 text-left text-sm text-text hover:bg-navy-light"
-              >
-                <Wallet className="h-4 w-4 text-accent" />
-                Deposit
-              </Link>
-              <Link
-                to="/withdraw"
-                onClick={() => setOpen(false)}
-                className="flex w-full cursor-pointer items-center gap-2.5 px-4 py-3 text-left text-sm text-text hover:bg-navy-light"
-              >
-                <ArrowUpFromLine className="h-4 w-4 text-accent" />
-                Withdraw
-              </Link>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setOpen(false)
-                onLogout()
-              }}
-              className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border px-4 py-3.5 text-left text-sm font-semibold text-red-300 hover:bg-navy-light"
-            >
-              <LogOut className="h-4 w-4" />
-              Logout
-            </button>
-          </div>
-        </div>,
-        document.body,
-      )
-    : null
+  const itemClass =
+    'flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-navy-light'
 
   return (
-    <>
+    <div className="relative shrink-0" ref={rootRef}>
       <button
-        ref={triggerRef}
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex h-11 max-w-[15rem] cursor-pointer items-center gap-2.5 rounded-xl border border-border bg-navy-light pl-1.5 pr-2.5 text-left transition-colors hover:border-accent/45 sm:h-12 sm:max-w-[17rem]"
-        aria-haspopup="dialog"
+        className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border bg-navy-light pl-1 pr-2 text-left transition-colors sm:h-11 sm:gap-2.5 sm:pl-1.5 sm:pr-2.5 ${
+          open
+            ? 'border-accent/50'
+            : 'border-border hover:border-accent/35'
+        }`}
+        aria-haspopup="menu"
         aria-expanded={open}
-        aria-label="Open profile"
+        aria-label="Account menu"
       >
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-sm font-bold text-navy-dark sm:h-9 sm:w-9 sm:text-base">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-navy-dark sm:h-8 sm:w-8 sm:text-sm">
           {initial}
         </span>
-        <span className="min-w-0 flex-1 leading-tight">
-          <span className="block truncate text-xs font-semibold text-text sm:text-[13px]">
+        <span className="hidden min-w-0 leading-tight sm:block">
+          <span className="block max-w-[8.5rem] truncate text-xs font-semibold text-text">
             {display}
           </span>
-          <span className="mt-0.5 flex items-center gap-1 truncate text-[11px] font-bold text-accent sm:text-xs">
-            <Wallet className="hidden h-3 w-3 shrink-0 sm:inline" />
+          <span className="block max-w-[8.5rem] truncate text-[11px] font-semibold text-accent">
             {balText}
           </span>
         </span>
         <ChevronDown
-          className={`h-4 w-4 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
-      {menu}
-    </>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-lg border border-border bg-navy-dark shadow-xl ring-1 ring-black/20"
+        >
+          <div className="border-b border-border px-3.5 py-3">
+            <p className="truncate text-sm font-semibold text-text">{display}</p>
+            <p className="mt-0.5 text-xs text-muted">
+              Available{' '}
+              <span className="font-semibold text-accent">{balText}</span>
+            </p>
+          </div>
+
+          <div className="py-1">
+            <Link to="/dashboard" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
+              <LayoutDashboard className="h-4 w-4 text-muted" />
+              Dashboard
+            </Link>
+            <Link to="/deposit" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
+              <Wallet className="h-4 w-4 text-muted" />
+              Deposit
+            </Link>
+            <Link to="/withdraw" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
+              <ArrowUpFromLine className="h-4 w-4 text-muted" />
+              Withdraw
+            </Link>
+          </div>
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setOpen(false)
+              onLogout()
+            }}
+            className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border px-3.5 py-2.5 text-left text-[13px] font-medium text-red-300 transition-colors hover:bg-navy-light"
+          >
+            <LogOut className="h-4 w-4" />
+            Logout
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
