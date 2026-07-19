@@ -252,12 +252,17 @@ export function HeaderBar() {
     setUsername('')
     setBalanceRaw('')
     setMenuOpen(false)
+    // Fire-and-forget — do not wait (keeps logout instant)
     try {
-      fetch('/bpexch/Common/Logout', { credentials: 'include', redirect: 'manual' }).catch(() => {})
+      fetch('/bpexch/Common/Logout', {
+        credentials: 'include',
+        redirect: 'manual',
+        keepalive: true,
+      }).catch(() => {})
     } catch {
       /* ignore */
     }
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
   }
 
   const isActive = (path) => location.pathname === path

@@ -22,6 +22,18 @@ export default function HomePage() {
     }
   }, [location.hash])
 
+  // Warm BPEXCH login through proxy so /login opens faster
+  useEffect(() => {
+    const link = document.createElement('link')
+    link.rel = 'prefetch'
+    link.href = '/bpexch/Users/Login'
+    link.as = 'document'
+    document.head.appendChild(link)
+    return () => {
+      link.remove()
+    }
+  }, [])
+
   return (
     <>
       <Hero />

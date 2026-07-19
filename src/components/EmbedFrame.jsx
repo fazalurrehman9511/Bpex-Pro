@@ -2,7 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { setEmbedAvailableBalance, NARROW_BREAKPOINT } from '../utils/embedBalance'
-import { setBpexchLoggedIn, setBpexchUsername } from '../utils/bpexchAuth'
+import {
+  setBpexchLoggedIn,
+  setBpexchUsername,
+  clearBpexchSession,
+} from '../utils/bpexchAuth'
 import {
   normalizePublicPath,
   shouldSyncPublicPath,
@@ -141,6 +145,9 @@ export default function EmbedFrame({
   useEffect(() => {
     setLoading(true)
     setActionAnchor(null)
+    // Don't hold a full-screen blocker forever — show iframe as soon as possible
+    const maxWait = window.setTimeout(() => setLoading(false), 1200)
+    return () => window.clearTimeout(maxWait)
   }, [src, key])
 
   useEffect(() => {
@@ -186,8 +193,11 @@ export default function EmbedFrame({
       }
 
       if (action === 'auth-logout') {
+        clearBpexchSession()
         setBpexchUsername('')
         setBpexchLoggedIn(false)
+        setEmbedAvailableBalance('')
+        navigate('/', { replace: true })
         return
       }
 
@@ -202,7 +212,7 @@ export default function EmbedFrame({
         else if (full === '/dashboard' || /Dashboard|Home|Common/i.test(pathPart)) {
           setBpexchLoggedIn(true)
         }
-        if (syncPublicUrl) {
+        if (syncPublicUrl || redirectOnLogin) {
           const allowed = full === '/dashboard' || full === '/login'
           if (!allowed) return
           if (`${location.pathname}${location.search}` !== full) {
@@ -261,9 +271,9 @@ export default function EmbedFrame({
   return (
     <div className="fixed inset-0 flex flex-col bg-[#1a1a1a]">
       {loading && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-navy">
-          <Loader2 className="h-8 w-8 animate-spin text-accent" />
-          <p className="text-sm text-muted">Loading {title}…</p>
+        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-navy/70">
+          <Loader2 className="h-7 w-7 animate-spin text-accent" />
+          <p className="text-xs text-muted">Loading {title}…</p>
         </div>
       )}
 

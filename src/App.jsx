@@ -6,8 +6,7 @@ import Layout from './components/Layout'
 import HomePage from './pages/HomePage'
 import BlogPage from './pages/BlogPage'
 import BlogPostPage from './pages/BlogPostPage'
-import LoginPage from './pages/LoginPage'
-import PlatformShellPage from './pages/PlatformShellPage'
+import PlatformSessionPage from './pages/PlatformSessionPage'
 import PlatformPathRedirect from './pages/PlatformPathRedirect'
 import DepositPage from './pages/DepositPage'
 import WithdrawPage from './pages/WithdrawPage'
@@ -25,8 +24,11 @@ function WebsiteApp() {
             <Route path="/bpexch/*" element={<BpexchRedirectPage />} />
             <Route element={<Layout />}>
               <Route path="/" element={<HomePage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/dashboard" element={<PlatformShellPage />} />
+              {/* Same layout keeps one BPEXCH iframe across login → dashboard */}
+              <Route element={<PlatformSessionPage />}>
+                <Route path="/login" element={<></>} />
+                <Route path="/dashboard" element={<></>} />
+              </Route>
               <Route path="/deposit" element={<DepositPage />} />
               <Route path="/withdraw" element={<WithdrawPage />} />
               <Route path="/blog" element={<BlogPage />} />
