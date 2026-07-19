@@ -2385,8 +2385,9 @@ function AdminDashboard({ onLogout }) {
     setLoadError('')
     try {
       const list = await fetchAdminTransactions({ status: statusFilter })
-      setAllTransactions(list)
+      setAllTransactions(Array.isArray(list) ? list : [])
     } catch (err) {
+      setAllTransactions([])
       setLoadError(err.message)
     } finally {
       setLoading(false)
@@ -2402,7 +2403,7 @@ function AdminDashboard({ onLogout }) {
         fetchBpexchUsers(),
         fetchAdminBpexchAgent().catch(() => null),
       ])
-      setBpexchUsers(list)
+      setBpexchUsers(Array.isArray(list) ? list : [])
       if (agent) {
         setBpexchAgent(agent)
         setBpexchAgentForm((prev) => ({
@@ -2412,6 +2413,7 @@ function AdminDashboard({ onLogout }) {
         }))
       }
     } catch (err) {
+      setBpexchUsers([])
       setLoadError(err.message)
     } finally {
       setLoading(false)
@@ -2598,19 +2600,22 @@ function AdminDashboard({ onLogout }) {
     () =>
       isUsersTab || isBlogTab || isSettingsPanel
         ? []
-        : allTransactions.filter((tx) => tx.type === activeTab),
+        : (Array.isArray(allTransactions) ? allTransactions : []).filter(
+            (tx) => tx.type === activeTab,
+          ),
     [allTransactions, activeTab, isUsersTab, isBlogTab, isSettingsPanel]
   )
 
   const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase()
-    return bpexchUsers.filter((user) => {
+    const users = Array.isArray(bpexchUsers) ? bpexchUsers : []
+    return users.filter((user) => {
       if (!q) return true
       return (
-        user.username.toLowerCase().includes(q) ||
-        user.phone.toLowerCase().includes(q) ||
-        user.userType.toLowerCase().includes(q) ||
-        user.reference.toLowerCase().includes(q)
+        String(user.username || '').toLowerCase().includes(q) ||
+        String(user.phone || '').toLowerCase().includes(q) ||
+        String(user.userType || '').toLowerCase().includes(q) ||
+        String(user.reference || '').toLowerCase().includes(q)
       )
     })
   }, [bpexchUsers, search])
@@ -2619,8 +2624,9 @@ function AdminDashboard({ onLogout }) {
     const q = search.trim().toLowerCase()
     const fromMs = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null
     const toMs = dateTo ? new Date(`${dateTo}T23:59:59.999`).getTime() : null
+    const rows = Array.isArray(tabTransactions) ? tabTransactions : []
 
-    return tabTransactions.filter((tx) => {
+    return rows.filter((tx) => {
       if (statusFilter !== 'all' && tx.status !== statusFilter) return false
       if (methodFilter !== 'all') {
         const mid = String(tx.paymentMethodId || '').toLowerCase()
@@ -2676,25 +2682,30 @@ function AdminDashboard({ onLogout }) {
     !!dateTo ||
     !!search.trim()
 
-  const sidebarCounts = useMemo(() => ({
-    deposit: {
-      total: allTransactions.filter((t) => t.type === 'deposit').length,
-      pending: allTransactions.filter((t) => t.type === 'deposit' && t.status === 'pending').length,
-    },
-    withdraw: {
-      total: allTransactions.filter((t) => t.type === 'withdraw').length,
-      pending: allTransactions.filter((t) => t.type === 'withdraw' && t.status === 'pending').length,
-    },
-    users: {
-      total: bpexchUsers.length,
-    },
-    blog: {
-      total: blogPosts.length,
-    },
-  }), [allTransactions, bpexchUsers, blogPosts])
+  const sidebarCounts = useMemo(() => {
+    const txs = Array.isArray(allTransactions) ? allTransactions : []
+    const users = Array.isArray(bpexchUsers) ? bpexchUsers : []
+    const posts = Array.isArray(blogPosts) ? blogPosts : []
+    return {
+      deposit: {
+        total: txs.filter((t) => t.type === 'deposit').length,
+        pending: txs.filter((t) => t.type === 'deposit' && t.status === 'pending').length,
+      },
+      withdraw: {
+        total: txs.filter((t) => t.type === 'withdraw').length,
+        pending: txs.filter((t) => t.type === 'withdraw' && t.status === 'pending').length,
+      },
+      users: {
+        total: users.length,
+      },
+      blog: {
+        total: posts.length,
+      },
+    }
+  }, [allTransactions, bpexchUsers, blogPosts])
 
   const stats = useMemo(() => {
-    const list = filtered
+    const list = Array.isArray(filtered) ? filtered : []
     return {
       total: list.length,
       pending: list.filter((t) => t.status === 'pending').length,

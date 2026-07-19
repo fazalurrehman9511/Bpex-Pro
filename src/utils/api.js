@@ -60,10 +60,23 @@ async function apiFetch(path, options = {}) {
   } catch (err) {
     const base = API_BASE || window.location.origin
     throw new Error(
-      `API connect nahi hui (${base}). Phone + Mac same Wi‑Fi rakho, server chal raha ho.`,
+      `API connect nahi hui (${base}). Server / Node app restart karein.`,
     )
   }
-  const data = await res.json().catch(() => ({}))
+
+  const raw = await res.text()
+  let data = null
+  if (raw) {
+    try {
+      data = JSON.parse(raw)
+    } catch {
+      throw new Error(
+        `API ne JSON nahi diya (${res.status}). Node app /api routes check karein.`,
+      )
+    }
+  } else {
+    data = {}
+  }
 
   if (!res.ok) {
     throw new Error(data.error || `Request failed (${res.status})`)
@@ -71,6 +84,12 @@ async function apiFetch(path, options = {}) {
 
   return data
 }
+
+function asArray(data, label = 'data') {
+  if (Array.isArray(data)) return data
+  throw new Error(`Expected array for ${label}`)
+}
+
 
 export async function createTransaction(payload) {
   return apiFetch('/api/transactions', {
@@ -103,7 +122,7 @@ export async function fetchAdminTransactions(filters = {}) {
   if (filters.type && filters.type !== 'all') params.set('type', filters.type)
   if (filters.status && filters.status !== 'all') params.set('status', filters.status)
   const qs = params.toString()
-  return apiFetch(`/api/admin/transactions${qs ? `?${qs}` : ''}`)
+  return asArray(await apiFetch(`/api/admin/transactions${qs ? `?${qs}` : ''}`), 'transactions')
 }
 
 export async function updateAdminTransaction(id, status, adminNotes = '') {
@@ -114,7 +133,7 @@ export async function updateAdminTransaction(id, status, adminNotes = '') {
 }
 
 export async function fetchBpexchUsers() {
-  return apiFetch('/api/bpexch/users')
+  return asArray(await apiFetch('/api/bpexch/users'), 'bpexch users')
 }
 
 export async function syncBpexchUserBalances() {
@@ -150,7 +169,7 @@ export async function fetchBlogPost(slug) {
 }
 
 export async function fetchAdminBlogPosts() {
-  return apiFetch('/api/blog/admin/posts')
+  return asArray(await apiFetch('/api/blog/admin/posts'), 'blog posts')
 }
 
 export async function createBlogPost(payload) {
@@ -190,7 +209,7 @@ export async function fetchPaymentAccounts() {
 }
 
 export async function fetchAdminPaymentAccounts() {
-  return apiFetch('/api/admin/payment-accounts')
+  return asArray(await apiFetch('/api/admin/payment-accounts'), 'payment accounts')
 }
 
 export async function updateAdminPaymentAccount(id, payload) {
@@ -218,7 +237,7 @@ export async function fetchWhatsappAgents() {
 }
 
 export async function fetchAdminWhatsappAgents() {
-  return apiFetch('/api/admin/whatsapp-agents')
+  return asArray(await apiFetch('/api/admin/whatsapp-agents'), 'whatsapp agents')
 }
 
 export async function updateAdminWhatsappAgent(code, payload) {
@@ -246,7 +265,7 @@ export async function fetchAdminExpenses(params = {}) {
   if (params.dateFrom) q.set('dateFrom', params.dateFrom)
   if (params.dateTo) q.set('dateTo', params.dateTo)
   const qs = q.toString()
-  return apiFetch(`/api/admin/expenses${qs ? `?${qs}` : ''}`)
+  return asArray(await apiFetch(`/api/admin/expenses${qs ? `?${qs}` : ''}`), 'expenses')
 }
 
 export async function createAdminExpense(payload) {
