@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, Component } from 'react'
+import { useState, useEffect, useMemo, useRef, Component } from 'react'
 import {
   Shield,
   LogOut,
@@ -25,6 +25,7 @@ import {
   Trash2,
   TrendingUp,
   Receipt,
+  Loader2,
 } from 'lucide-react'
 import {
   formatCurrency,
@@ -196,12 +197,43 @@ function DetailRow({ label, value, mono = false }) {
 
 function TransactionDetailModal({ tx, onClose, onApprove, onReject }) {
   const [notes, setNotes] = useState(tx.adminNotes || '')
+  const [actionBusy, setActionBusy] = useState(null) // 'approve' | 'reject' | null
   const isPending = tx.status === 'pending'
+  const busy = Boolean(actionBusy)
+
+  const handleClose = () => {
+    if (busy) return
+    onClose()
+  }
+
+  const runReject = async () => {
+    if (busy) return
+    setActionBusy('reject')
+    try {
+      await onReject(tx.id, notes)
+    } catch {
+      /* parent shows alert */
+    } finally {
+      setActionBusy(null)
+    }
+  }
+
+  const runApprove = async () => {
+    if (busy) return
+    setActionBusy('approve')
+    try {
+      await onApprove(tx.id, notes)
+    } catch {
+      /* parent shows alert */
+    } finally {
+      setActionBusy(null)
+    }
+  }
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4"
-      onClick={onClose}
+      onClick={handleClose}
     >
       <div
         className="max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-xl border border-border bg-navy-light shadow-2xl sm:rounded-xl"
@@ -226,8 +258,9 @@ function TransactionDetailModal({ tx, onClose, onApprove, onReject }) {
           </div>
           <button
             type="button"
-            onClick={onClose}
-            className="rounded p-1.5 text-muted hover:bg-surface-hover hover:text-text"
+            onClick={handleClose}
+            disabled={busy}
+            className="cursor-pointer rounded p-1.5 text-muted hover:bg-surface-hover hover:text-text disabled:cursor-not-allowed disabled:opacity-50"
           >
             <X className="h-5 w-5" />
           </button>
@@ -322,27 +355,43 @@ function TransactionDetailModal({ tx, onClose, onApprove, onReject }) {
                   onChange={(e) => setNotes(e.target.value)}
                   rows={2}
                   placeholder="Internal notes…"
-                  className="w-full rounded border border-border bg-navy-dark px-3 py-2 text-sm text-text placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none"
+                  disabled={busy}
+                  className="w-full rounded border border-border bg-navy-dark px-3 py-2 text-sm text-text placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 resize-none disabled:opacity-60"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
-                  onClick={() => onReject(tx.id, notes)}
-                  className="flex items-center justify-center gap-1.5 rounded border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 hover:bg-red-500/20 transition-colors"
+                  onClick={runReject}
+                  disabled={busy}
+                  className="flex cursor-pointer items-center justify-center gap-1.5 rounded border border-red-500/40 bg-red-500/10 px-4 py-2.5 text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/20 disabled:cursor-wait disabled:opacity-60"
                 >
-                  <X className="h-4 w-4" />
-                  Reject
+                  {actionBusy === 'reject' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <X className="h-4 w-4" />
+                  )}
+                  {actionBusy === 'reject' ? 'Rejecting…' : 'Reject'}
                 </button>
                 <button
                   type="button"
-                  onClick={() => onApprove(tx.id, notes)}
-                  className="flex items-center justify-center gap-1.5 rounded bg-accent px-4 py-2.5 text-sm font-bold text-navy-dark hover:bg-accent-hover transition-colors"
+                  onClick={runApprove}
+                  disabled={busy}
+                  className="flex cursor-pointer items-center justify-center gap-1.5 rounded bg-accent px-4 py-2.5 text-sm font-bold text-navy-dark transition-colors hover:bg-accent-hover disabled:cursor-wait disabled:opacity-60"
                 >
-                  <Check className="h-4 w-4" />
-                  Approve
+                  {actionBusy === 'approve' ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                  {actionBusy === 'approve' ? 'Approving…' : 'Approve'}
                 </button>
               </div>
+              {busy && (
+                <p className="text-center text-[11px] text-muted">
+                  BPEXCH update chal rahi hai — dobara click mat karo.
+                </p>
+              )}
             </div>
           )}
 
@@ -2337,6 +2386,7 @@ function AdminDashboard({ onLogout }) {
   const [dateTo, setDateTo] = useState('')
   const [search, setSearch] = useState('')
   const [selectedTx, setSelectedTx] = useState(null)
+  const statusLockRef = useRef(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [showBlogForm, setShowBlogForm] = useState(false)
   const [blogForm, setBlogForm] = useState(EMPTY_BLOG_FORM)
@@ -2730,6 +2780,10 @@ function AdminDashboard({ onLogout }) {
   }, [filtered])
 
   const handleStatus = async (id, status, notes) => {
+    if (statusLockRef.current) {
+      throw new Error('Pehle wali approve/reject request abhi puri nahi hui.')
+    }
+    statusLockRef.current = id
     try {
       const updated = await updateAdminTransaction(id, status, notes)
       setAllTransactions((prev) => prev.map((tx) => (tx.id === id ? updated : tx)))
@@ -2742,6 +2796,9 @@ function AdminDashboard({ onLogout }) {
       }
     } catch (err) {
       alert(err.message)
+      throw err
+    } finally {
+      statusLockRef.current = null
     }
   }
 
