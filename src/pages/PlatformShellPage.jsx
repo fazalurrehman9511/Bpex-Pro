@@ -1,137 +1,113 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { ExternalLink, Home, Loader2, Wallet } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Loader2 } from 'lucide-react'
 import PlatformEmbedPage from './PlatformEmbedPage'
 import { setBpexchLoggedIn, isBpexchLoggedIn } from '../utils/bpexchAuth'
-import { openBpexchExchange, readWebLoginCreds } from '../utils/openBpexchExchange'
-import { BPEXCH_BASE_URL } from '../config/embed'
+import { readWebLoginCreds } from '../utils/openBpexchExchange'
+
+/** Clear rewritten BPEXCH cookies on bpexpro.com so old agent sessions don't stick */
+function clearBpexchCookies() {
+  const names = [
+    'wex3authtoken',
+    'wex3reftoken',
+    'ASP.NET_SessionId',
+    '.AspNetCore.Cookies',
+    'AntiForgery.WebExchange',
+  ]
+  const expires = 'Thu, 01 Jan 1970 00:00:00 GMT'
+  for (const name of names) {
+    document.cookie = `${name}=; expires=${expires}; path=/`
+    document.cookie = `${name}=; expires=${expires}; path=/bpexch`
+  }
+  try {
+    for (const c of document.cookie.split(';')) {
+      const key = c.split('=')[0]?.trim()
+      if (!key) continue
+      if (/wex3|asp\.?net|antiforgery|bpexch|webexchange/i.test(key)) {
+        document.cookie = `${key}=; expires=${expires}; path=/`
+        document.cookie = `${key}=; expires=${expires}; path=/bpexch`
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function postLoginToIframe(creds) {
+  const form = document.createElement('form')
+  form.method = 'POST'
+  form.action = '/bpexch/Users/Login'
+  form.target = 'flowexch-platform'
+  form.acceptCharset = 'UTF-8'
+  form.style.display = 'none'
+
+  const fields = {
+    'user.Username': creds.username,
+    'user.Password': creds.password,
+    Device: 'BpxPro-Web',
+    UtcOffset: String(-new Date().getTimezoneOffset()),
+  }
+  for (const [name, value] of Object.entries(fields)) {
+    const input = document.createElement('input')
+    input.type = 'hidden'
+    input.name = name
+    input.value = value
+    form.appendChild(input)
+  }
+  document.body.appendChild(form)
+  form.submit()
+  form.remove()
+}
 
 /**
- * Betting dashboard — browser URL stays https://bpexpro.com/dashboard
+ * /dashboard — URL stays bpexpro.com/dashboard; BPEXCH loads in same-origin iframe.
+ * Logs in the bettor who signed in on /login (not residual agent session).
  */
 export default function PlatformShellPage() {
   const navigate = useNavigate()
-  const [ready, setReady] = useState(false)
-  const [useEmbed, setUseEmbed] = useState(true)
-  const loggedIn = isBpexchLoggedIn() || Boolean(readWebLoginCreds())
+  const [embedSrc, setEmbedSrc] = useState('/bpexch/Users/Login')
+  const [booting, setBooting] = useState(true)
+  const creds = readWebLoginCreds()
+  const loggedIn = Boolean(creds?.username && creds?.password) || isBpexchLoggedIn()
 
   useEffect(() => {
-    if (!loggedIn) {
+    if (!creds?.username || !creds?.password) {
       navigate('/login', { replace: true })
       return undefined
     }
+
     setBpexchLoggedIn(true)
-    setReady(true)
+    clearBpexchCookies()
+    setEmbedSrc('/bpexch/Users/Login')
+    setBooting(false)
 
-    /* Probe same-origin proxy — if dead, show local shell (not blank iframe) */
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch('/bpexch/Users/Login', {
-          method: 'HEAD',
-          credentials: 'include',
-        })
-        if (cancelled) return
-        /* 503 friendly page still "works" as HTML; HEAD may not — also try GET snip */
-        if (res.status >= 500) {
-          setUseEmbed(false)
-          return
-        }
-      } catch {
-        if (!cancelled) setUseEmbed(false)
-      }
+    /* 1) Open login in iframe, 2) POST bettor creds, 3) go to bettor dashboard */
+    const t1 = window.setTimeout(() => {
+      postLoginToIframe(creds)
+    }, 700)
 
-      const creds = readWebLoginCreds()
-      if (!creds?.username || !creds?.password || cancelled) return
-
-      window.setTimeout(() => {
-        if (cancelled) return
-        const form = document.createElement('form')
-        form.method = 'POST'
-        form.action = '/bpexch/Users/Login'
-        form.target = 'flowexch-platform'
-        form.acceptCharset = 'UTF-8'
-        form.style.display = 'none'
-        const fields = {
-          'user.Username': creds.username,
-          'user.Password': creds.password,
-          Device: 'BpxPro-Web',
-          UtcOffset: String(-new Date().getTimezoneOffset()),
-        }
-        for (const [name, value] of Object.entries(fields)) {
-          const input = document.createElement('input')
-          input.type = 'hidden'
-          input.name = name
-          input.value = value
-          form.appendChild(input)
-        }
-        document.body.appendChild(form)
-        form.submit()
-        form.remove()
-      }, 500)
-    })()
+    const t2 = window.setTimeout(() => {
+      setEmbedSrc('/bpexch/Common/Dashboard')
+    }, 2200)
 
     return () => {
-      cancelled = true
+      window.clearTimeout(t1)
+      window.clearTimeout(t2)
     }
-  }, [loggedIn, navigate])
+  }, [creds?.username, creds?.password, navigate])
 
-  if (!loggedIn || !ready) {
+  if (!loggedIn || !creds?.username || booting) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-navy px-4">
         <Loader2 className="h-8 w-8 animate-spin text-accent" />
-        <p className="text-sm text-muted">Loading dashboard…</p>
+        <p className="text-sm text-muted">Opening your exchange…</p>
       </div>
-    )
-  }
-
-  if (!useEmbed) {
-    return (
-      <section className="mx-auto flex min-h-[70vh] max-w-md flex-col justify-center px-4 py-12">
-        <div className="rounded-xl border border-border bg-navy-light p-6 text-center shadow-xl">
-          <h1 className="text-lg font-bold text-text">Dashboard</h1>
-          <p className="mt-2 text-xs text-muted">
-            URL: <span className="text-accent">bpexpro.com/dashboard</span>
-          </p>
-          <p className="mt-3 text-sm text-muted">
-            In-site exchange embed abhi hosting Cloudflare / proxy block ki wajah se available nahi.
-            Deposit &amp; Withdraw BpxPro pe use karein, ya exchange alag tab mein kholo.
-          </p>
-          <div className="mt-6 flex flex-col gap-2">
-            <Link
-              to="/deposit"
-              className="inline-flex items-center justify-center gap-2 rounded bg-accent px-4 py-3 text-sm font-bold text-navy-dark"
-            >
-              <Wallet className="h-4 w-4" />
-              Deposit
-            </Link>
-            <Link
-              to="/withdraw"
-              className="inline-flex items-center justify-center gap-2 rounded border border-border px-4 py-3 text-sm font-semibold text-text"
-            >
-              Withdraw
-            </Link>
-            <button
-              type="button"
-              onClick={() => openBpexchExchange()}
-              className="inline-flex items-center justify-center gap-2 rounded border border-accent/40 px-4 py-3 text-sm font-semibold text-accent"
-            >
-              <ExternalLink className="h-4 w-4" />
-              Open Exchange ({BPEXCH_BASE_URL.replace(/^https?:\/\//, '')})
-            </button>
-            <Link to="/" className="inline-flex items-center justify-center gap-1 pt-2 text-xs text-accent">
-              <Home className="h-3.5 w-3.5" />
-              Home
-            </Link>
-          </div>
-        </div>
-      </section>
     )
   }
 
   return (
     <PlatformEmbedPage
-      src="/bpexch/Common/Dashboard"
+      src={embedSrc}
       title="Dashboard"
       pageTitle="Dashboard — BpxPro"
       listenForActions

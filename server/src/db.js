@@ -817,12 +817,24 @@ export function verifyBpexchUserForLogin({ username, password } = {}) {
       error: 'Username ya password ghalat hai.',
     }
   }
+
+  /* Public site login = bettor only — agent/admin accounts must not open exchange as admin */
+  const type = normalizeUserType(row.user_type || '')
+  if (type && /admin|agent|master|super/i.test(type) && !/bettor/i.test(type)) {
+    return {
+      ok: false,
+      code: 'not_bettor',
+      error:
+        'Yeh agent/admin account hai. Site login sirf bettor accounts ke liye hai. Apna bettor username use karein.',
+    }
+  }
+
   return {
     ok: true,
     user: {
       username: row.username,
       isActive: true,
-      userType: row.user_type,
+      userType: row.user_type || 'Bettor',
     },
   }
 }

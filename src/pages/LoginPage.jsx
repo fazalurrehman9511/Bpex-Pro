@@ -41,8 +41,8 @@ export default function LoginPage() {
       await verifyBpexchUser({ username: u, password: p })
       saveWebLoginCreds({ username: u, password: p })
       setBpexchLoggedIn(true)
-      /* Stay on bpexpro.com — Home / Deposit / Withdraw. Dashboard → BPEXCH. */
-      navigate('/', { replace: true })
+      /* Go to exchange shell — URL stays bpexpro.com/dashboard */
+      navigate('/dashboard', { replace: true })
     } catch (err) {
       setError(err.message || 'Login fail — pehle register karein ya credentials check karein')
       setSubmitting(false)
