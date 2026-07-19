@@ -7,6 +7,7 @@
  */
 
 import { getBpexchAgentConfig } from '../db.js'
+import { bpexchHttpFetch } from './bpexchHttp.js'
 
 const BPEXCH_ORIGIN = process.env.BPEXCH_BASE_URL || 'https://bpexch.xyz'
 
@@ -54,7 +55,7 @@ async function bpexchFetch(session, pathName, options = {}) {
     headers.Authorization = `Bearer ${session.authToken}`
   }
 
-  const res = await fetch(`${BPEXCH_ORIGIN}${pathName}`, {
+  const res = await bpexchHttpFetch(`${BPEXCH_ORIGIN}${pathName}`, {
     ...options,
     headers,
     redirect: 'manual',

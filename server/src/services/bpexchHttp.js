@@ -1,0 +1,52 @@
+/**
+ * Outbound HTTP to BPEXCH — optional residential proxy to bypass Cloudflare
+ * on shared-hosting datacenter IPs.
+ *
+ * Set in server/.env (one of):
+ *   BPEXCH_HTTP_PROXY=http://user:pass@host:port
+ *   HTTPS_PROXY=http://user:pass@host:port
+ */
+
+import { ProxyAgent, fetch as undiciFetch } from 'undici'
+
+let proxyAgent = null
+let proxyUrlCached = null
+
+function resolveProxyUrl() {
+  return (
+    process.env.BPEXCH_HTTP_PROXY ||
+    process.env.HTTPS_PROXY ||
+    process.env.HTTP_PROXY ||
+    process.env.ALL_PROXY ||
+    ''
+  ).trim()
+}
+
+export function getBpexchProxyUrl() {
+  return resolveProxyUrl()
+}
+
+export function isBpexchProxyConfigured() {
+  return Boolean(resolveProxyUrl())
+}
+
+function getProxyAgent() {
+  const url = resolveProxyUrl()
+  if (!url) return undefined
+  if (proxyAgent && proxyUrlCached === url) return proxyAgent
+  proxyAgent = new ProxyAgent(url)
+  proxyUrlCached = url
+  console.log('[bpexch-http] Using outbound proxy for BPEXCH requests')
+  return proxyAgent
+}
+
+/**
+ * fetch() with optional proxy dispatcher (undici).
+ */
+export async function bpexchHttpFetch(url, options = {}) {
+  const dispatcher = getProxyAgent()
+  if (dispatcher) {
+    return undiciFetch(url, { ...options, dispatcher })
+  }
+  return fetch(url, options)
+}

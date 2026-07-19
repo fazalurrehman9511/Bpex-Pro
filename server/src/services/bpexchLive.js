@@ -11,6 +11,7 @@
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { bpexchHttpFetch } from './bpexchHttp.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const SESSION_FILE = path.resolve(__dirname, '../../data/bpexch-live-session.json')
@@ -267,7 +268,7 @@ async function bpexchFetch(pathName, options = {}) {
   if (cookies) headers.Cookie = cookies
   if (authToken && !headers.Authorization) headers.Authorization = `Bearer ${authToken}`
 
-  const res = await fetch(`${BPEXCH_ORIGIN}${pathName}`, {
+  const res = await bpexchHttpFetch(`${BPEXCH_ORIGIN}${pathName}`, {
     ...options,
     headers,
     redirect: 'manual',
