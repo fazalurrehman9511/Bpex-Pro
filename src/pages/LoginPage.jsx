@@ -1,47 +1,18 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Lock, MessageCircle, User, UserPlus } from 'lucide-react'
 import { useModal } from '../context/ModalContext'
-import { BPEXCH_BASE_URL } from '../config/embed'
 import { verifyBpexchUser } from '../utils/api'
 import { setBpexchLoggedIn } from '../utils/bpexchAuth'
+import { saveWebLoginCreds } from '../utils/openBpexchExchange'
 import { BRAND_LOGO_LG, BRAND_NAME } from '../config/brand'
 
 const inputClass =
   'w-full rounded border border-border bg-navy-dark px-4 py-3 text-sm text-text placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors'
 
-/**
- * Top-level POST to BPEXCH (browser IP).
- * Iframe /bpexch proxy is blocked by Cloudflare on the hosting IP.
- */
-function submitBpexchLogin({ username, password }) {
-  const form = document.createElement('form')
-  form.method = 'POST'
-  form.action = `${BPEXCH_BASE_URL}/Users/Login`
-  form.acceptCharset = 'UTF-8'
-  form.style.display = 'none'
-
-  const fields = {
-    'user.Username': username,
-    'user.Password': password,
-    Device: 'BpxPro-Web',
-    UtcOffset: String(-new Date().getTimezoneOffset()),
-  }
-
-  for (const [name, value] of Object.entries(fields)) {
-    const input = document.createElement('input')
-    input.type = 'hidden'
-    input.name = name
-    input.value = value
-    form.appendChild(input)
-  }
-
-  document.body.appendChild(form)
-  form.submit()
-}
-
 export default function LoginPage() {
   const { openModal } = useModal()
+  const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
@@ -68,9 +39,10 @@ export default function LoginPage() {
     setSubmitting(true)
     try {
       await verifyBpexchUser({ username: u, password: p })
+      saveWebLoginCreds({ username: u, password: p })
       setBpexchLoggedIn(true)
-      /* Leave BpxPro site → full BPEXCH login (works in browser; iframe/proxy does not) */
-      submitBpexchLogin({ username: u, password: p })
+      /* Stay on bpexpro.com — Home / Deposit / Withdraw. Dashboard → BPEXCH. */
+      navigate('/', { replace: true })
     } catch (err) {
       setError(err.message || 'Login fail — pehle register karein ya credentials check karein')
       setSubmitting(false)
@@ -91,7 +63,8 @@ export default function LoginPage() {
           />
           <h1 className="mt-4 text-xl font-bold text-text">Login</h1>
           <p className="mt-1 text-xs text-muted">
-            Apne BpxPro / BPEXCH username &amp; password se sign in karein
+            Sign in on BpxPro — URL always{' '}
+            <span className="text-accent">bpexpro.com</span>
           </p>
         </div>
 
