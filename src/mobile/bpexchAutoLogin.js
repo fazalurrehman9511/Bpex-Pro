@@ -1,5 +1,5 @@
 import { Capacitor, CapacitorHttp } from '@capacitor/core'
-import { BPEXCH_BASE_URL, BPEXCH_LOGIN_URL } from '../config/embed'
+import { BPEXCH_BASE_URL } from '../config/embed'
 import { verifyBpexchUser } from '../utils/api'
 
 function extractAntiForgery(html = '') {
@@ -100,20 +100,23 @@ export async function openBpexchWithAppLogin({ username, password }) {
     return { mode: 'form' }
   }
 
-  /* Browser / ?nativeApp=1 — use Vite /bpexch proxy (same origin cookies) */
+  /* Browser — always POST to real BPEXCH origin (iframe/proxy hits Cloudflare on host IP) */
   try {
-    const page = await fetch(BPEXCH_LOGIN_URL, { credentials: 'include' })
+    const page = await fetch(`${BPEXCH_BASE_URL}/Users/Login`, {
+      credentials: 'include',
+      mode: 'cors',
+    })
     const html = await page.text()
     token = extractAntiForgery(html)
   } catch {
-    /* continue */
+    /* continue — antiforgery optional for many BPEXCH hosts */
   }
 
   submitLoginForm({
-    action: BPEXCH_LOGIN_URL,
+    action: `${BPEXCH_BASE_URL}/Users/Login`,
     username: user,
     password: pass,
     token,
   })
-  return { mode: 'form-proxy' }
+  return { mode: 'form-direct' }
 }
