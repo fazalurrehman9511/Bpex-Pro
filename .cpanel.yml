@@ -1,6 +1,18 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/bpexproc/bpexpro
+    - export DEPLOYPATH=/home/bpexproc/bpexpro/
     - /bin/mkdir -p $DEPLOYPATH
-    - /usr/bin/rsync -a --delete --exclude='.git' --exclude='node_modules' --exclude='server/node_modules' --exclude='server/data' --exclude='server/uploads' --exclude='.env' --exclude='server/.env' --exclude='bpexpro-deploy.zip' --exclude='dist/frontend-build.zip' ./ $DEPLOYPATH/
+    - /bin/cp -R server $DEPLOYPATH
+    - /bin/cp -R src $DEPLOYPATH
+    - /bin/cp -R public $DEPLOYPATH
+    - /bin/cp -R deploy $DEPLOYPATH
+    - /bin/cp package.json $DEPLOYPATH
+    - /bin/cp package-lock.json $DEPLOYPATH
+    - /bin/cp vite-plugin-bpexch-proxy.js $DEPLOYPATH
+    - /bin/cp vite.config.js $DEPLOYPATH
+    - /bin/cp index.html $DEPLOYPATH
+    - /bin/cp capacitor.config.json $DEPLOYPATH
+    - /bin/cp .env.example $DEPLOYPATH
+    - /bin/cp README.md $DEPLOYPATH
+    - /bin/cp .cpanel.yml $DEPLOYPATH
