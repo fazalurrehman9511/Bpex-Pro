@@ -1,14 +1,14 @@
 import { Outlet, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import { HeaderBar } from '../components/Header'
-import MarqueeTicker from '../components/MarqueeTicker'
-import Footer from '../components/Footer'
-import BottomNav from '../components/BottomNav'
-import RegistrationModal from '../components/RegistrationModal'
 import { isPlatformEmbedRoute } from '../utils/platformPaths'
 
+const MarqueeTicker = lazy(() => import('../components/MarqueeTicker'))
+const Footer = lazy(() => import('../components/Footer'))
+const BottomNav = lazy(() => import('../components/BottomNav'))
 const FloatingWhatsApp = lazy(() => import('../components/FloatingWhatsApp'))
 const InstallPrompt = lazy(() => import('../components/InstallPrompt'))
+const RegistrationModal = lazy(() => import('../components/RegistrationModal'))
 
 export default function Layout() {
   const location = useLocation()
@@ -22,11 +22,13 @@ export default function Layout() {
   // Fullscreen embed — no FlowExch chrome, BPEXCH gets entire viewport
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 flex flex-col bg-navy overflow-hidden">
-        <main id="main-content" className="flex flex-1 flex-col min-h-0 min-w-0">
+      <div className="fixed inset-0 flex flex-col overflow-hidden bg-navy">
+        <main id="main-content" className="flex min-h-0 min-w-0 flex-1 flex-col">
           <Outlet />
         </main>
-        <RegistrationModal />
+        <Suspense fallback={null}>
+          <RegistrationModal />
+        </Suspense>
       </div>
     )
   }
@@ -37,17 +39,21 @@ export default function Layout() {
         Skip to main content
       </a>
       <HeaderBar />
-      {location.pathname === '/' && <MarqueeTicker />}
-      <main id="main-content" className="flex flex-1 flex-col min-h-0">
+      {location.pathname === '/' && (
+        <Suspense fallback={null}>
+          <MarqueeTicker />
+        </Suspense>
+      )}
+      <main id="main-content" className="flex min-h-0 flex-1 flex-col">
         <Outlet />
       </main>
-      {!isBlogPost && <Footer />}
-      {!isBlogPost && <BottomNav />}
       <Suspense fallback={null}>
+        {!isBlogPost && <Footer />}
+        {!isBlogPost && <BottomNav />}
         {!isBlogPost && <InstallPrompt />}
         <FloatingWhatsApp />
+        <RegistrationModal />
       </Suspense>
-      <RegistrationModal />
     </div>
   )
 }

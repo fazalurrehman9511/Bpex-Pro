@@ -8,7 +8,6 @@ import {
   ChevronDown,
   MessageCircle,
   UserPlus,
-  Download,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -34,7 +33,6 @@ import {
   parseBalanceAmount,
 } from '../utils/transactions'
 import { BRAND_LOGO, BRAND_NAME } from '../config/brand'
-import { ANDROID_APK_URL, ANDROID_APK_AVAILABLE } from '../config/androidApp'
 
 export default function Logo() {
   return (
@@ -270,22 +268,6 @@ export function HeaderBar() {
     navigate('/', { replace: true })
   }
 
-  const handleAppDownload = () => {
-    setMenuOpen(false)
-    if (ANDROID_APK_AVAILABLE) {
-      const a = document.createElement('a')
-      a.href = ANDROID_APK_URL
-      a.download = 'bpexpro.apk'
-      a.type = 'application/vnd.android.package-archive'
-      a.rel = 'noopener'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      return
-    }
-    navigateToSection('app', navigate, location.pathname)
-  }
-
   const isActive = (path) => location.pathname === path
   const balanceLabel = formatBalanceLabel(balanceRaw)
 
@@ -384,14 +366,6 @@ export function HeaderBar() {
               >
                 <UserPlus className="h-3.5 w-3.5 text-accent" />
                 Myself
-              </button>
-              <button
-                type="button"
-                onClick={handleAppDownload}
-                className="hidden cursor-pointer items-center gap-1 rounded-lg bg-header-blue px-2.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1d4f8c] sm:inline-flex sm:px-3"
-              >
-                <Download className="h-3.5 w-3.5" />
-                App
               </button>
             </>
           )}
@@ -496,14 +470,6 @@ export function HeaderBar() {
               >
                 <UserPlus className="h-4 w-4 text-accent" />
                 Register Myself
-              </button>
-              <button
-                type="button"
-                onClick={handleAppDownload}
-                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded bg-header-blue px-3 py-2.5 text-left text-sm font-bold text-white"
-              >
-                <Download className="h-4 w-4" />
-                App Download
               </button>
             </>
           )}

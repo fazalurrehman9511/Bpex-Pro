@@ -1,32 +1,15 @@
-import { MessageCircle, Shield, Zap, Clock, Smartphone, UserPlus, Download } from 'lucide-react'
+import { MessageCircle, Shield, Zap, Clock, UserPlus } from 'lucide-react'
 import { useModal } from '../context/ModalContext'
-import { scrollToSection } from '../utils/detectCountry'
-import { ANDROID_APK_URL, ANDROID_APK_AVAILABLE } from '../config/androidApp'
 
 const highlights = [
   { icon: Shield, text: 'Trusted agent since 2018' },
   { icon: Zap, text: '5 min avg payout speed' },
   { icon: Clock, text: '24/7 WhatsApp support' },
-  { icon: Smartphone, text: 'Android APK available' },
+  { icon: UserPlus, text: 'Self-register in 60 seconds' },
 ]
 
 export default function Hero() {
   const { openModal } = useModal()
-
-  const handleAppDownload = () => {
-    if (ANDROID_APK_AVAILABLE) {
-      const a = document.createElement('a')
-      a.href = ANDROID_APK_URL
-      a.download = 'bpexpro.apk'
-      a.type = 'application/vnd.android.package-archive'
-      a.rel = 'noopener'
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      return
-    }
-    scrollToSection('app')
-  }
 
   return (
     <section className="relative overflow-hidden bg-navy px-4 pt-8 pb-10 sm:px-6 sm:pt-12 sm:pb-14">
@@ -35,11 +18,11 @@ export default function Hero() {
 
       <div className="relative mx-auto max-w-5xl">
         <div className="mb-5 flex flex-wrap items-center gap-2">
-          <div className="inline-flex items-center gap-2 rounded bg-accent/10 border border-accent/30 px-3 py-1 text-xs font-semibold text-accent">
-            <span className="h-2 w-2 rounded-full bg-accent animate-pulse" />
+          <div className="inline-flex items-center gap-2 rounded border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
             LIVE — Markets Open
           </div>
-          <div className="inline-flex items-center gap-1.5 rounded bg-navy-light border border-border px-3 py-1 text-xs font-medium text-muted">
+          <div className="inline-flex items-center gap-1.5 rounded border border-border bg-navy-light px-3 py-1 text-xs font-medium text-muted">
             4 Countries · Local Agents
           </div>
         </div>
@@ -68,7 +51,7 @@ export default function Hero() {
             type="button"
             onClick={() => openModal('register', { registerPath: 'whatsapp' })}
             aria-label="Register with WhatsApp agent"
-            className="inline-flex w-full min-h-12 cursor-pointer items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/25 hover:bg-accent-hover transition-colors active:scale-[0.98] sm:w-auto"
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/25 transition-colors hover:bg-accent-hover active:scale-[0.98] sm:w-auto"
           >
             <MessageCircle className="h-5 w-5" fill="currentColor" strokeWidth={0} aria-hidden="true" />
             Register with Agent
@@ -77,19 +60,10 @@ export default function Hero() {
             type="button"
             onClick={() => openModal('register', { registerPath: 'self' })}
             aria-label="Create account yourself"
-            className="inline-flex w-full min-h-12 cursor-pointer items-center justify-center gap-2 rounded border border-border bg-navy-light px-6 py-3.5 text-sm font-bold text-text hover:border-accent/40 transition-colors active:scale-[0.98] sm:w-auto"
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded border border-border bg-navy-light px-6 py-3.5 text-sm font-bold text-text transition-colors hover:border-accent/40 active:scale-[0.98] sm:w-auto"
           >
             <UserPlus className="h-4 w-4 text-accent" aria-hidden="true" />
             Register Myself
-          </button>
-          <button
-            type="button"
-            onClick={handleAppDownload}
-            aria-label="Download Android app"
-            className="inline-flex w-full min-h-12 cursor-pointer items-center justify-center gap-2 rounded bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/25 hover:bg-[#1d4f8c] transition-colors active:scale-[0.98] sm:w-auto"
-          >
-            <Download className="h-4 w-4" aria-hidden="true" />
-            App Download
           </button>
         </div>
       </div>

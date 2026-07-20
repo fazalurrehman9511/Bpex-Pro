@@ -16,7 +16,6 @@ Alternate: https://bpexpro.com
 
 1. **Register with Agent** — open WhatsApp with your country agent and get an account set up.
 2. **Register Myself** — create username/password on the site (self-register).
-3. **App Download** — Android APK / install section on the home page (`#app`).
 
 ## Payments
 

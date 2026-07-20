@@ -12,7 +12,6 @@ const links = [
   { label: 'Blog', to: '/blog' },
   { label: 'FAQ', href: '/#faq' },
   { label: 'Contact Us', href: '/#contact' },
-  { label: 'Android App', href: '/#app' },
 ]
 
 export default function Footer() {

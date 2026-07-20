@@ -11,11 +11,14 @@ const HowItWorks = lazy(() => import('../components/HowItWorks'))
 const Features = lazy(() => import('../components/Features'))
 const Testimonials = lazy(() => import('../components/Testimonials'))
 const FAQ = lazy(() => import('../components/FAQ'))
-const AndroidApp = lazy(() => import('../components/AndroidApp'))
 const ContactUs = lazy(() => import('../components/ContactUs'))
 
 function SectionFallback() {
   return <div className="min-h-[12rem] bg-navy" aria-hidden="true" />
+}
+
+function Deferred({ children }) {
+  return <div className="[content-visibility:auto] [contain-intrinsic-size:auto_480px]">{children}</div>
 }
 
 export default function HomePage() {
@@ -34,14 +37,15 @@ export default function HomePage() {
       <StatsBar />
       <Categories />
       <Suspense fallback={<SectionFallback />}>
-        <LiveEvents />
-        <PaymentMethods />
-        <HowItWorks />
-        <Features />
-        <Testimonials />
-        <FAQ />
-        <AndroidApp />
-        <ContactUs />
+        <Deferred>
+          <LiveEvents />
+          <PaymentMethods />
+          <HowItWorks />
+          <Features />
+          <Testimonials />
+          <FAQ />
+          <ContactUs />
+        </Deferred>
       </Suspense>
     </>
   )

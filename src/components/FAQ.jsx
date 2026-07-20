@@ -5,7 +5,7 @@ import { useModal } from '../context/ModalContext'
 const faqs = [
   {
     q: 'How do I register?',
-    a: 'Two ways: (1) Create Myself — pick username/password on the site and your BPEXCH account is created instantly. (2) WhatsApp Agent — message your local agent and they set up your account. Same options work after installing the Android app.',
+    a: 'Two ways: (1) Create Myself — pick username/password on the site and your BPEXCH account is created instantly. (2) WhatsApp Agent — message your local agent and they set up your account.',
   },
   {
     q: 'How can I add balance?',
@@ -18,10 +18,6 @@ const faqs = [
   {
     q: 'How fast are withdrawals?',
     a: 'Most withdrawals are processed within 5–15 minutes via JazzCash, EasyPaisa or bank transfer. Crypto withdrawals may take up to 30 minutes.',
-  },
-  {
-    q: 'How do I install the Android app?',
-    a: 'Phone pe Chrome mein BpxPro kholo → menu (⋮) → Install app / Add to Home screen. APK ki zaroorat nahi. Home screen pe icon aa jayega aur app ki tarah open hogi.',
   },
   {
     q: 'Is my money safe?',
