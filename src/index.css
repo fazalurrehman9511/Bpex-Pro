@@ -15,7 +15,8 @@
   --color-back-dark: #4db8e8;
   --color-lay: #f5a8b8;
   --color-lay-dark: #f08098;
-  --color-muted: #94a3b8;
+  /* Slightly brighter for WCAG contrast on navy backgrounds */
+  --color-muted: #a8b6c8;
   --color-text: #f1f5f9;
   --color-panel: #eef2f6;
 
@@ -41,6 +42,26 @@
 
 html {
   scroll-behavior: smooth;
+}
+
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--color-accent);
+  color: var(--color-navy-dark);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.skip-to-content:focus {
+  left: 0.75rem;
+  top: 0.75rem;
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 body {

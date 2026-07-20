@@ -6,12 +6,13 @@ import { useModal } from '../context/ModalContext'
 import { BRAND_LOGO, BRAND_NAME, SITE_DOMAIN } from '../config/brand'
 
 const links = [
-  { label: 'Live Events', id: 'events' },
-  { label: 'Add Balance', id: 'payments' },
+  { label: 'Live Events', href: '/#events' },
+  { label: 'Add Balance', href: '/#payments' },
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Blog', to: '/blog' },
-  { label: 'FAQ', id: 'faq' },
-  { label: 'Contact Us', id: 'contact' },
+  { label: 'FAQ', href: '/#faq' },
+  { label: 'Contact Us', href: '/#contact' },
+  { label: 'Android App', href: '/#app' },
 ]
 
 export default function Footer() {
@@ -24,8 +25,12 @@ export default function Footer() {
     loadWhatsappAgents().then(setCountryList)
   }, [])
 
-  const handleLink = (id) => {
-    navigateToSection(id, navigate, location.pathname)
+  const handleHashLink = (e, href) => {
+    const id = href.replace('/#', '')
+    if (location.pathname === '/') {
+      e.preventDefault()
+      navigateToSection(id, navigate, location.pathname)
+    }
   }
 
   return (
@@ -36,11 +41,12 @@ export default function Footer() {
             <Link to="/" className="inline-flex items-center hover:opacity-90">
               <img
                 src={BRAND_LOGO}
-                alt="BPX"
+                alt={`${BRAND_NAME} logo`}
                 width={72}
                 height={72}
                 className="h-9 w-9 object-contain"
                 decoding="async"
+                loading="lazy"
               />
             </Link>
             <p className="mt-2 text-xs leading-relaxed text-muted">
@@ -49,59 +55,66 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">Quick Links</p>
-            <div className="flex flex-col gap-2">
-              {links.map(({ label, id, to }) =>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">Quick Links</p>
+            <nav className="flex flex-col gap-2" aria-label="Footer">
+              {links.map(({ label, href, to }) =>
                 to ? (
                   <Link
                     key={to}
                     to={to}
-                    className="text-left text-xs text-muted hover:text-accent transition-colors"
+                    className="text-left text-xs text-muted transition-colors hover:text-accent"
                   >
                     {label}
                   </Link>
                 ) : (
-                  <button
-                    key={id}
-                    onClick={() => handleLink(id)}
-                    className="text-left text-xs text-muted hover:text-accent transition-colors"
+                  <a
+                    key={href}
+                    href={href}
+                    onClick={(e) => handleHashLink(e, href)}
+                    className="text-left text-xs text-muted transition-colors hover:text-accent"
                   >
                     {label}
-                  </button>
-                )
+                  </a>
+                ),
               )}
               <button
-                onClick={() => openModal('register')}
-                className="text-left text-xs text-accent font-semibold hover:underline"
+                type="button"
+                onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                className="cursor-pointer text-left text-xs font-semibold text-accent hover:underline"
               >
-                WhatsApp Register
+                Register with Agent
               </button>
-            </div>
+              <button
+                type="button"
+                onClick={() => openModal('register', { registerPath: 'self' })}
+                className="cursor-pointer text-left text-xs text-muted transition-colors hover:text-accent"
+              >
+                Register Myself
+              </button>
+            </nav>
           </div>
 
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">Countries Served</p>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">Countries Served</p>
             <div className="flex flex-wrap gap-1.5">
               {countryList.map((c) => (
                 <span
                   key={c.code}
-                  className="rounded bg-navy-light border border-border px-2 py-1 text-[10px] text-muted"
+                  className="rounded border border-border bg-navy-light px-2 py-1 text-xs text-muted"
                 >
                   {c.flag} {c.code}
                 </span>
               ))}
             </div>
-            <p className="mt-3 text-[10px] text-muted">
-              JazzCash · EasyPaisa · Bank · Crypto
-            </p>
+            <p className="mt-3 text-xs text-muted">JazzCash · EasyPaisa · Bank · Crypto</p>
           </div>
         </div>
 
         <div className="mt-8 border-t border-border pt-4 text-center">
-          <p className="text-[10px] text-muted/60">
+          <p className="text-xs text-muted/70">
             18+ only. Bet responsibly. {BRAND_NAME} is an agent platform — register via WhatsApp to get started.
           </p>
-          <p className="mt-1 text-[10px] text-muted/40">
+          <p className="mt-1 text-xs text-muted/50">
             &copy; {new Date().getFullYear()} {BRAND_NAME} · {SITE_DOMAIN}. All rights reserved.
           </p>
         </div>

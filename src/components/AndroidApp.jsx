@@ -121,7 +121,7 @@ export default function AndroidApp() {
                   href={ANDROID_APK_URL}
                   download="flowexch.apk"
                   type="application/vnd.android.package-archive"
-                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 hover:bg-accent-hover transition-colors"
+                  className="mt-4 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-header-blue px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/25 hover:bg-[#1d4f8c] transition-colors"
                 >
                   <Download className="h-5 w-5" />
                   Download APK ({ANDROID_APP.versionLabel})

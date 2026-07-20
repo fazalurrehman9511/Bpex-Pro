@@ -817,10 +817,3 @@ function Toast({ text }) {
     </div>
   )
 }
-
-export function shouldUseNativeWalletApp() {
-  if (typeof window === 'undefined') return false
-  if (Capacitor.isNativePlatform()) return true
-  const q = new URLSearchParams(window.location.search)
-  return q.get('nativeApp') === '1'
-}

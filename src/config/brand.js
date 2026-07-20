@@ -7,8 +7,8 @@ export const BRAND_LOGO_MD = '/icon-192x192.png'
 export const BRAND_LOGO_LG = '/icon-512x512.png'
 export const BRAND_TAGLINE = "Pakistan's trusted betting exchange"
 
-/** Public site domain (production) */
-export const SITE_DOMAIN = (import.meta.env.VITE_SITE_DOMAIN || 'bpexpro.com').trim()
+/** Public site domain (production) — prefer www to match live canonical */
+export const SITE_DOMAIN = (import.meta.env.VITE_SITE_DOMAIN || 'www.bpexpro.com').trim()
 export const SITE_URL = (
   import.meta.env.VITE_SITE_URL || `https://${SITE_DOMAIN}`
 )

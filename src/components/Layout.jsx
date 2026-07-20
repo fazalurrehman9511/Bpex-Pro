@@ -1,13 +1,14 @@
 import { Outlet, useLocation } from 'react-router-dom'
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { HeaderBar } from '../components/Header'
 import MarqueeTicker from '../components/MarqueeTicker'
 import Footer from '../components/Footer'
 import BottomNav from '../components/BottomNav'
-import FloatingWhatsApp from '../components/FloatingWhatsApp'
 import RegistrationModal from '../components/RegistrationModal'
-import InstallPrompt from '../components/InstallPrompt'
 import { isPlatformEmbedRoute } from '../utils/platformPaths'
+
+const FloatingWhatsApp = lazy(() => import('../components/FloatingWhatsApp'))
+const InstallPrompt = lazy(() => import('../components/InstallPrompt'))
 
 export default function Layout() {
   const location = useLocation()
@@ -22,7 +23,7 @@ export default function Layout() {
   if (isFullscreen) {
     return (
       <div className="fixed inset-0 flex flex-col bg-navy overflow-hidden">
-        <main className="flex flex-1 flex-col min-h-0 min-w-0">
+        <main id="main-content" className="flex flex-1 flex-col min-h-0 min-w-0">
           <Outlet />
         </main>
         <RegistrationModal />
@@ -32,15 +33,20 @@ export default function Layout() {
 
   return (
     <div className={`flex min-h-screen flex-col bg-navy ${isBlogPost ? '' : 'pb-[4.5rem] sm:pb-0'}`}>
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
       <HeaderBar />
       {location.pathname === '/' && <MarqueeTicker />}
-      <main className="flex flex-1 flex-col min-h-0">
+      <main id="main-content" className="flex flex-1 flex-col min-h-0">
         <Outlet />
       </main>
       {!isBlogPost && <Footer />}
       {!isBlogPost && <BottomNav />}
-      {!isBlogPost && <InstallPrompt />}
-      <FloatingWhatsApp />
+      <Suspense fallback={null}>
+        {!isBlogPost && <InstallPrompt />}
+        <FloatingWhatsApp />
+      </Suspense>
       <RegistrationModal />
     </div>
   )

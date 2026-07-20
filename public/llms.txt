@@ -1,0 +1,39 @@
+# BpxPro
+
+> Pakistan's trusted betting exchange agent platform. Cricket, football, tennis, horse racing and live casino odds with personal WhatsApp agents and local payments (JazzCash, EasyPaisa, bank, crypto).
+
+Site: https://www.bpexpro.com
+Alternate: https://bpexpro.com
+
+## Main pages
+
+- [Home](https://www.bpexpro.com/): Live markets overview, register options, payments, FAQ
+- [Blog](https://www.bpexpro.com/blog): Guides on cricket betting, deposits, PSL tips, and responsible play
+- [Dashboard](https://www.bpexpro.com/dashboard): Logged-in betting exchange (requires account)
+- [Login](https://www.bpexpro.com/login): Account login
+
+## How to register
+
+1. **Register with Agent** — open WhatsApp with your country agent and get an account set up.
+2. **Register Myself** — create username/password on the site (self-register).
+3. **App Download** — Android APK / install section on the home page (`#app`).
+
+## Payments
+
+- JazzCash
+- EasyPaisa
+- Bank transfer
+- Crypto (USDT)
+
+## Countries served
+
+Pakistan (PK), UAE (AE), Saudi Arabia (SA), United Kingdom (GB)
+
+## Contact
+
+Use the on-site WhatsApp chat widget or the Contact section on the home page (`#contact`).
+
+## Optional
+
+- [Sitemap](https://www.bpexpro.com/sitemap.xml)
+- [Robots](https://www.bpexpro.com/robots.txt)

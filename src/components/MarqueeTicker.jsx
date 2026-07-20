@@ -39,7 +39,7 @@ export default function MarqueeTicker() {
     }
 
     load()
-    const timer = window.setInterval(load, 10000)
+    const timer = window.setInterval(load, 30000)
     return () => {
       cancelled = true
       window.clearInterval(timer)
@@ -52,7 +52,7 @@ export default function MarqueeTicker() {
     <div className="overflow-hidden border-b border-accent/20 bg-navy-dark">
       <div className="flex animate-marquee whitespace-nowrap py-2">
         {doubled.map((item, i) => (
-          <span key={`${item}-${i}`} className="mx-6 text-[11px] font-medium text-muted">
+          <span key={`${item}-${i}`} className="mx-6 text-xs font-medium text-muted">
             {item}
             <span className="mx-6 text-accent/40">•</span>
           </span>

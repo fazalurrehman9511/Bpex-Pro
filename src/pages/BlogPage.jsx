@@ -182,17 +182,26 @@ export default function BlogPage() {
               <div className="max-w-md">
                 <p className="text-lg font-bold text-text sm:text-xl">Ready to Start Betting?</p>
                 <p className="mt-2 text-sm leading-relaxed text-muted">
-                  Register in 60 seconds via WhatsApp — free account setup with your personal agent.
+                  Register with Agent on WhatsApp, or create your account yourself — free setup.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => openModal('register')}
-                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-accent px-8 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
-              >
-                <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-                WhatsApp Register
-              </button>
+              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                  className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
+                >
+                  <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
+                  Register with Agent
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openModal('register', { registerPath: 'self' })}
+                  className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-navy-dark px-6 py-3.5 text-sm font-bold text-text transition-colors hover:border-accent/40"
+                >
+                  Register Myself
+                </button>
+              </div>
             </div>
           </div>
         </div>

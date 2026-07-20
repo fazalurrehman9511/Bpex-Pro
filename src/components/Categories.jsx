@@ -30,15 +30,17 @@ export default function Categories() {
           <h2 className="text-xs font-bold uppercase tracking-wider text-muted">
             Sports &amp; Casino
           </h2>
-          <span className="text-[10px] text-accent font-medium">Swipe →</span>
+          <span className="text-xs font-medium text-accent">Swipe →</span>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide sm:grid sm:grid-cols-8 sm:overflow-visible sm:gap-3">
           {categories.map(({ icon: Icon, label, color, hot }) => (
             <button
               key={label}
-              onClick={() => openModal('register')}
-              className="relative flex shrink-0 w-[72px] flex-col items-center gap-1.5 rounded border border-border bg-navy-light p-2.5 hover:border-accent/40 hover:bg-surface-hover transition-all active:scale-95 sm:w-auto sm:p-3"
+              type="button"
+              onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+              aria-label={`Register to bet on ${label}`}
+              className="relative flex min-h-[4.5rem] w-[72px] shrink-0 cursor-pointer flex-col items-center justify-center gap-1.5 rounded border border-border bg-navy-light p-2.5 transition-all hover:border-accent/40 hover:bg-surface-hover active:scale-95 sm:w-auto sm:p-3"
             >
               {hot && (
                 <span className="absolute -top-1.5 -right-1 rounded bg-accent px-1 py-px text-[8px] font-bold text-navy-dark">
@@ -46,7 +48,7 @@ export default function Categories() {
                 </span>
               )}
               <Icon className={`h-5 w-5 sm:h-6 sm:w-6 ${color}`} />
-              <span className="text-[10px] font-medium text-text leading-tight text-center sm:text-xs">
+              <span className="text-center text-xs font-medium leading-tight text-text">
                 {label}
               </span>
             </button>

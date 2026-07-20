@@ -21,7 +21,7 @@ export default function StatsBar() {
             </div>
             <div>
               <p className="text-base font-extrabold text-text leading-none sm:text-lg">{value}</p>
-              <p className="mt-0.5 text-[10px] text-muted sm:text-xs">{label}</p>
+              <p className="mt-0.5 text-xs text-muted">{label}</p>
             </div>
           </div>
         ))}

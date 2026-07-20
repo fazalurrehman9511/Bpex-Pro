@@ -1,16 +1,22 @@
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { scrollToSection } from '../utils/detectCountry'
 import Hero from '../components/Hero'
 import StatsBar from '../components/StatsBar'
 import Categories from '../components/Categories'
-import LiveEvents from '../components/LiveEvents'
-import PaymentMethods from '../components/PaymentMethods'
-import HowItWorks from '../components/HowItWorks'
-import Features from '../components/Features'
-import Testimonials from '../components/Testimonials'
-import FAQ from '../components/FAQ'
-import ContactUs from '../components/ContactUs'
+
+const LiveEvents = lazy(() => import('../components/LiveEvents'))
+const PaymentMethods = lazy(() => import('../components/PaymentMethods'))
+const HowItWorks = lazy(() => import('../components/HowItWorks'))
+const Features = lazy(() => import('../components/Features'))
+const Testimonials = lazy(() => import('../components/Testimonials'))
+const FAQ = lazy(() => import('../components/FAQ'))
+const AndroidApp = lazy(() => import('../components/AndroidApp'))
+const ContactUs = lazy(() => import('../components/ContactUs'))
+
+function SectionFallback() {
+  return <div className="min-h-[12rem] bg-navy" aria-hidden="true" />
+}
 
 export default function HomePage() {
   const location = useLocation()
@@ -22,30 +28,21 @@ export default function HomePage() {
     }
   }, [location.hash])
 
-  // Warm BPEXCH login through proxy so /login opens faster
-  useEffect(() => {
-    const link = document.createElement('link')
-    link.rel = 'prefetch'
-    link.href = '/bpexch/Users/Login'
-    link.as = 'document'
-    document.head.appendChild(link)
-    return () => {
-      link.remove()
-    }
-  }, [])
-
   return (
     <>
       <Hero />
       <StatsBar />
       <Categories />
-      <LiveEvents />
-      <PaymentMethods />
-      <HowItWorks />
-      <Features />
-      <Testimonials />
-      <FAQ />
-      <ContactUs />
+      <Suspense fallback={<SectionFallback />}>
+        <LiveEvents />
+        <PaymentMethods />
+        <HowItWorks />
+        <Features />
+        <Testimonials />
+        <FAQ />
+        <AndroidApp />
+        <ContactUs />
+      </Suspense>
     </>
   )
 }

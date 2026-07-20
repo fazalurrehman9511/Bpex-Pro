@@ -6,6 +6,9 @@ import {
   ArrowUpFromLine,
   LogOut,
   ChevronDown,
+  MessageCircle,
+  UserPlus,
+  Download,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -31,6 +34,7 @@ import {
   parseBalanceAmount,
 } from '../utils/transactions'
 import { BRAND_LOGO, BRAND_NAME } from '../config/brand'
+import { ANDROID_APK_URL, ANDROID_APK_AVAILABLE } from '../config/androidApp'
 
 export default function Logo() {
   return (
@@ -41,11 +45,12 @@ export default function Logo() {
     >
       <img
         src={BRAND_LOGO}
-        alt="BPX"
+        alt={BRAND_NAME}
         width={72}
         height={72}
         className="h-9 w-9 object-contain sm:h-10 sm:w-10"
         decoding="async"
+        fetchPriority="high"
       />
     </Link>
   )
@@ -265,6 +270,22 @@ export function HeaderBar() {
     navigate('/', { replace: true })
   }
 
+  const handleAppDownload = () => {
+    setMenuOpen(false)
+    if (ANDROID_APK_AVAILABLE) {
+      const a = document.createElement('a')
+      a.href = ANDROID_APK_URL
+      a.download = 'bpexpro.apk'
+      a.type = 'application/vnd.android.package-archive'
+      a.rel = 'noopener'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      return
+    }
+    navigateToSection('app', navigate, location.pathname)
+  }
+
   const isActive = (path) => location.pathname === path
   const balanceLabel = formatBalanceLabel(balanceRaw)
 
@@ -340,7 +361,7 @@ export function HeaderBar() {
             <>
               <Link
                 to="/login"
-                className={`hidden cursor-pointer rounded-lg border px-4 py-2 text-xs font-semibold transition-colors sm:inline-flex ${
+                className={`hidden cursor-pointer rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:inline-flex ${
                   isActive('/login')
                     ? 'border-accent bg-accent/10 text-accent'
                     : 'border-border text-text hover:border-accent/40'
@@ -350,10 +371,27 @@ export function HeaderBar() {
               </Link>
               <button
                 type="button"
-                onClick={() => openModal('register')}
-                className="cursor-pointer rounded-lg bg-accent px-3.5 py-2 text-xs font-bold text-navy-dark transition-colors hover:bg-accent-hover sm:px-4"
+                onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                className="hidden cursor-pointer items-center gap-1 rounded-lg bg-accent px-2.5 py-2 text-xs font-bold text-navy-dark transition-colors hover:bg-accent-hover sm:inline-flex sm:px-3"
               >
-                Register
+                <MessageCircle className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} />
+                Agent
+              </button>
+              <button
+                type="button"
+                onClick={() => openModal('register', { registerPath: 'self' })}
+                className="hidden cursor-pointer items-center gap-1 rounded-lg border border-border bg-navy-light px-2.5 py-2 text-xs font-bold text-text transition-colors hover:border-accent/40 sm:inline-flex sm:px-3"
+              >
+                <UserPlus className="h-3.5 w-3.5 text-accent" />
+                Myself
+              </button>
+              <button
+                type="button"
+                onClick={handleAppDownload}
+                className="hidden cursor-pointer items-center gap-1 rounded-lg bg-header-blue px-2.5 py-2 text-xs font-bold text-white transition-colors hover:bg-[#1d4f8c] sm:inline-flex sm:px-3"
+              >
+                <Download className="h-3.5 w-3.5" />
+                App
               </button>
             </>
           )}
@@ -429,13 +467,45 @@ export function HeaderBar() {
               </button>
             </>
           ) : (
-            <Link
-              to="/login"
-              onClick={() => setMenuOpen(false)}
-              className="mt-1 block w-full rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
-            >
-              Login
-            </Link>
+            <>
+              <Link
+                to="/login"
+                onClick={() => setMenuOpen(false)}
+                className="mt-1 block w-full rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+              >
+                Login
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  openModal('register', { registerPath: 'whatsapp' })
+                }}
+                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded bg-accent px-3 py-2.5 text-left text-sm font-bold text-navy-dark"
+              >
+                <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
+                Register with Agent
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  openModal('register', { registerPath: 'self' })
+                }}
+                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-semibold text-text"
+              >
+                <UserPlus className="h-4 w-4 text-accent" />
+                Register Myself
+              </button>
+              <button
+                type="button"
+                onClick={handleAppDownload}
+                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded bg-header-blue px-3 py-2.5 text-left text-sm font-bold text-white"
+              >
+                <Download className="h-4 w-4" />
+                App Download
+              </button>
+            </>
           )}
         </div>
       )}

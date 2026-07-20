@@ -1,0 +1,13 @@
+User-agent: *
+Allow: /
+Allow: /llms.txt
+Allow: /sitemap.xml
+Allow: /robots.txt
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /deposit
+Disallow: /withdraw
+Disallow: /api/
+Disallow: /bpexch/
+
+Sitemap: https://www.bpexpro.com/sitemap.xml

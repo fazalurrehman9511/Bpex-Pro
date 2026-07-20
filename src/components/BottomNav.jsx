@@ -71,9 +71,9 @@ export default function BottomNav() {
         },
         {
           icon: UserPlus,
-          label: 'Register',
+          label: 'Agent',
           active: false,
-          action: () => openModal('register'),
+          action: () => openModal('register', { registerPath: 'whatsapp' }),
           accent: true,
         },
       ]
@@ -84,8 +84,10 @@ export default function BottomNav() {
         {navItems.map(({ icon: Icon, label, active, action, accent }) => (
           <button
             key={label}
+            type="button"
             onClick={action}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 transition-colors ${
+            aria-label={label}
+            className={`flex min-h-14 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 py-2.5 transition-colors ${
               accent
                 ? 'text-accent'
                 : active
@@ -93,8 +95,8 @@ export default function BottomNav() {
                   : 'text-muted hover:text-text'
             }`}
           >
-            <Icon className="h-5 w-5" />
-            <span className="text-[10px] font-medium">{label}</span>
+            <Icon className="h-5 w-5" aria-hidden="true" />
+            <span className="text-xs font-medium">{label}</span>
           </button>
         ))}
       </div>

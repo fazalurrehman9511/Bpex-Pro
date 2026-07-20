@@ -53,6 +53,8 @@ export default function RegistrationModal() {
   const selectedCountry = getCountryByCode(countryCode)
   const selfDial = getCountryByCode('PK')
   const isRegister = intent === 'register'
+  const pathLocked =
+    modalOptions.registerPath === 'self' || modalOptions.registerPath === 'whatsapp'
 
   useEffect(() => {
     if (!isOpen) return
@@ -215,7 +217,7 @@ export default function RegistrationModal() {
           </h2>
         </div>
 
-        {isRegister && !created && (
+        {isRegister && !created && !pathLocked && (
           <div className="mb-4 grid grid-cols-2 gap-1.5 rounded-lg border border-border bg-navy-dark p-1">
             <button
               type="button"
@@ -228,7 +230,7 @@ export default function RegistrationModal() {
                   codes.includes(prev) ? prev : agentCountries[0]?.code || detectCountryCode(),
                 )
               }}
-              className={`rounded-md px-2 py-2 text-[11px] font-bold transition-colors ${
+              className={`cursor-pointer rounded-md px-2 py-2 text-[11px] font-bold transition-colors ${
                 path === 'whatsapp' ? 'bg-accent text-navy-dark' : 'text-muted hover:text-text'
               }`}
             >
@@ -242,7 +244,7 @@ export default function RegistrationModal() {
                 setErrors({})
                 setSubmitError('')
               }}
-              className={`rounded-md px-2 py-2 text-[11px] font-bold transition-colors ${
+              className={`cursor-pointer rounded-md px-2 py-2 text-[11px] font-bold transition-colors ${
                 path === 'self' ? 'bg-accent text-navy-dark' : 'text-muted hover:text-text'
               }`}
             >
