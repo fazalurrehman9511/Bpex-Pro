@@ -9,6 +9,7 @@ export default function PlatformEmbedPage({
   listenForActions = false,
   syncPublicUrl = false,
   autoLoginCredentials = null,
+  loadingMessage = '',
 }) {
   useEffect(() => {
     document.title = pageTitle
@@ -25,6 +26,7 @@ export default function PlatformEmbedPage({
       listenForActions={listenForActions}
       syncPublicUrl={syncPublicUrl}
       autoLoginCredentials={autoLoginCredentials}
+      loadingMessage={loadingMessage}
     />
   )
 }

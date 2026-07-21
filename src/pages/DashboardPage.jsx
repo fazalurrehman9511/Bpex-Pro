@@ -30,6 +30,7 @@ export default function DashboardPage() {
       pageTitle="Dashboard — BpxPro"
       listenForActions
       autoLoginCredentials={hasAuthToken ? null : { username, password }}
+      loadingMessage={hasAuthToken ? 'Opening Dashboard...' : 'Signing in to Dashboard...'}
     />
   )
 }
