@@ -61,12 +61,13 @@ function getProxyAgent() {
  * fetch() with optional proxy dispatcher (undici).
  */
 export async function bpexchHttpFetch(url, options = {}) {
+  const { requireProxy = isBpexchProxyRequired(), ...fetchOptions } = options
   const dispatcher = getProxyAgent()
   if (!dispatcher) {
-    if (isBpexchProxyRequired()) {
+    if (requireProxy) {
       throw createBpexchProxyRequiredError()
     }
-    return fetch(url, options)
+    return fetch(url, fetchOptions)
   }
-  return undiciFetch(url, { ...options, dispatcher })
+  return undiciFetch(url, { ...fetchOptions, dispatcher })
 }

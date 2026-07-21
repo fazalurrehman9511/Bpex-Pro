@@ -273,6 +273,7 @@ async function bpexchFetch(pathName, options = {}) {
     ...options,
     headers,
     redirect: 'manual',
+    requireProxy: false,
   })
   parseCookieJar(res)
   return res

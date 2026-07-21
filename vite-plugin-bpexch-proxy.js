@@ -101,6 +101,14 @@ function isBpexchLoginPath(pathname = '') {
   )
 }
 
+function isBpexchMarketFetchPath(pathname = '') {
+  const p = pathname.toLowerCase()
+  return (
+    /^\/api\/markets(?:\/|\?|$)/.test(p) ||
+    /^\/common\/markethighlights(?:\/|\?|$)/.test(p)
+  )
+}
+
 function extractLoginCredentials(body, contentType = '') {
   if (!body?.length) return null
   const raw = body.toString('utf8')
@@ -272,6 +280,7 @@ async function proxyBpexch(req, res, proxyOptions = {}) {
     headers: forwardHeaders,
     body: body?.length ? body : undefined,
     redirect: 'manual',
+    requireProxy: !isBpexchMarketFetchPath(targetPath),
   })
 
   if (body?.length && (req.method === 'POST' || req.method === 'PUT')) {
