@@ -12,6 +12,9 @@ import { ProxyAgent, fetch as undiciFetch } from 'undici'
 let proxyAgent = null
 let proxyUrlCached = null
 
+const PROXY_REQUIRED_MESSAGE =
+  'Residential proxy is required for all BPEXCH requests. Set BPEXCH_HTTP_PROXY and make sure it is working.'
+
 function resolveProxyUrl() {
   return (
     process.env.BPEXCH_HTTP_PROXY ||
@@ -30,6 +33,20 @@ export function isBpexchProxyConfigured() {
   return Boolean(resolveProxyUrl())
 }
 
+export function isBpexchProxyRequired() {
+  return process.env.BPEXCH_PROXY_REQUIRED !== '0'
+}
+
+export function getBpexchProxyRequiredMessage() {
+  return PROXY_REQUIRED_MESSAGE
+}
+
+export function createBpexchProxyRequiredError(message = PROXY_REQUIRED_MESSAGE) {
+  const err = new Error(message)
+  err.code = 'BPEXCH_PROXY_REQUIRED'
+  return err
+}
+
 function getProxyAgent() {
   const url = resolveProxyUrl()
   if (!url) return undefined
@@ -45,8 +62,11 @@ function getProxyAgent() {
  */
 export async function bpexchHttpFetch(url, options = {}) {
   const dispatcher = getProxyAgent()
-  if (dispatcher) {
-    return undiciFetch(url, { ...options, dispatcher })
+  if (!dispatcher) {
+    if (isBpexchProxyRequired()) {
+      throw createBpexchProxyRequiredError()
+    }
+    return fetch(url, options)
   }
-  return fetch(url, options)
+  return undiciFetch(url, { ...options, dispatcher })
 }

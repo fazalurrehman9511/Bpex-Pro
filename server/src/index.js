@@ -17,7 +17,12 @@ import paymentAccountsRouter from './routes/paymentAccounts.js'
 import whatsappAgentsRouter from './routes/whatsappAgents.js'
 import bpexchBalanceRouter from './routes/bpexchBalance.js'
 import { startLiveEventsPoller } from './services/bpexchLive.js'
-import { bpexchHttpFetch, isBpexchProxyConfigured } from './services/bpexchHttp.js'
+import {
+  bpexchHttpFetch,
+  getBpexchProxyRequiredMessage,
+  isBpexchProxyConfigured,
+  isBpexchProxyRequired,
+} from './services/bpexchHttp.js'
 import {
   createBpexchProxyMiddleware,
   createStrayBpexchApiRewrite,
@@ -162,12 +167,14 @@ if (
       brandName: config.embedBrandName,
       syncSecret: config.bpexchSyncSecret,
       apiBaseUrl: config.apiBaseUrl,
-      // Route /bpexch through residential proxy when configured (Cloudflare bypass)
-      fetchImpl: isBpexchProxyConfigured() ? bpexchHttpFetch : undefined,
+      // Always use the shared BPEXCH fetcher so residential proxy rules stay consistent.
+      fetchImpl: bpexchHttpFetch,
     }),
   )
   if (isBpexchProxyConfigured()) {
     console.log('BPEXCH proxy: outbound residential proxy enabled for /bpexch')
+  } else if (isBpexchProxyRequired()) {
+    console.warn(`[warn] ${getBpexchProxyRequiredMessage()}`)
   }
 } else if (config.enableBpexchProxy) {
   console.warn('[warn] BPEXCH proxy requested but middleware unavailable')

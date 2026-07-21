@@ -5,7 +5,11 @@
  */
 
 import { getBpexchAgentConfig } from '../db.js'
-import { bpexchHttpFetch } from './bpexchHttp.js'
+import {
+  bpexchHttpFetch,
+  createBpexchProxyRequiredError,
+  getBpexchProxyRequiredMessage,
+} from './bpexchHttp.js'
 
 const BPEXCH_ORIGIN = process.env.BPEXCH_BASE_URL || 'https://bpexch.xyz'
 
@@ -65,6 +69,12 @@ function extractAntiForgery(html = '') {
   return match?.[1] || match?.[2] || ''
 }
 
+function proxyBlockedError(message = 'BPEXCH rejected the request (403).') {
+  return createBpexchProxyRequiredError(
+    `${message} ${getBpexchProxyRequiredMessage()}`.trim(),
+  )
+}
+
 function parseClientUsernames(html = '') {
   const names = new Set()
   const rows = html.match(/<tr[\s\S]*?<\/tr>/gi) || []
@@ -114,6 +124,9 @@ async function loginAgent(session) {
 
   /* Cookie/session login first — required for /Users/Create form */
   const loginPage = await bpexchFetch(session, '/Users/Login', { accept: 'text/html' })
+  if (loginPage.status === 403) {
+    throw proxyBlockedError('BPEXCH blocked the login page (403).')
+  }
   const html = await loginPage.text()
   const anti = extractAntiForgery(html)
   const body = new URLSearchParams()
@@ -133,6 +146,9 @@ async function loginAgent(session) {
     accept: 'text/html',
     body: body.toString(),
   })
+  if (formRes.status === 403) {
+    throw proxyBlockedError('BPEXCH blocked the agent login request (403).')
+  }
 
   const loc = formRes.headers.get('location') || ''
   if (formRes.status >= 300 && formRes.status < 400 && /login/i.test(loc)) {
@@ -145,6 +161,9 @@ async function loginAgent(session) {
     body: JSON.stringify({ username, password, identity: 'FlowExch-Register' }),
   })
   const data = await apiRes.json().catch(() => ({}))
+  if (apiRes.status === 403) {
+    throw proxyBlockedError('BPEXCH blocked the agent API login request (403).')
+  }
   if (!apiRes.ok) {
     throw new Error(data.error || data.message || 'BPEXCH agent API login failed')
   }
@@ -226,6 +245,9 @@ export async function createBpexchBettorAccount({
   }
 
   const createPage = await bpexchFetch(session, '/Users/Create', { accept: 'text/html' })
+  if (createPage.status === 403) {
+    throw proxyBlockedError('BPEXCH blocked the Create User page (403).')
+  }
   if (createPage.status >= 300 && createPage.status < 400) {
     const loc = createPage.headers.get('location') || ''
     if (/login/i.test(loc)) {
@@ -281,6 +303,9 @@ export async function createBpexchBettorAccount({
 
   const msg =
     extractError(text) ||
+    (res.status === 403
+      ? proxyBlockedError().message
+      : null) ||
     (res.status === 405
       ? 'Method not allowed'
       : /login/i.test(location)
@@ -288,7 +313,12 @@ export async function createBpexchBettorAccount({
         : `Could not create account on BPEXCH (${res.status})`)
 
   const err = new Error(msg)
-  err.code = /already exists on bpexch/i.test(msg) ? 'USERNAME_EXISTS' : 'CREATE_FAILED'
+  err.code =
+    /already exists on bpexch/i.test(msg)
+      ? 'USERNAME_EXISTS'
+      : res.status === 403
+        ? 'BPEXCH_PROXY_REQUIRED'
+        : 'CREATE_FAILED'
   throw err
 }
 

@@ -367,8 +367,9 @@ export function createBpexchProxyMiddleware(options = {}) {
     } catch (err) {
       console.error('[bpexch-proxy]', err.message)
       if (!res.headersSent) {
-        res.writeHead(502, { 'content-type': 'text/plain' })
-        res.end('BPEXCH proxy error')
+        const status = err.code === 'BPEXCH_PROXY_REQUIRED' ? 503 : 502
+        res.writeHead(status, { 'content-type': 'text/plain; charset=utf-8' })
+        res.end(err.message || 'BPEXCH proxy error')
       }
     }
   }

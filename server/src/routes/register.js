@@ -164,7 +164,9 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('[register]', err.code || '', err.message)
     const status =
-      err.code === 'NOT_CONFIGURED' || err.code === 'AGENT_NO_PERMISSION'
+      err.code === 'NOT_CONFIGURED' ||
+      err.code === 'AGENT_NO_PERMISSION' ||
+      err.code === 'BPEXCH_PROXY_REQUIRED'
         ? 503
         : err.code === 'USERNAME_EXISTS'
           ? 409
