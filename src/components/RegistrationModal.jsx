@@ -17,10 +17,8 @@ import { getCountries, getCountryByCode, loadWhatsappAgents } from '../data/coun
 import { getPaymentMethod } from '../data/paymentMethods'
 import { detectCountryCode } from '../utils/detectCountry'
 import { fetchRegisterStatus, selfRegister } from '../utils/api'
-import { openBpexchWithAppLogin } from '../mobile/bpexchAutoLogin'
-import { setBpexchPassword, setBpexchUsername } from '../utils/bpexchAuth'
+import { setBpexchLoggedIn, setBpexchPassword, setBpexchUsername } from '../utils/bpexchAuth'
 
-const POST_LOGIN_REDIRECT_KEY = 'flowexch_post_login_redirect'
 const FLASH_MESSAGE_KEY = 'flowexch_flash_message'
 
 const intentLabels = {
@@ -162,31 +160,17 @@ export default function RegistrationModal() {
       const username = String(data.user?.username || '').trim()
       if (!username) throw new Error('Account created but username missing')
 
-      const credentials = { username, password }
-      setCreated(credentials)
-      setAutoLoginPending(true)
       setBpexchUsername(username)
       setBpexchPassword(password)
+      setBpexchLoggedIn(true, username)
 
       try {
-        sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, 'home')
         sessionStorage.setItem(FLASH_MESSAGE_KEY, 'Account created successfully')
       } catch {
         /* ignore */
       }
-
-      window.setTimeout(() => {
-        openBpexchWithAppLogin(credentials).catch((err) => {
-          try {
-            sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY)
-            sessionStorage.removeItem(FLASH_MESSAGE_KEY)
-          } catch {
-            /* ignore */
-          }
-          setAutoLoginPending(false)
-          setSubmitError(err.message || 'Auto login failed. Please login manually.')
-        })
-      }, 350)
+      closeModal()
+      navigate('/', { replace: true })
     } catch (err) {
       setSubmitError(err.message || 'Failed to create account')
       setAutoLoginPending(false)

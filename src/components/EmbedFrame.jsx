@@ -62,6 +62,7 @@ export default function EmbedFrame({
   redirectOnLogin = false,
   listenForActions = false,
   syncPublicUrl = false,
+  autoLoginCredentials = null,
 }) {
   const [loading, setLoading] = useState(true)
   const [failed, setFailed] = useState(false)
@@ -73,6 +74,7 @@ export default function EmbedFrame({
   const iframeRef = useRef(null)
   const verifiedUsernameRef = useRef('')
   const checkingUsernameRef = useRef('')
+  const autoLoginAttemptedRef = useRef(false)
   const publicPathRef = useRef(location.pathname)
 
   const captureBalanceFromIframe = useCallback(() => {
@@ -93,6 +95,54 @@ export default function EmbedFrame({
     },
     [captureBalanceFromIframe, navigate]
   )
+
+  const submitAutoLoginInsideIframe = useCallback(() => {
+    const creds = autoLoginCredentials || {}
+    const username = String(creds.username || '').trim()
+    const password = String(creds.password || '')
+    if (!username || !password) return false
+
+    try {
+      const doc = iframeRef.current?.contentWindow?.document
+      if (!doc) return false
+
+      const form =
+        doc.querySelector('form[action*="/Users/Login"]') ||
+        doc.querySelector('form.login100-form') ||
+        doc.querySelector('form')
+      const userInput =
+        doc.querySelector('input[name="user.Username"]') ||
+        doc.querySelector('input[name="Username"]') ||
+        doc.querySelector('input[name="username"]')
+      const passInput =
+        doc.querySelector('input[name="user.Password"]') ||
+        doc.querySelector('input[name="Password"]') ||
+        doc.querySelector('input[type="password"]')
+      const submitButton =
+        form.querySelector('button[type="submit"]') ||
+        form.querySelector('input[type="submit"]') ||
+        form.querySelector('button')
+
+      if (!form || !userInput || !passInput) return false
+
+      form.target = '_self'
+      userInput.value = username
+      passInput.value = password
+      userInput.dispatchEvent(new Event('input', { bubbles: true }))
+      passInput.dispatchEvent(new Event('input', { bubbles: true }))
+      userInput.dispatchEvent(new Event('change', { bubbles: true }))
+      passInput.dispatchEvent(new Event('change', { bubbles: true }))
+
+      if (typeof form.requestSubmit === 'function') {
+        form.requestSubmit(submitButton || undefined)
+      } else {
+        form.submit()
+      }
+      return true
+    } catch {
+      return false
+    }
+  }, [autoLoginCredentials])
 
   const postViewportToIframe = () => {
     const isNarrow = window.innerWidth <= NARROW_BREAKPOINT
@@ -197,6 +247,18 @@ export default function EmbedFrame({
     postViewportToIframe()
     syncUrlFromIframe()
 
+    try {
+      const path = iframeRef.current?.contentWindow?.location?.pathname || ''
+      const onLogin = path.includes('/Users/Login') || path.includes('/login')
+      if (onLogin && autoLoginCredentials && !autoLoginAttemptedRef.current) {
+        autoLoginAttemptedRef.current = true
+        const submitted = submitAutoLoginInsideIframe()
+        if (submitted) return
+      }
+    } catch {
+      /* ignore */
+    }
+
     if (!redirectOnLogin || !iframeRef.current) return
 
     try {
@@ -220,6 +282,7 @@ export default function EmbedFrame({
   useEffect(() => {
     setLoading(true)
     setActionAnchor(null)
+    autoLoginAttemptedRef.current = false
     // Don't hold a full-screen blocker forever — show iframe as soon as possible
     const maxWait = window.setTimeout(() => setLoading(false), 1200)
     return () => window.clearTimeout(maxWait)

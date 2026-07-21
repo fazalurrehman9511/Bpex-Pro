@@ -11,12 +11,12 @@ function slugFromName(name) {
     .slice(0, 10)
 }
 
-function randomFiveDigits() {
-  return String(Math.floor(10000 + Math.random() * 90000))
+function randomFourDigits() {
+  return String(Math.floor(1000 + Math.random() * 9000))
 }
 
 function buildAutoUsername(name, suffix) {
-  const serial = String(suffix || '').replace(/\D/g, '').slice(-5) || randomFiveDigits()
+  const serial = String(suffix || '').replace(/\D/g, '').slice(-4) || randomFourDigits()
   let base = slugFromName(name)
   if (base.endsWith('bpx')) base = base.slice(0, -3)
   if (base.length < 3) base = 'user'
@@ -28,9 +28,9 @@ function buildAutoUsername(name, suffix) {
 /** Auto username: name/phone based, unique in local DB. */
 function generateUniqueUsername({ name, phone } = {}, reserved = new Set()) {
   const digits = String(phone || '').replace(/\D/g, '')
-  const phoneTail = digits.slice(-5)
+  const phoneTail = digits.slice(-4)
   for (let i = 0; i < 40; i++) {
-    const suffix = i === 0 && phoneTail.length === 5 ? phoneTail : randomFiveDigits()
+    const suffix = i === 0 && phoneTail.length === 4 ? phoneTail : randomFourDigits()
     const username = buildAutoUsername(name, suffix)
     const key = username.toLowerCase()
     if (reserved.has(key)) continue
@@ -41,7 +41,7 @@ function generateUniqueUsername({ name, phone } = {}, reserved = new Set()) {
     reserved.add(key)
   }
 
-  return buildAutoUsername(name, String(Date.now()).slice(-5))
+  return buildAutoUsername(name, String(Date.now()).slice(-4))
 }
 
 function saveLocalUser({ username, password, phone, name, reference }) {

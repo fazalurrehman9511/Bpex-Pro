@@ -8,6 +8,7 @@ export default function PlatformEmbedPage({
   redirectOnLogin = false,
   listenForActions = false,
   syncPublicUrl = false,
+  autoLoginCredentials = null,
 }) {
   useEffect(() => {
     document.title = pageTitle
@@ -23,6 +24,7 @@ export default function PlatformEmbedPage({
       redirectOnLogin={redirectOnLogin}
       listenForActions={listenForActions}
       syncPublicUrl={syncPublicUrl}
+      autoLoginCredentials={autoLoginCredentials}
     />
   )
 }
