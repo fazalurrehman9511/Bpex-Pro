@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_URL || ''
+const MAX_SESSION_EVENTS = Number(import.meta.env.VITE_LIVE_EVENTS_MAX || 120)
 
 function formatSize(n) {
   const v = Number(n)
@@ -189,7 +190,7 @@ export async function fetchSessionMarkets() {
         Math.min(e.matched / 1e6, 50)
       return rank(b) - rank(a)
     })
-    return { events: events.slice(0, 24), source: 'session' }
+    return { events: events.slice(0, MAX_SESSION_EVENTS), source: 'session' }
   } catch {
     return null
   }

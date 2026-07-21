@@ -29,18 +29,13 @@ export default function LiveEvents() {
 
     async function load() {
       try {
-        const data = await fetchLiveEvents()
+        const [data, session] = await Promise.all([fetchLiveEvents(), fetchSessionMarkets()])
         if (cancelled) return
-        let next = Array.isArray(data.events) ? data.events : []
-
-        const session = await fetchSessionMarkets()
-        if (session?.events?.length) {
-          const map = new Map()
-          for (const e of [...session.events, ...next]) {
-            map.set(e.marketId || e.id || e.teams, e)
-          }
-          next = [...map.values()].slice(0, 24)
-        }
+        const next = session?.events?.length
+          ? session.events
+          : Array.isArray(data.events)
+            ? data.events
+            : []
 
         setEvents(next)
         setEmpty(next.length === 0)

@@ -8,6 +8,8 @@ import {
   ChevronDown,
   MessageCircle,
   UserPlus,
+  Copy,
+  Lock,
 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
@@ -17,7 +19,9 @@ import {
   isBpexchLoggedIn,
   subscribeBpexchAuth,
   getBpexchUsername,
+  getBpexchPassword,
   subscribeBpexchUsername,
+  subscribeBpexchPassword,
   clearBpexchSession,
   setBpexchUsername,
   usernameFromAuthToken,
@@ -73,12 +77,20 @@ function formatBalanceLabel(raw) {
   return formatCurrency(n)
 }
 
-function ProfileMenu({ username, balanceLabel, balanceLoading, onLogout, onRefreshBalance }) {
+function ProfileMenu({
+  username,
+  password,
+  balanceLabel,
+  balanceLoading,
+  onLogout,
+  onRefreshBalance,
+}) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   const display = username || 'User'
   const initial = display.charAt(0).toUpperCase()
   const balText = balanceLoading && !balanceLabel ? '…' : balanceLabel || '—'
+  const passText = String(password || '').trim() || '—'
 
   useEffect(() => {
     if (!open) return undefined
@@ -144,6 +156,32 @@ function ProfileMenu({ username, balanceLabel, balanceLoading, onLogout, onRefre
               Available{' '}
               <span className="font-semibold text-accent">{balText}</span>
             </p>
+            <div className="mt-3 rounded-md border border-border bg-navy-light/70 px-3 py-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wide text-muted">Password</p>
+                  <p className="truncate text-xs font-semibold text-text">{passText}</p>
+                </div>
+                {password ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(password)
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    aria-label="Copy password"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" />
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="py-1">
@@ -184,6 +222,7 @@ export function HeaderBar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
   const [username, setUsername] = useState(() => getBpexchUsername())
+  const [savedPassword, setSavedPassword] = useState(() => getBpexchPassword())
   const [balanceRaw, setBalanceRaw] = useState(() => getEmbedAvailableBalance())
   const [balanceLoading, setBalanceLoading] = useState(false)
   const location = useLocation()
@@ -191,6 +230,7 @@ export function HeaderBar() {
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
   useEffect(() => subscribeBpexchUsername(setUsername), [])
+  useEffect(() => subscribeBpexchPassword(setSavedPassword), [])
   useEffect(() => subscribeEmbedBalance(setBalanceRaw), [])
 
   useEffect(() => {
@@ -200,16 +240,6 @@ export function HeaderBar() {
     }
     setUsername(getBpexchUsername())
   }, [loggedIn, location.pathname])
-
-  useEffect(() => {
-    if (
-      location.pathname === '/dashboard' ||
-      location.pathname === '/deposit' ||
-      location.pathname === '/withdraw'
-    ) {
-      setLoggedIn(true)
-    }
-  }, [location.pathname])
 
   const loadBalance = useCallback(async () => {
     const u = getBpexchUsername() || username
@@ -333,6 +363,7 @@ export function HeaderBar() {
               </Link>
               <ProfileMenu
                 username={username}
+                password={savedPassword}
                 balanceLabel={balanceLabel}
                 balanceLoading={balanceLoading}
                 onLogout={handleLogout}
@@ -413,6 +444,7 @@ export function HeaderBar() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-accent">{username || 'User'}</p>
                   <p className="text-xs font-semibold text-text">{balanceLabel || '—'}</p>
+                  <p className="truncate text-[11px] text-muted">Pass: {savedPassword || '—'}</p>
                 </div>
               </div>
               <Link

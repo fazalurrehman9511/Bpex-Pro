@@ -381,8 +381,8 @@ export default function NativeWalletApp() {
 
   const submitRegister = async () => {
     setRegError('')
-    if (!regPassword || regPassword.length < 6) {
-      setRegError('Password min 6 characters')
+    if (!regPassword || regPassword.length < 8) {
+      setRegError('Password min 8 characters')
       return
     }
     if (regPassword !== regConfirm) {
@@ -404,11 +404,12 @@ export default function NativeWalletApp() {
       })
       const createdUser = data.user?.username
       if (!createdUser) throw new Error('Account ban gaya magar username nahi mila')
-      setRegCreated({ username: createdUser, password: regPassword })
       if (regPhone.trim()) {
         localStorage.setItem(PHONE_KEY, regPhone.trim())
         setPhone(regPhone.trim())
       }
+      flash('Account created successfully')
+      finishRegisterLogin({ username: createdUser, password: regPassword })
     } catch (err) {
       setRegError(err.message || 'Failed to create account')
     } finally {
@@ -416,10 +417,10 @@ export default function NativeWalletApp() {
     }
   }
 
-  const finishRegisterLogin = () => {
-    if (!regCreated) return
-    const u = regCreated.username
-    const p = regCreated.password
+  const finishRegisterLogin = (credentials = regCreated) => {
+    if (!credentials) return
+    const u = credentials.username
+    const p = credentials.password
     setUsername(u)
     setPassword(p)
     saveJson(STORAGE_KEY, { username: u, password: p })
@@ -622,7 +623,7 @@ export default function NativeWalletApp() {
       <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#063822]">
         <ScreenProfile
           username={username}
-          passwordMask={password ? '••••••••' : '••••••••'}
+          passwordText={password || '—'}
           balance={balance}
           balanceLoading={balanceLoading}
           onCopyUsername={() => {

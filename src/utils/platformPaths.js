@@ -29,9 +29,9 @@ export function isBpexchInternalPath(pathname = '') {
   return BPEXCH_PATH_PATTERN.test(path)
 }
 
-/** Fullscreen BPEXCH embed — only /login and /dashboard in the address bar */
+/** Fullscreen BPEXCH embed — only /dashboard in the address bar */
 export function isPlatformEmbedRoute(pathname = '') {
-  return pathname === '/login' || pathname === '/dashboard'
+  return pathname === '/dashboard'
 }
 
 /** Strip /bpexch prefix and map internal paths to clean FlowExch URLs */

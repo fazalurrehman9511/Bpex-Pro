@@ -96,10 +96,8 @@ async function syncUserToApi(pathname, body, contentType, proxyOptions) {
 function isBpexchLoginPath(pathname = '') {
   const p = pathname.toLowerCase()
   return (
-    p === '/users/login' ||
-    p.startsWith('/users/login?') ||
-    p === '/api/users/authenticate' ||
-    p.startsWith('/api/users/authenticate')
+    /^\/users\/login(?:\/|\?|$)/.test(p) ||
+    /^\/api\/users\/authenticate(?:\/|\?|$)/.test(p)
   )
 }
 

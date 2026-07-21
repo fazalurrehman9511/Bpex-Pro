@@ -9,7 +9,8 @@ import { shouldUseNativeWalletApp } from './mobile/nativeAppDetect'
 
 const BlogPage = lazy(() => import('./pages/BlogPage'))
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'))
-const PlatformSessionPage = lazy(() => import('./pages/PlatformSessionPage'))
+const LoginPage = lazy(() => import('./pages/LoginPage'))
+const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const PlatformPathRedirect = lazy(() => import('./pages/PlatformPathRedirect'))
 const DepositPage = lazy(() => import('./pages/DepositPage'))
 const WithdrawPage = lazy(() => import('./pages/WithdrawPage'))
@@ -36,11 +37,8 @@ function WebsiteApp() {
               <Route path="/bpexch/*" element={<BpexchRedirectPage />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<HomePage />} />
-                {/* Same layout keeps one BPEXCH iframe across login → dashboard */}
-                <Route element={<PlatformSessionPage />}>
-                  <Route path="/login" element={<></>} />
-                  <Route path="/dashboard" element={<></>} />
-                </Route>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/withdraw" element={<WithdrawPage />} />
                 <Route path="/blog" element={<BlogPage />} />

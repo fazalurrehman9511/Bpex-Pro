@@ -11,25 +11,37 @@ function slugFromName(name) {
     .slice(0, 10)
 }
 
-/** Auto username: name/phone based, unique in local DB. */
-function generateUniqueUsername({ name, phone } = {}) {
-  const digits = String(phone || '').replace(/\D/g, '')
-  const phoneTail = digits.slice(-4) || String(Math.floor(1000 + Math.random() * 9000))
-  let base = slugFromName(name)
-  if (base.length < 3) base = 'bpx'
+function randomFiveDigits() {
+  return String(Math.floor(10000 + Math.random() * 90000))
+}
 
+function buildAutoUsername(name, suffix) {
+  const serial = String(suffix || '').replace(/\D/g, '').slice(-5) || randomFiveDigits()
+  let base = slugFromName(name)
+  if (base.endsWith('bpx')) base = base.slice(0, -3)
+  if (base.length < 3) base = 'user'
+
+  const maxBaseLength = Math.max(1, 20 - 'bpx'.length - serial.length)
+  return `${base.slice(0, maxBaseLength)}bpx${serial}`
+}
+
+/** Auto username: name/phone based, unique in local DB. */
+function generateUniqueUsername({ name, phone } = {}, reserved = new Set()) {
+  const digits = String(phone || '').replace(/\D/g, '')
+  const phoneTail = digits.slice(-5)
   for (let i = 0; i < 40; i++) {
-    const suffix =
-      i === 0 ? phoneTail : String(Math.floor(1000 + Math.random() * 9000))
-    const username = `${base}${suffix}`.slice(0, 20)
-    if (username.length < 4) continue
+    const suffix = i === 0 && phoneTail.length === 5 ? phoneTail : randomFiveDigits()
+    const username = buildAutoUsername(name, suffix)
+    const key = username.toLowerCase()
+    if (reserved.has(key)) continue
     const existing = db
       .prepare('SELECT id FROM bpexch_users WHERE lower(username) = lower(?)')
       .get(username)
     if (!existing) return username
+    reserved.add(key)
   }
 
-  return `bpx${Date.now().toString(36)}`
+  return buildAutoUsername(name, String(Date.now()).slice(-5))
 }
 
 function saveLocalUser({ username, password, phone, name, reference }) {
@@ -71,10 +83,12 @@ router.post('/', async (req, res) => {
     const phone = String(req.body?.phone || '').trim()
     const name = String(req.body?.name || '').trim()
     const countryCode = String(req.body?.countryCode || 'PK').trim().toUpperCase()
-    let username = String(req.body?.username || '').trim()
+    const requestedUsername = String(req.body?.username || '').trim()
+    const isAutoUsername = !requestedUsername
+    let username = requestedUsername
 
-    if (!password || password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' })
+    if (!password || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' })
     }
     if (password !== confirmPassword) {
       return res.status(400).json({ error: 'Passwords do not match' })
@@ -96,20 +110,45 @@ router.post('/', async (req, res) => {
       if (existing) {
         return res.status(409).json({ error: 'Username already exists. Try another.' })
       }
-    } else {
-      username = generateUniqueUsername({ name, phone })
     }
 
-    await createBpexchBettorAccount({
-      username,
-      password,
-      phone,
-      name,
-      reference: `flowexch-${countryCode}`,
-    })
+    const reservedUsernames = new Set()
+    const maxAutoAttempts = isAutoUsername ? 8 : 1
+    let createdUsername = ''
+
+    for (let attempt = 0; attempt < maxAutoAttempts; attempt += 1) {
+      const candidate = isAutoUsername
+        ? generateUniqueUsername({ name, phone }, reservedUsernames)
+        : username
+
+      reservedUsernames.add(candidate.toLowerCase())
+
+      try {
+        await createBpexchBettorAccount({
+          username: candidate,
+          password,
+          phone,
+          name,
+          reference: `flowexch-${countryCode}`,
+        })
+        createdUsername = candidate
+        break
+      } catch (err) {
+        if (isAutoUsername && err?.code === 'USERNAME_EXISTS' && attempt < maxAutoAttempts - 1) {
+          continue
+        }
+        throw err
+      }
+    }
+
+    if (!createdUsername) {
+      const err = new Error('Could not generate an available BPEXCH username. Please try again.')
+      err.code = 'USERNAME_EXISTS'
+      throw err
+    }
 
     const row = saveLocalUser({
-      username,
+      username: createdUsername,
       password,
       phone,
       name,
@@ -125,7 +164,11 @@ router.post('/', async (req, res) => {
   } catch (err) {
     console.error('[register]', err.code || '', err.message)
     const status =
-      err.code === 'NOT_CONFIGURED' || err.code === 'AGENT_NO_PERMISSION' ? 503 : 400
+      err.code === 'NOT_CONFIGURED' || err.code === 'AGENT_NO_PERMISSION'
+        ? 503
+        : err.code === 'USERNAME_EXISTS'
+          ? 409
+          : 400
     res.status(status).json({
       error: err.message || 'Failed to create account',
       code: err.code || 'CREATE_FAILED',

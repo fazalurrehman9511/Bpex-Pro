@@ -1,5 +1,6 @@
 const FLAG_KEY = 'flowexch_bpexch_logged_in'
 const USERNAME_KEY = 'flowexch_bpexch_username'
+const PASSWORD_KEY = 'flowexch_bpexch_password'
 const EVENT = 'flowexch-auth-change'
 
 function readCookie(name) {
@@ -102,6 +103,27 @@ export function setBpexchUsername(username) {
   }
 }
 
+export function getBpexchPassword() {
+  if (typeof window === 'undefined') return ''
+  return String(storageGet(PASSWORD_KEY) || '')
+}
+
+export function setBpexchPassword(password) {
+  const p = String(password || '')
+  storageSet(PASSWORD_KEY, p)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent(EVENT, {
+        detail: {
+          loggedIn: isBpexchLoggedIn(),
+          username: getBpexchUsername(),
+          password: p,
+        },
+      }),
+    )
+  }
+}
+
 export function isBpexchLoggedIn() {
   if (typeof window === 'undefined') return false
   if (getBpexchAuthToken()) return true
@@ -152,11 +174,14 @@ function expireCookie(name) {
 export function clearBpexchSession() {
   storageSet(FLAG_KEY, '')
   storageSet(USERNAME_KEY, '')
+  storageSet(PASSWORD_KEY, '')
   try {
     sessionStorage.removeItem(FLAG_KEY)
     sessionStorage.removeItem(USERNAME_KEY)
+    sessionStorage.removeItem(PASSWORD_KEY)
     localStorage.removeItem(FLAG_KEY)
     localStorage.removeItem(USERNAME_KEY)
+    localStorage.removeItem(PASSWORD_KEY)
   } catch {
     /* ignore */
   }
@@ -175,7 +200,7 @@ export function clearBpexchSession() {
 export function subscribeBpexchAuth(listener) {
   const onChange = () => listener(isBpexchLoggedIn())
   const onStorage = (e) => {
-    if (e.key === FLAG_KEY || e.key === USERNAME_KEY) onChange()
+    if (e.key === FLAG_KEY || e.key === USERNAME_KEY || e.key === PASSWORD_KEY) onChange()
   }
   window.addEventListener(EVENT, onChange)
   window.addEventListener('storage', onStorage)
@@ -194,6 +219,23 @@ export function subscribeBpexchUsername(listener) {
   const onChange = () => listener(getBpexchUsername())
   const onStorage = (e) => {
     if (e.key === USERNAME_KEY) onChange()
+  }
+  window.addEventListener(EVENT, onChange)
+  window.addEventListener('storage', onStorage)
+  window.addEventListener('focus', onChange)
+  document.addEventListener('visibilitychange', onChange)
+  return () => {
+    window.removeEventListener(EVENT, onChange)
+    window.removeEventListener('storage', onStorage)
+    window.removeEventListener('focus', onChange)
+    document.removeEventListener('visibilitychange', onChange)
+  }
+}
+
+export function subscribeBpexchPassword(listener) {
+  const onChange = () => listener(getBpexchPassword())
+  const onStorage = (e) => {
+    if (e.key === PASSWORD_KEY) onChange()
   }
   window.addEventListener(EVENT, onChange)
   window.addEventListener('storage', onStorage)

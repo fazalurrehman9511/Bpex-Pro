@@ -6,11 +6,15 @@ import {
   setBpexchLoggedIn,
   setBpexchUsername,
   clearBpexchSession,
+  getBpexchUsername,
 } from '../utils/bpexchAuth'
+import { verifyBpexchUser } from '../utils/api'
 import {
   normalizePublicPath,
   shouldSyncPublicPath,
 } from '../utils/platformPaths'
+
+const POST_LOGIN_REDIRECT_KEY = 'flowexch_post_login_redirect'
 
 const DASHBOARD_PATHS = [
   '/bpexch/Common/Dashboard',
@@ -64,9 +68,12 @@ export default function EmbedFrame({
   const [key, setKey] = useState(0)
   const [actionAnchor, setActionAnchor] = useState(null)
   const [narrow, setNarrow] = useState(false)
-  const iframeRef = useRef(null)
-  const navigate = useNavigate()
   const location = useLocation()
+  const navigate = useNavigate()
+  const iframeRef = useRef(null)
+  const verifiedUsernameRef = useRef('')
+  const checkingUsernameRef = useRef('')
+  const publicPathRef = useRef(location.pathname)
 
   const captureBalanceFromIframe = useCallback(() => {
     try {
@@ -119,6 +126,72 @@ export default function EmbedFrame({
     }
   }
 
+  const redirectToLoginWithError = useCallback((message) => {
+    verifiedUsernameRef.current = ''
+    checkingUsernameRef.current = ''
+    publicPathRef.current = '/login'
+    clearBpexchSession()
+    setBpexchUsername('')
+    setBpexchLoggedIn(false)
+    setEmbedAvailableBalance('')
+    const params = new URLSearchParams()
+    params.set(
+      'error',
+      String(message || "User doesn't exist in our database. Please register first."),
+    )
+    window.location.replace(`/login?${params.toString()}`)
+  }, [])
+
+  const confirmLocalUserAccess = useCallback(
+    async (candidate, { goDashboard = false } = {}) => {
+      const username = String(candidate || getBpexchUsername()).trim()
+      if (!username) return false
+
+      const key = username.toLowerCase()
+      if (verifiedUsernameRef.current === key) {
+        setBpexchUsername(username)
+        setBpexchLoggedIn(true, username)
+        if (goDashboard && location.pathname !== '/dashboard') {
+          navigate('/dashboard', { replace: true })
+        }
+        return true
+      }
+
+      if (checkingUsernameRef.current === key) return false
+      checkingUsernameRef.current = key
+
+      try {
+        await verifyBpexchUser({ username })
+        verifiedUsernameRef.current = key
+        setBpexchUsername(username)
+        setBpexchLoggedIn(true, username)
+        let redirectHome = false
+        try {
+          redirectHome = sessionStorage.getItem(POST_LOGIN_REDIRECT_KEY) === 'home'
+          if (redirectHome) sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY)
+        } catch {
+          /* ignore */
+        }
+        if (redirectHome) {
+          navigate('/', { replace: true })
+          return true
+        }
+        if (goDashboard && location.pathname !== '/dashboard') {
+          navigate('/dashboard', { replace: true })
+        }
+        return true
+      } catch (err) {
+        redirectToLoginWithError(
+          err?.message || "User doesn't exist in our database. Please register first.",
+        )
+        return false
+      } finally {
+        if (checkingUsernameRef.current === key) checkingUsernameRef.current = ''
+      }
+    },
+    [location.pathname, navigate, redirectToLoginWithError],
+  )
+
   const handleLoad = () => {
     setLoading(false)
     postViewportToIframe()
@@ -132,9 +205,11 @@ export default function EmbedFrame({
         (p) => path === p || path.startsWith('/bpexch/Common/') || path.startsWith('/bpexch/Home')
       )
       if (isDashboard && !path.includes('/Users/Login')) {
-        setBpexchLoggedIn(true)
-        navigate('/dashboard', { replace: true })
+        publicPathRef.current = '/dashboard'
+        void confirmLocalUserAccess(getBpexchUsername(), { goDashboard: true })
       } else if (path.includes('/Users/Login') || path.includes('/login')) {
+        publicPathRef.current = '/login'
+        verifiedUsernameRef.current = ''
         setBpexchLoggedIn(false)
       }
     } catch {
@@ -187,12 +262,17 @@ export default function EmbedFrame({
         const u = String(data.username || '').trim()
         if (u) {
           setBpexchUsername(u)
-          setBpexchLoggedIn(true, u)
+          if (publicPathRef.current === '/dashboard' || location.pathname === '/dashboard') {
+            void confirmLocalUserAccess(u, { goDashboard: true })
+          }
         }
         return
       }
 
       if (action === 'auth-logout') {
+        verifiedUsernameRef.current = ''
+        checkingUsernameRef.current = ''
+        publicPathRef.current = '/login'
         clearBpexchSession()
         setBpexchUsername('')
         setBpexchLoggedIn(false)
@@ -207,10 +287,13 @@ export default function EmbedFrame({
         const pathPart = q >= 0 ? raw.slice(0, q) : raw
         const search = q >= 0 ? raw.slice(q) : ''
         const full = normalizePublicPath(pathPart, search)
+        publicPathRef.current = full
         const onLogin = full === '/login' || /\/Users\/Login|\/login/i.test(pathPart)
-        if (onLogin) setBpexchLoggedIn(false)
-        else if (full === '/dashboard' || /Dashboard|Home|Common/i.test(pathPart)) {
-          setBpexchLoggedIn(true)
+        if (onLogin) {
+          verifiedUsernameRef.current = ''
+          setBpexchLoggedIn(false)
+        } else if (full === '/dashboard' || /Dashboard|Home|Common/i.test(pathPart)) {
+          void confirmLocalUserAccess(getBpexchUsername(), { goDashboard: false })
         }
         if (syncPublicUrl || redirectOnLogin) {
           const allowed = full === '/dashboard' || full === '/login'
@@ -240,7 +323,26 @@ export default function EmbedFrame({
 
     window.addEventListener('message', handleMessage)
     return () => window.removeEventListener('message', handleMessage)
-  }, [listenForActions, syncPublicUrl, redirectOnLogin, navigate, location.pathname, location.search])
+  }, [
+    confirmLocalUserAccess,
+    listenForActions,
+    syncPublicUrl,
+    redirectOnLogin,
+    navigate,
+    location.pathname,
+    location.search,
+  ])
+
+  useEffect(() => {
+    publicPathRef.current = location.pathname
+    if (location.pathname === '/login') {
+      verifiedUsernameRef.current = ''
+      return
+    }
+    if (location.pathname === '/dashboard') {
+      void confirmLocalUserAccess(getBpexchUsername())
+    }
+  }, [confirmLocalUserAccess, location.pathname])
 
   useEffect(() => {
     if (!listenForActions) return undefined

@@ -65,6 +65,47 @@ function extractAntiForgery(html = '') {
   return match?.[1] || match?.[2] || ''
 }
 
+function parseClientUsernames(html = '') {
+  const names = new Set()
+  const rows = html.match(/<tr[\s\S]*?<\/tr>/gi) || []
+  for (const row of rows) {
+    const cells = [...row.matchAll(/<td[^>]*>([\s\S]*?)<\/td>/gi)].map((m) =>
+      m[1].replace(/<[^>]+>/g, '').trim(),
+    )
+    const username = cells.length >= 2 ? cells[1] : ''
+    if (!username || /^id$/i.test(username) || /^name$/i.test(username)) continue
+    names.add(username.toLowerCase())
+  }
+  return names
+}
+
+async function getClientUsernameSet(session, { forceRefresh = false } = {}) {
+  if (!forceRefresh && session.clientUsernames instanceof Set) {
+    return session.clientUsernames
+  }
+
+  const res = await bpexchFetch(session, '/Users', { accept: 'text/html' })
+  const html = await res.text()
+  if (res.status !== 200 && !/Clients List/i.test(html)) {
+    throw new Error('Could not open BPEXCH clients list')
+  }
+
+  session.clientUsernames = parseClientUsernames(html)
+  return session.clientUsernames
+}
+
+async function assertUsernameAvailable(session, username) {
+  const target = String(username || '').trim().toLowerCase()
+  if (!target) return
+
+  const existing = await getClientUsernameSet(session)
+  if (existing.has(target)) {
+    const err = new Error('Username already exists on BPEXCH')
+    err.code = 'USERNAME_EXISTS'
+    throw err
+  }
+}
+
 async function loginAgent(session) {
   const { username, password } = agentCredentials()
   if (!username || !password) {
@@ -126,11 +167,10 @@ function isCreateSuccess(status, location = '', text = '') {
   if (status >= 300 && status < 400) {
     if (/login/i.test(loc)) return false
     if (/\/Users\/Create/i.test(loc)) return false
-    /* Success redirects to Accounts/Chart?MID=... */
-    return true
+    return /Accounts\/Chart|Users\/Edit|Accounts\/Cash/i.test(loc)
   }
   if (status >= 200 && status < 300) {
-    if (/already\s*exist|username.*(taken|exist)|invalid|error|fail|denied/i.test(text.slice(0, 3000))) {
+    if (extractError(text)) {
       return false
     }
     if (/Accounts\/Chart|successfully|created/i.test(text) || /Accounts\/Chart/i.test(loc)) {
@@ -204,6 +244,8 @@ export async function createBpexchBettorAccount({
     throw err
   }
 
+  await assertUsernameAvailable(session, username)
+
   const anti = extractAntiForgery(createHtml)
   const notes = name ? `FlowExch self-register: ${name}` : 'FlowExch self-register'
   const form = new URLSearchParams()
@@ -231,6 +273,9 @@ export async function createBpexchBettorAccount({
   const text = res.status === 200 ? await res.text() : ''
 
   if (isCreateSuccess(res.status, location, text)) {
+    if (session.clientUsernames instanceof Set) {
+      session.clientUsernames.add(String(username).trim().toLowerCase())
+    }
     return { ok: true, remote: true, path: '/Users/Create', location }
   }
 
@@ -243,7 +288,7 @@ export async function createBpexchBettorAccount({
         : `Could not create account on BPEXCH (${res.status})`)
 
   const err = new Error(msg)
-  err.code = 'CREATE_FAILED'
+  err.code = /already exists on bpexch/i.test(msg) ? 'USERNAME_EXISTS' : 'CREATE_FAILED'
   throw err
 }
 

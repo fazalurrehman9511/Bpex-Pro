@@ -17,6 +17,11 @@ import { getCountries, getCountryByCode, loadWhatsappAgents } from '../data/coun
 import { getPaymentMethod } from '../data/paymentMethods'
 import { detectCountryCode } from '../utils/detectCountry'
 import { fetchRegisterStatus, selfRegister } from '../utils/api'
+import { openBpexchWithAppLogin } from '../mobile/bpexchAutoLogin'
+import { setBpexchPassword, setBpexchUsername } from '../utils/bpexchAuth'
+
+const POST_LOGIN_REDIRECT_KEY = 'flowexch_post_login_redirect'
+const FLASH_MESSAGE_KEY = 'flowexch_flash_message'
 
 const intentLabels = {
   register: 'Create Account',
@@ -43,6 +48,7 @@ export default function RegistrationModal() {
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [created, setCreated] = useState(null)
+  const [autoLoginPending, setAutoLoginPending] = useState(false)
   const [selfAvailable, setSelfAvailable] = useState(true)
   const [agentCountries, setAgentCountries] = useState(() => getCountries())
 
@@ -68,6 +74,7 @@ export default function RegistrationModal() {
     setErrors({})
     setSubmitError('')
     setCreated(null)
+    setAutoLoginPending(false)
     setShowPass(false)
 
     loadWhatsappAgents().then((list) => {
@@ -116,7 +123,7 @@ export default function RegistrationModal() {
 
   const validateSelf = () => {
     const next = {}
-    if (!password || password.length < 6) next.password = 'Min 6 characters'
+    if (!password || password.length < 8) next.password = 'Min 8 characters'
     if (password !== confirmPassword) next.confirmPassword = 'Passwords do not match'
     if (!phone.trim()) next.phone = 'Phone number is required'
     else if (!/^[\d\s+\-()]{7,}$/.test(phone.trim())) {
@@ -152,12 +159,37 @@ export default function RegistrationModal() {
         name: name.trim(),
         countryCode: 'PK',
       })
-      setCreated({
-        username: data.user?.username || '',
-        password,
-      })
+      const username = String(data.user?.username || '').trim()
+      if (!username) throw new Error('Account created but username missing')
+
+      const credentials = { username, password }
+      setCreated(credentials)
+      setAutoLoginPending(true)
+      setBpexchUsername(username)
+      setBpexchPassword(password)
+
+      try {
+        sessionStorage.setItem(POST_LOGIN_REDIRECT_KEY, 'home')
+        sessionStorage.setItem(FLASH_MESSAGE_KEY, 'Account created successfully')
+      } catch {
+        /* ignore */
+      }
+
+      window.setTimeout(() => {
+        openBpexchWithAppLogin(credentials).catch((err) => {
+          try {
+            sessionStorage.removeItem(POST_LOGIN_REDIRECT_KEY)
+            sessionStorage.removeItem(FLASH_MESSAGE_KEY)
+          } catch {
+            /* ignore */
+          }
+          setAutoLoginPending(false)
+          setSubmitError(err.message || 'Auto login failed. Please login manually.')
+        })
+      }, 350)
     } catch (err) {
       setSubmitError(err.message || 'Failed to create account')
+      setAutoLoginPending(false)
     } finally {
       setSubmitting(false)
     }
@@ -255,7 +287,9 @@ export default function RegistrationModal() {
 
         <p className="mb-4 text-xs text-muted">
           {created
-            ? 'Your BpxPro account is ready'
+            ? autoLoginPending
+              ? 'Account created successfully. Auto login ho raha hai...'
+              : 'Your BpxPro account is ready'
             : isRegister && path === 'self'
               ? 'Password set karein — username system auto generate karega'
               : 'Select country → enter details → connect with local agent'}
@@ -279,8 +313,10 @@ export default function RegistrationModal() {
         {created ? (
           <div className="space-y-4">
             <div className="rounded border border-accent/40 bg-accent/10 px-4 py-3 text-center">
-              <p className="text-sm font-bold text-accent">Account created</p>
-              <p className="mt-1 text-xs text-muted">Save these login details</p>
+              <p className="text-sm font-bold text-accent">Account created successfully</p>
+              <p className="mt-1 text-xs text-muted">
+                {autoLoginPending ? 'Logging you in and taking you home...' : 'Save these login details'}
+              </p>
             </div>
             <div className="space-y-2 rounded border border-border bg-navy-dark px-4 py-3">
               <div className="flex items-center justify-between gap-2">
@@ -294,24 +330,36 @@ export default function RegistrationModal() {
                 <p className="text-sm font-bold text-text">{created.password}</p>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={copyCreds}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded border border-border px-3 py-2.5 text-xs font-semibold text-muted hover:border-accent/40 hover:text-text transition-colors"
-              >
-                <Copy className="h-3.5 w-3.5" />
-                Copy
-              </button>
-              <button
-                type="button"
-                onClick={goLogin}
-                className="flex flex-1 items-center justify-center gap-1.5 rounded bg-accent px-3 py-2.5 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors"
-              >
-                <LayoutDashboard className="h-3.5 w-3.5" />
-                Go to Login
-              </button>
-            </div>
+            {submitError ? (
+              <p className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                {submitError}
+              </p>
+            ) : null}
+            {autoLoginPending ? (
+              <div className="flex items-center justify-center gap-2 rounded border border-accent/30 bg-accent/5 px-3 py-2.5 text-xs font-semibold text-accent">
+                <Check className="h-3.5 w-3.5" />
+                Success! Auto login in progress...
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={copyCreds}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded border border-border px-3 py-2.5 text-xs font-semibold text-muted hover:border-accent/40 hover:text-text transition-colors"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy
+                </button>
+                <button
+                  type="button"
+                  onClick={goLogin}
+                  className="flex flex-1 items-center justify-center gap-1.5 rounded bg-accent px-3 py-2.5 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  Login Manually
+                </button>
+              </div>
+            )}
           </div>
         ) : path === 'self' && isRegister ? (
           <form onSubmit={handleSelfRegister} className="space-y-3.5" noValidate>
@@ -332,7 +380,8 @@ export default function RegistrationModal() {
                   type={showPass ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min 6 characters"
+                  placeholder="Min 8 characters"
+                  minLength={8}
                   autoComplete="new-password"
                   className={`${inputClass} pr-11`}
                 />
@@ -358,6 +407,7 @@ export default function RegistrationModal() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Re-enter password"
+                minLength={8}
                 autoComplete="new-password"
                 className={inputClass}
               />

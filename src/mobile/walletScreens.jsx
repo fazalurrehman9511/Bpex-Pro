@@ -94,7 +94,7 @@ export function WalletBottomNav({ active = 'home', onHome, onProfile }) {
 
 export function ScreenProfile({
   username = '',
-  passwordMask = '••••••••',
+  passwordText = '—',
   balance = null,
   balanceLoading = false,
   onCopyUsername,
@@ -143,7 +143,7 @@ export function ScreenProfile({
         <div className="mt-2 flex items-center justify-between gap-2">
           <div>
             <p className="text-[9px] text-white/50">Password</p>
-            <p className="text-xs font-semibold text-white">{passwordMask}</p>
+            <p className="text-xs font-semibold text-white">{passwordText || '—'}</p>
           </div>
           <button type="button" onClick={onCopyPassword} aria-label="Copy password">
             <Copy className="h-3.5 w-3.5 text-accent" />
@@ -343,7 +343,8 @@ export function ScreenRegister({
                 type={showPass ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => onPassword?.(e.target.value)}
-                placeholder="Min 6 characters"
+                placeholder="Min 8 characters"
+                minLength={8}
                 autoComplete="new-password"
                 className={`${regInputClass} pr-11`}
               />
@@ -367,6 +368,7 @@ export function ScreenRegister({
               value={confirmPassword}
               onChange={(e) => onConfirmPassword?.(e.target.value)}
               placeholder="Re-enter password"
+              minLength={8}
               autoComplete="new-password"
               className={regInputClass}
             />

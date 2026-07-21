@@ -19,6 +19,7 @@ const SESSION_FILE = path.resolve(__dirname, '../../data/bpexch-live-session.jso
 const BPEXCH_ORIGIN = process.env.BPEXCH_BASE_URL || 'https://bpexch.xyz'
 const POLL_MS = Number(process.env.BPEXCH_LIVE_POLL_MS) || 8000
 const CACHE_TTL_MS = 12_000
+const MAX_LIVE_EVENTS = Number(process.env.BPEXCH_LIVE_MAX_EVENTS) || 120
 /** Re-login before BPEXCH kills the session (~20–30 min). */
 const SESSION_MAX_AGE_MS = Number(process.env.BPEXCH_LIVE_SESSION_MS) || 15 * 60 * 1000
 
@@ -514,7 +515,7 @@ function mergeEvents(...lists) {
       if (!prev || rankEvent(e) >= rankEvent(prev)) map.set(key, e)
     }
   }
-  return [...map.values()].sort((a, b) => rankEvent(b) - rankEvent(a)).slice(0, 24)
+  return [...map.values()].sort((a, b) => rankEvent(b) - rankEvent(a)).slice(0, MAX_LIVE_EVENTS)
 }
 
 export async function refreshLiveEvents() {

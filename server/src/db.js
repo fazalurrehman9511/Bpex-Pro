@@ -798,7 +798,7 @@ export function verifyBpexchUserForLogin({ username, password } = {}) {
     return {
       ok: false,
       code: 'not_found',
-      error: 'Yeh account hamari system mein register nahi hai. Pehle register karein ya agent se contact karein.',
+      error: "User doesn't exist in our database. Pehle register karein ya agent se contact karein.",
     }
   }
   if (Number(row.is_active) === 0) {
