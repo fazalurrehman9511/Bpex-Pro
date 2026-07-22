@@ -7,8 +7,11 @@ import {
   setBpexchUsername,
   clearBpexchSession,
   getBpexchUsername,
+  getBpexchAuthToken,
+  getBpexchPassword,
 } from '../utils/bpexchAuth'
 import { verifyBpexchUser } from '../utils/api'
+import { ensureBpexchSession, logBpexchDebug } from '../utils/bpexchSession'
 import {
   normalizePublicPath,
   shouldSyncPublicPath,
@@ -76,6 +79,8 @@ export default function EmbedFrame({
   const verifiedUsernameRef = useRef('')
   const checkingUsernameRef = useRef('')
   const autoLoginAttemptedRef = useRef(false)
+  const sessionRefreshAttemptedRef = useRef(false)
+  const sessionRefreshCountRef = useRef(0)
   const readyCheckTimerRef = useRef(0)
   const publicPathRef = useRef(location.pathname)
   const isDashboardRoute = location.pathname === '/dashboard'
@@ -185,6 +190,7 @@ export default function EmbedFrame({
       const doc = win?.document
       const path = win?.location?.pathname || ''
       const onLogin = path.includes('/Users/Login') || path.includes('/login')
+      const hasAuthToken = Boolean(getBpexchAuthToken())
       const isDashboardPath =
         DASHBOARD_PATHS.some(
           (p) => path === p || path.startsWith('/bpexch/Common/') || path.startsWith('/bpexch/Home')
@@ -195,10 +201,11 @@ export default function EmbedFrame({
         ),
       )
       const bodyText = String(doc?.body?.innerText || '').replace(/\s+/g, ' ').trim()
-      const ready = isDashboardPath && (hasDashboardShell || bodyText.length > 80)
-      return { path, onLogin, isDashboardPath, ready }
+      const ready =
+        isDashboardPath && (hasDashboardShell || bodyText.length > 80 || (hasAuthToken && bodyText.length > 20))
+      return { path, onLogin, isDashboardPath, ready, hasAuthToken }
     } catch {
-      return { path: '', onLogin: false, isDashboardPath: false, ready: false }
+      return { path: '', onLogin: false, isDashboardPath: false, ready: false, hasAuthToken: false }
     }
   }, [])
 
@@ -272,12 +279,57 @@ export default function EmbedFrame({
     window.clearTimeout(readyCheckTimerRef.current)
     try {
       const frame = getFrameStatus()
+      if (
+        frame.onLogin &&
+        isDashboardRoute &&
+        !sessionRefreshAttemptedRef.current &&
+        sessionRefreshCountRef.current < 1 &&
+        autoLoginCredentials?.username &&
+        autoLoginCredentials?.password
+      ) {
+        sessionRefreshAttemptedRef.current = true
+        sessionRefreshCountRef.current += 1
+        setLoading(true)
+        logBpexchDebug('dashboard-login-bounce', {
+          path: frame.path,
+          hasAuthToken: frame.hasAuthToken,
+          attempt: sessionRefreshCountRef.current,
+        })
+        void ensureBpexchSession({
+          username: autoLoginCredentials.username,
+          password: autoLoginCredentials.password,
+          force: true,
+        })
+          .then((ok) => {
+            if (ok) {
+              logBpexchDebug('dashboard-retry', { mode: 'session-refresh' })
+              autoLoginAttemptedRef.current = false
+              setKey((k) => k + 1)
+              return
+            }
+            if (!autoLoginAttemptedRef.current) {
+              autoLoginAttemptedRef.current = true
+              const submitted = submitAutoLoginInsideIframe()
+              if (submitted) return
+            }
+            setLoading(false)
+          })
+          .catch(() => {
+            if (!autoLoginAttemptedRef.current) {
+              autoLoginAttemptedRef.current = true
+              const submitted = submitAutoLoginInsideIframe()
+              if (submitted) return
+            }
+            setLoading(false)
+          })
+        return
+      }
       if (frame.onLogin && autoLoginCredentials && !autoLoginAttemptedRef.current) {
         autoLoginAttemptedRef.current = true
         const submitted = submitAutoLoginInsideIframe()
         if (submitted) return
       }
-      if ((frame.onLogin && autoLoginCredentials) || (isDashboardRoute && !frame.ready)) {
+      if ((frame.onLogin && autoLoginCredentials) || (isDashboardRoute && !frame.ready && !frame.hasAuthToken)) {
         setLoading(true)
         readyCheckTimerRef.current = window.setTimeout(() => {
           handleLoad()
@@ -288,6 +340,7 @@ export default function EmbedFrame({
       /* ignore */
     }
 
+    window.clearTimeout(readyCheckTimerRef.current)
     setLoading(false)
     postViewportToIframe()
     syncUrlFromIframe()
@@ -301,6 +354,8 @@ export default function EmbedFrame({
       )
       if (isDashboard && !path.includes('/Users/Login')) {
         publicPathRef.current = '/dashboard'
+        sessionRefreshAttemptedRef.current = false
+        sessionRefreshCountRef.current = 0
         void confirmLocalUserAccess(getBpexchUsername(), { goDashboard: true })
       } else if (path.includes('/Users/Login') || path.includes('/login')) {
         publicPathRef.current = '/login'
@@ -439,9 +494,17 @@ export default function EmbedFrame({
     publicPathRef.current = location.pathname
     if (location.pathname === '/login') {
       verifiedUsernameRef.current = ''
+      sessionRefreshAttemptedRef.current = false
+      sessionRefreshCountRef.current = 0
       return
     }
     if (location.pathname === '/dashboard') {
+      const username = getBpexchUsername()
+      const password = getBpexchPassword()
+      if (!getBpexchAuthToken() && username && password) {
+        logBpexchDebug('dashboard-prime-on-route', { username })
+        void ensureBpexchSession({ username, password }).catch(() => {})
+      }
       void confirmLocalUserAccess(getBpexchUsername())
     }
   }, [confirmLocalUserAccess, location.pathname])

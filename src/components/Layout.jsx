@@ -2,6 +2,13 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
 import { HeaderBar } from '../components/Header'
 import { isPlatformEmbedRoute } from '../utils/platformPaths'
+import {
+  getBpexchAuthToken,
+  getBpexchPassword,
+  getBpexchUsername,
+  isBpexchLoggedIn,
+} from '../utils/bpexchAuth'
+import { primeBpexchSession } from '../utils/bpexchSession'
 
 const MarqueeTicker = lazy(() => import('../components/MarqueeTicker'))
 const Footer = lazy(() => import('../components/Footer'))
@@ -18,6 +25,14 @@ export default function Layout() {
   useEffect(() => {
     if (!isFullscreen) window.scrollTo(0, 0)
   }, [location.pathname, isFullscreen])
+
+  useEffect(() => {
+    if (getBpexchAuthToken() || !isBpexchLoggedIn()) return
+    const username = getBpexchUsername()
+    const password = getBpexchPassword()
+    if (!username || !password) return
+    primeBpexchSession({ username, password })
+  }, [location.pathname])
 
   // Fullscreen embed — no FlowExch chrome, BPEXCH gets entire viewport
   if (isFullscreen) {

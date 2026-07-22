@@ -18,6 +18,7 @@ import { getPaymentMethod } from '../data/paymentMethods'
 import { detectCountryCode } from '../utils/detectCountry'
 import { fetchRegisterStatus, selfRegister } from '../utils/api'
 import { setBpexchLoggedIn, setBpexchPassword, setBpexchUsername } from '../utils/bpexchAuth'
+import { ensureBpexchSession } from '../utils/bpexchSession'
 
 const FLASH_MESSAGE_KEY = 'flowexch_flash_message'
 
@@ -163,6 +164,10 @@ export default function RegistrationModal() {
       setBpexchUsername(username)
       setBpexchPassword(password)
       setBpexchLoggedIn(true, username)
+      setAutoLoginPending(true)
+      void ensureBpexchSession({ username, password, force: true })
+        .catch(() => false)
+        .finally(() => setAutoLoginPending(false))
 
       try {
         sessionStorage.setItem(FLASH_MESSAGE_KEY, 'Account created successfully')

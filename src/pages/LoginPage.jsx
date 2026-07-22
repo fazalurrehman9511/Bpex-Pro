@@ -10,6 +10,7 @@ import {
   setBpexchPassword,
   setBpexchUsername,
 } from '../utils/bpexchAuth'
+import { ensureBpexchSession } from '../utils/bpexchSession'
 import { BRAND_LOGO_LG, BRAND_NAME } from '../config/brand'
 
 export default function LoginPage() {
@@ -46,6 +47,7 @@ export default function LoginPage() {
       setBpexchUsername(u)
       setBpexchPassword(p)
       setBpexchLoggedIn(true, u)
+      void ensureBpexchSession({ username: u, password: p, force: true }).catch(() => false)
       try {
         sessionStorage.removeItem('flowexch_post_login_redirect')
         sessionStorage.removeItem('flowexch_flash_message')
