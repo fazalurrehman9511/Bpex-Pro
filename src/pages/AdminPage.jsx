@@ -436,6 +436,7 @@ const EXPENSE_CATEGORIES = [
 const BLOG_CATEGORY_OPTIONS = blogCategories.filter((c) => c.id !== 'all')
 
 const BPEXCH_USER_TYPES = ['Bettor', 'Admin', 'Master', 'SuperMaster']
+const ADMIN_IDLE_MS = 20 * 60 * 1000
 
 const EMPTY_BPEXCH_USER_FORM = {
   username: '',
@@ -3523,6 +3524,41 @@ export default function AdminPage() {
     }
     window.addEventListener('unhandledrejection', onReject)
     return () => window.removeEventListener('unhandledrejection', onReject)
+  }, [authed])
+
+  useEffect(() => {
+    if (!authed) return undefined
+
+    let timer = 0
+    const resetIdleTimer = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        logoutAdmin()
+        setAuthed(false)
+      }, ADMIN_IDLE_MS)
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') resetIdleTimer()
+    }
+
+    const events = ['pointerdown', 'keydown', 'scroll', 'touchstart', 'mousemove']
+    for (const name of events) {
+      window.addEventListener(name, resetIdleTimer, { passive: true })
+    }
+    window.addEventListener('focus', resetIdleTimer)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    resetIdleTimer()
+
+    return () => {
+      window.clearTimeout(timer)
+      for (const name of events) {
+        window.removeEventListener(name, resetIdleTimer)
+      }
+      window.removeEventListener('focus', resetIdleTimer)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [authed])
 
   if (!authed) {

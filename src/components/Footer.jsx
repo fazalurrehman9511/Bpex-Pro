@@ -3,9 +3,10 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getCountries, loadWhatsappAgents } from '../data/countries'
 import { navigateToSection } from '../utils/detectCountry'
 import { useModal } from '../context/ModalContext'
+import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import { BRAND_LOGO, BRAND_NAME, SITE_DOMAIN } from '../config/brand'
 
-const links = [
+const baseLinks = [
   { label: 'Live Events', href: '/#events' },
   { label: 'Add Balance', href: '/#payments' },
   { label: 'Dashboard', to: '/dashboard' },
@@ -18,11 +19,18 @@ export default function Footer() {
   const { openModal } = useModal()
   const location = useLocation()
   const navigate = useNavigate()
+  const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
   const [countryList, setCountryList] = useState(() => getCountries())
 
   useEffect(() => {
     loadWhatsappAgents().then(setCountryList)
   }, [])
+
+  useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
+
+  const links = loggedIn
+    ? baseLinks
+    : baseLinks.filter((item) => item.to !== '/dashboard')
 
   const handleHashLink = (e, href) => {
     const id = href.replace('/#', '')
@@ -43,7 +51,7 @@ export default function Footer() {
                 alt={`${BRAND_NAME} logo`}
                 width={72}
                 height={72}
-                className="h-9 w-9 object-contain"
+                className="h-11 w-11 object-contain"
                 decoding="async"
                 loading="lazy"
               />
@@ -76,20 +84,24 @@ export default function Footer() {
                   </a>
                 ),
               )}
-              <button
-                type="button"
-                onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-                className="cursor-pointer text-left text-xs font-semibold text-accent hover:underline"
-              >
-                Register with Agent
-              </button>
-              <button
-                type="button"
-                onClick={() => openModal('register', { registerPath: 'self' })}
-                className="cursor-pointer text-left text-xs text-muted transition-colors hover:text-accent"
-              >
-                Register Myself
-              </button>
+              {!loggedIn && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                    className="cursor-pointer text-left text-xs font-semibold text-accent hover:underline"
+                  >
+                    Register with Agent
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal('register', { registerPath: 'self' })}
+                    className="cursor-pointer text-left text-xs text-muted transition-colors hover:text-accent"
+                  >
+                    Register Myself
+                  </button>
+                </>
+              )}
             </nav>
           </div>
 

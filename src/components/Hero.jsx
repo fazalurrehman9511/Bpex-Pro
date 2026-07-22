@@ -1,5 +1,8 @@
 import { MessageCircle, Shield, Zap, Clock, UserPlus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
+import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 
 const highlights = [
   { icon: Shield, text: 'Trusted agent since 2018' },
@@ -10,6 +13,9 @@ const highlights = [
 
 export default function Hero() {
   const { openModal } = useModal()
+  const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
+
+  useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
 
   return (
     <section className="relative overflow-hidden bg-navy px-4 pt-8 pb-10 sm:px-6 sm:pt-12 sm:pb-14">
@@ -46,26 +52,37 @@ export default function Hero() {
           ))}
         </ul>
 
-        <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
-          <button
-            type="button"
-            onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-            aria-label="Register with WhatsApp agent"
-            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/25 transition-colors hover:bg-accent-hover active:scale-[0.98] sm:w-auto"
-          >
-            <MessageCircle className="h-5 w-5" fill="currentColor" strokeWidth={0} aria-hidden="true" />
-            Register with Agent
-          </button>
-          <button
-            type="button"
-            onClick={() => openModal('register', { registerPath: 'self' })}
-            aria-label="Create account yourself"
-            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded border border-border bg-navy-light px-6 py-3.5 text-sm font-bold text-text transition-colors hover:border-accent/40 active:scale-[0.98] sm:w-auto"
-          >
-            <UserPlus className="h-4 w-4 text-accent" aria-hidden="true" />
-            Register Myself
-          </button>
-        </div>
+        {loggedIn ? (
+          <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
+            <Link
+              to="/dashboard"
+              className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/25 transition-colors hover:bg-accent-hover active:scale-[0.98] sm:w-auto"
+            >
+              Open Dashboard
+            </Link>
+          </div>
+        ) : (
+          <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
+            <button
+              type="button"
+              onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+              aria-label="Register with WhatsApp agent"
+              className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/25 transition-colors hover:bg-accent-hover active:scale-[0.98] sm:w-auto"
+            >
+              <MessageCircle className="h-5 w-5" fill="currentColor" strokeWidth={0} aria-hidden="true" />
+              Register with Agent
+            </button>
+            <button
+              type="button"
+              onClick={() => openModal('register', { registerPath: 'self' })}
+              aria-label="Create account yourself"
+              className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded border border-border bg-navy-light px-6 py-3.5 text-sm font-bold text-text transition-colors hover:border-accent/40 active:scale-[0.98] sm:w-auto"
+            >
+              <UserPlus className="h-4 w-4 text-accent" aria-hidden="true" />
+              Register Myself
+            </button>
+          </div>
+        )}
       </div>
     </section>
   )

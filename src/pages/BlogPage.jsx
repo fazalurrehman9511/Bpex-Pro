@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { BookOpen, Search, Sparkles, MessageCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
 import { blogCategories, blogPosts as staticPosts } from '../data/blogPosts'
 import { fetchBlogPosts } from '../utils/api'
+import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import BlogCard from '../components/blog/BlogCard'
 
 export default function BlogPage() {
@@ -11,6 +13,9 @@ export default function BlogPage() {
   const [search, setSearch] = useState('')
   const [posts, setPosts] = useState(staticPosts)
   const [loading, setLoading] = useState(true)
+  const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
+
+  useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
 
   useEffect(() => {
     let cancelled = false
@@ -185,23 +190,34 @@ export default function BlogPage() {
                   Register with Agent on WhatsApp, or create your account yourself — free setup.
                 </p>
               </div>
-              <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
-                <button
-                  type="button"
-                  onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-                  className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
-                >
-                  <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
-                  Register with Agent
-                </button>
-                <button
-                  type="button"
-                  onClick={() => openModal('register', { registerPath: 'self' })}
-                  className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-navy-dark px-6 py-3.5 text-sm font-bold text-text transition-colors hover:border-accent/40"
-                >
-                  Register Myself
-                </button>
-              </div>
+              {loggedIn ? (
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <Link
+                    to="/dashboard"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
+                  >
+                    Open Dashboard
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+                  <button
+                    type="button"
+                    onClick={() => openModal('register', { registerPath: 'whatsapp' })}
+                    className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
+                  >
+                    <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
+                    Register with Agent
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openModal('register', { registerPath: 'self' })}
+                    className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-2 rounded-xl border border-border bg-navy-dark px-6 py-3.5 text-sm font-bold text-text transition-colors hover:border-accent/40"
+                  >
+                    Register Myself
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

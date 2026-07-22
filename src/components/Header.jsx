@@ -50,7 +50,7 @@ export default function Logo() {
         alt={BRAND_NAME}
         width={72}
         height={72}
-        className="h-9 w-9 object-contain sm:h-10 sm:w-10"
+        className="h-11 w-11 object-contain sm:h-12 sm:w-12"
         decoding="async"
         fetchPriority="high"
       />
@@ -58,7 +58,7 @@ export default function Logo() {
   )
 }
 
-const navLinks = [
+const baseNavLinks = [
   { label: 'Events', id: 'events' },
   { label: 'Deposit', id: 'payments' },
   { label: 'Blog', to: '/blog' },
@@ -300,6 +300,9 @@ export function HeaderBar() {
 
   const isActive = (path) => location.pathname === path
   const balanceLabel = formatBalanceLabel(balanceRaw)
+  const navLinks = loggedIn
+    ? baseNavLinks
+    : baseNavLinks.filter((item) => item.to !== '/dashboard')
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/50 bg-navy-dark/95 backdrop-blur-md">
@@ -314,7 +317,7 @@ export function HeaderBar() {
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-1 rounded px-2.5 py-1.5 text-xs font-medium transition-colors lg:px-3 ${
+                className={`flex items-center gap-1.5 rounded px-3 py-2 text-sm font-semibold transition-colors lg:px-3.5 ${
                   isActive(to)
                     ? 'bg-accent/10 text-accent'
                     : 'text-muted hover:bg-navy-light hover:text-text'
@@ -328,7 +331,7 @@ export function HeaderBar() {
                 key={id}
                 type="button"
                 onClick={() => handleNav(id)}
-                className="cursor-pointer rounded px-2.5 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-navy-light hover:text-text lg:px-3"
+                className="cursor-pointer rounded px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-navy-light hover:text-text lg:px-3.5"
               >
                 {label}
               </button>

@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, LogIn, UserPlus, Wallet, ArrowUpFromLine } from 'lucide-react'
+import { Home, LayoutDashboard, LogIn, MessageCircle, UserPlus, Wallet, ArrowUpFromLine } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
@@ -11,16 +11,6 @@ export default function BottomNav() {
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
-
-  useEffect(() => {
-    if (
-      location.pathname === '/dashboard' ||
-      location.pathname === '/deposit' ||
-      location.pathname === '/withdraw'
-    ) {
-      setLoggedIn(true)
-    }
-  }, [location.pathname])
 
   const navItems = loggedIn
     ? [
@@ -58,23 +48,23 @@ export default function BottomNav() {
           action: () => navigate('/'),
         },
         {
-          icon: LayoutDashboard,
-          label: 'Dashboard',
-          active: location.pathname === '/dashboard',
-          action: () => navigate('/dashboard'),
-        },
-        {
           icon: LogIn,
           label: 'Login',
           active: location.pathname === '/login',
           action: () => navigate('/login'),
         },
         {
-          icon: UserPlus,
+          icon: MessageCircle,
           label: 'Agent',
           active: false,
           action: () => openModal('register', { registerPath: 'whatsapp' }),
           accent: true,
+        },
+        {
+          icon: UserPlus,
+          label: 'Myself',
+          active: false,
+          action: () => openModal('register', { registerPath: 'self' }),
         },
       ]
 

@@ -12,6 +12,40 @@ import {
 
 const router = Router()
 
+function protectedBpexchUsernames() {
+  return [
+    String(config.adminUsername || '').trim().toLowerCase(),
+    String(getBpexchAgentConfig().username || '').trim().toLowerCase(),
+    'superadmin',
+    'bpx_superadmin',
+  ].filter(Boolean)
+}
+
+function isProtectedBpexchUsername(username = '') {
+  const name = String(username || '').trim().toLowerCase()
+  if (!name) return false
+  if (protectedBpexchUsernames().includes(name)) return true
+  return name.includes('superadmin')
+}
+
+function purgeProtectedBpexchUsers() {
+  const protectedNames = protectedBpexchUsernames()
+  if (!protectedNames.length) return 0
+
+  const placeholders = protectedNames.map(() => '?').join(', ')
+  const result = db.prepare(`
+    DELETE FROM bpexch_users
+    WHERE lower(username) IN (${placeholders})
+       OR lower(username) = lower(agent_username)
+       OR lower(username) LIKE '%superadmin%'
+  `).run(...protectedNames)
+
+  if (Number(result.changes) > 0) {
+    console.log(`[bpexch-users] Removed ${result.changes} protected account row(s) from local users`)
+  }
+  return Number(result.changes || 0)
+}
+
 function checkSyncSecret(req) {
   // Fail closed — never allow open sync in any environment
   if (!config.bpexchSyncSecret) return false
@@ -125,6 +159,11 @@ router.post('/sync', (req, res) => {
     if (!user?.username) {
       return res.status(400).json({ error: 'Username is required' })
     }
+    if (isProtectedBpexchUsername(user.username)) {
+      purgeProtectedBpexchUsers()
+      console.log(`[bpexch-sync] Protected account skipped: ${user.username}`)
+      return res.status(204).end()
+    }
 
     if (mode === 'edit') {
       const row = updateExistingUser(user)
@@ -147,6 +186,7 @@ router.post('/sync', (req, res) => {
 
 router.get('/', requireAdmin, (req, res) => {
   try {
+    purgeProtectedBpexchUsers()
     const forActiveAgent = req.query.forActiveAgent !== '0' && req.query.all !== '1'
     const agent = getBpexchAgentConfig().username
     let rows
@@ -178,6 +218,7 @@ router.get('/', requireAdmin, (req, res) => {
 
 router.post('/sync-balances', requireAdmin, async (_req, res) => {
   try {
+    purgeProtectedBpexchUsers()
     if (!isBpexchCashConfigured()) {
       return res.status(503).json({ error: 'BPEXCH agent credentials are not configured' })
     }
@@ -244,6 +285,7 @@ router.post('/sync-balances', requireAdmin, async (_req, res) => {
 /** Import all downline clients from BPEXCH Clients List into local users table. */
 router.post('/sync-from-bpexch', requireAdmin, async (req, res) => {
   try {
+    purgeProtectedBpexchUsers()
     if (!isBpexchCashConfigured()) {
       return res.status(503).json({ error: 'BPEXCH agent credentials are not configured' })
     }
@@ -254,6 +296,7 @@ router.post('/sync-from-bpexch', requireAdmin, async (req, res) => {
     const now = new Date().toISOString()
     let created = 0
     let updated = 0
+    let skipped = 0
 
     const findByUsername = db.prepare(
       'SELECT * FROM bpexch_users WHERE lower(username) = lower(?)',
@@ -278,6 +321,10 @@ router.post('/sync-from-bpexch', requireAdmin, async (req, res) => {
 
     const syncTx = db.transaction((list) => {
       for (const client of list) {
+        if (isProtectedBpexchUsername(client.username)) {
+          skipped += 1
+          continue
+        }
         const existing = findByUsername.get(client.username)
         if (existing) {
           patch.run(
@@ -348,6 +395,7 @@ router.post('/sync-from-bpexch', requireAdmin, async (req, res) => {
       fetched: clients.length,
       created,
       updated,
+      skipped,
       balancesUpdated,
       users: fresh.map((row) => rowToBpexchUser(row, { includePassword: true })),
     })
@@ -363,6 +411,7 @@ router.post('/sync-from-bpexch', requireAdmin, async (req, res) => {
  */
 router.post('/import-clients', requireAdmin, (req, res) => {
   try {
+    purgeProtectedBpexchUsers()
     const clients = Array.isArray(req.body?.clients) ? req.body.clients : []
     if (!clients.length) {
       return res.status(400).json({ error: 'clients array is required' })
@@ -406,6 +455,10 @@ router.post('/import-clients', requireAdmin, (req, res) => {
       for (const raw of list) {
         const username = String(raw?.username || '').trim()
         if (!username) {
+          skipped += 1
+          continue
+        }
+        if (isProtectedBpexchUsername(username)) {
           skipped += 1
           continue
         }
@@ -462,6 +515,11 @@ router.post('/', requireAdmin, (req, res) => {
     }
     if (!password) {
       return res.status(400).json({ error: 'Password is required' })
+    }
+    if (isProtectedBpexchUsername(username)) {
+      return res.status(400).json({
+        error: 'Protected admin/agent account cannot be saved in simple BPEXCH users',
+      })
     }
 
     const existing = db.prepare('SELECT id FROM bpexch_users WHERE username = ?').get(username)
