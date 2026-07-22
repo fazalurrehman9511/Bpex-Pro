@@ -76,7 +76,9 @@ export default function EmbedFrame({
   const verifiedUsernameRef = useRef('')
   const checkingUsernameRef = useRef('')
   const autoLoginAttemptedRef = useRef(false)
+  const readyCheckTimerRef = useRef(0)
   const publicPathRef = useRef(location.pathname)
+  const isDashboardRoute = location.pathname === '/dashboard'
 
   const captureBalanceFromIframe = useCallback(() => {
     try {
@@ -177,6 +179,29 @@ export default function EmbedFrame({
     }
   }
 
+  const getFrameStatus = useCallback(() => {
+    try {
+      const win = iframeRef.current?.contentWindow
+      const doc = win?.document
+      const path = win?.location?.pathname || ''
+      const onLogin = path.includes('/Users/Login') || path.includes('/login')
+      const isDashboardPath =
+        DASHBOARD_PATHS.some(
+          (p) => path === p || path.startsWith('/bpexch/Common/') || path.startsWith('/bpexch/Home')
+        ) || /^\/blank(\/|$)/i.test(path)
+      const hasDashboardShell = Boolean(
+        doc?.querySelector(
+          '.wallet-balance,.dropdown-toggle,.nav-link.dropdown-toggle,.Bl_NT_SF,.Bl_NT_DB,.app-body,.main',
+        ),
+      )
+      const bodyText = String(doc?.body?.innerText || '').replace(/\s+/g, ' ').trim()
+      const ready = isDashboardPath && (hasDashboardShell || bodyText.length > 80)
+      return { path, onLogin, isDashboardPath, ready }
+    } catch {
+      return { path: '', onLogin: false, isDashboardPath: false, ready: false }
+    }
+  }, [])
+
   const redirectToLoginWithError = useCallback((message) => {
     verifiedUsernameRef.current = ''
     checkingUsernameRef.current = ''
@@ -244,16 +269,19 @@ export default function EmbedFrame({
   )
 
   const handleLoad = () => {
+    window.clearTimeout(readyCheckTimerRef.current)
     try {
-      const path = iframeRef.current?.contentWindow?.location?.pathname || ''
-      const onLogin = path.includes('/Users/Login') || path.includes('/login')
-      if (onLogin && autoLoginCredentials && !autoLoginAttemptedRef.current) {
+      const frame = getFrameStatus()
+      if (frame.onLogin && autoLoginCredentials && !autoLoginAttemptedRef.current) {
         autoLoginAttemptedRef.current = true
         const submitted = submitAutoLoginInsideIframe()
         if (submitted) return
       }
-      if (onLogin && autoLoginCredentials) {
+      if ((frame.onLogin && autoLoginCredentials) || (isDashboardRoute && !frame.ready)) {
         setLoading(true)
+        readyCheckTimerRef.current = window.setTimeout(() => {
+          handleLoad()
+        }, 250)
         return
       }
     } catch {
@@ -288,10 +316,16 @@ export default function EmbedFrame({
     setLoading(true)
     setActionAnchor(null)
     autoLoginAttemptedRef.current = false
-    // Don't hold a full-screen blocker forever — show iframe as soon as possible
+    if (isDashboardRoute) {
+      return () => window.clearTimeout(readyCheckTimerRef.current)
+    }
+    // Don't hold a full-screen blocker forever on non-dashboard screens.
     const maxWait = window.setTimeout(() => setLoading(false), 1200)
-    return () => window.clearTimeout(maxWait)
-  }, [src, key])
+    return () => {
+      window.clearTimeout(maxWait)
+      window.clearTimeout(readyCheckTimerRef.current)
+    }
+  }, [isDashboardRoute, src, key])
 
   useEffect(() => {
     if (!listenForActions && !syncPublicUrl && !redirectOnLogin) return undefined
