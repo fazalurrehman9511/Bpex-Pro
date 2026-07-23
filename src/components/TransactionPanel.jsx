@@ -33,6 +33,7 @@ import {
   getBpexchUsername,
   subscribeBpexchUsername,
 } from '../utils/bpexchAuth'
+import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 const statusStyles = {
   pending: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
@@ -155,6 +156,11 @@ export default function TransactionPanel({
   initialPaymentMethod = 'jazzcash',
   embedded = false,
 }) {
+  const openDashboard = (e) => {
+    if (openBpexchLoginInNewTab()) {
+      e?.preventDefault?.()
+    }
+  }
   const { transactions, submitTransaction } = useTransaction()
 
   const [tab, setTab] = useState('form')
@@ -324,6 +330,7 @@ export default function TransactionPanel({
         </div>
         <Link
           to="/dashboard"
+          onClick={openDashboard}
           className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-xs font-semibold text-muted hover:border-accent/40 hover:text-accent transition-colors"
         >
           <LayoutDashboard className="h-3.5 w-3.5" />

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
+import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 const highlights = [
   { icon: Shield, text: 'Trusted agent since 2018' },
@@ -16,6 +17,12 @@ export default function Hero() {
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
+
+  const openDashboard = (e) => {
+    if (openBpexchLoginInNewTab()) {
+      e?.preventDefault?.()
+    }
+  }
 
   return (
     <section className="relative overflow-hidden bg-navy px-4 pt-8 pb-10 sm:px-6 sm:pt-12 sm:pb-14">
@@ -56,6 +63,7 @@ export default function Hero() {
           <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
             <Link
               to="/dashboard"
+              onClick={openDashboard}
               className="inline-flex min-h-12 w-full items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/25 transition-colors hover:bg-accent-hover active:scale-[0.98] sm:w-auto"
             >
               Open Dashboard

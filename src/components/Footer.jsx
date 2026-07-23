@@ -5,6 +5,7 @@ import { navigateToSection } from '../utils/detectCountry'
 import { useModal } from '../context/ModalContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import { BRAND_LOGO, BRAND_NAME, SITE_DOMAIN } from '../config/brand'
+import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 const baseLinks = [
   { label: 'Live Events', href: '/#events' },
@@ -40,6 +41,12 @@ export default function Footer() {
     }
   }
 
+  const openDashboard = (e) => {
+    if (openBpexchLoginInNewTab()) {
+      e?.preventDefault?.()
+    }
+  }
+
   return (
     <footer className="border-t border-border bg-navy-dark px-4 py-8 sm:px-6">
       <div className="mx-auto max-w-5xl">
@@ -69,6 +76,7 @@ export default function Footer() {
                   <Link
                     key={to}
                     to={to}
+                    onClick={to === '/dashboard' ? openDashboard : undefined}
                     className="text-left text-xs text-muted transition-colors hover:text-accent"
                   >
                     {label}

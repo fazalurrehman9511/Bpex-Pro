@@ -34,7 +34,10 @@ export function isBpexchProxyConfigured() {
 }
 
 export function isBpexchProxyRequired() {
-  return process.env.BPEXCH_PROXY_REQUIRED !== '0'
+  const raw = String(process.env.BPEXCH_PROXY_REQUIRED || '').trim().toLowerCase()
+  if (raw === '1' || raw === 'true' || raw === 'yes' || raw === 'on') return true
+  if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') return false
+  return String(process.env.NODE_ENV || '').trim().toLowerCase() === 'production'
 }
 
 export function getBpexchProxyRequiredMessage() {

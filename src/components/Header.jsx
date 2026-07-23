@@ -37,6 +37,7 @@ import {
   parseBalanceAmount,
 } from '../utils/transactions'
 import { BRAND_LOGO, BRAND_NAME } from '../config/brand'
+import { BPEXCH_LOGIN_EXTERNAL_URL, openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 export default function Logo() {
   return (
@@ -66,6 +67,12 @@ const baseNavLinks = [
   { label: 'Contact', id: 'contact' },
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
 ]
+
+function openDashboardExternal(event) {
+  if (openBpexchLoginInNewTab()) {
+    event?.preventDefault?.()
+  }
+}
 
 function formatBalanceLabel(raw) {
   if (raw == null || raw === '') return ''
@@ -185,10 +192,20 @@ function ProfileMenu({
           </div>
 
           <div className="py-1">
-            <Link to="/dashboard" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
+            <a
+              href={BPEXCH_LOGIN_EXTERNAL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              role="menuitem"
+              onClick={(e) => {
+                setOpen(false)
+                openDashboardExternal(e)
+              }}
+              className={itemClass}
+            >
               <LayoutDashboard className="h-4 w-4 text-muted" />
               Dashboard
-            </Link>
+            </a>
             <Link to="/deposit" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
               <Wallet className="h-4 w-4 text-muted" />
               Deposit
@@ -317,6 +334,7 @@ export function HeaderBar() {
               <Link
                 key={to}
                 to={to}
+                onClick={to === '/dashboard' ? openDashboardExternal : undefined}
                 className={`flex items-center gap-1.5 rounded px-3 py-2 text-sm font-semibold transition-colors lg:px-3.5 ${
                   isActive(to)
                     ? 'bg-accent/10 text-accent'

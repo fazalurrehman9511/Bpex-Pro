@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { useModal } from '../context/ModalContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
+import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 export default function BottomNav() {
   const { openModal } = useModal()
@@ -11,6 +12,12 @@ export default function BottomNav() {
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
+
+  const openDashboard = () => {
+    if (!openBpexchLoginInNewTab()) {
+      navigate('/dashboard')
+    }
+  }
 
   const navItems = loggedIn
     ? [
@@ -23,8 +30,8 @@ export default function BottomNav() {
         {
           icon: LayoutDashboard,
           label: 'Dashboard',
-          active: location.pathname === '/dashboard',
-          action: () => navigate('/dashboard'),
+          active: false,
+          action: openDashboard,
         },
         {
           icon: Wallet,

@@ -6,6 +6,7 @@ import { blogCategories, blogPosts as staticPosts } from '../data/blogPosts'
 import { fetchBlogPosts } from '../utils/api'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import BlogCard from '../components/blog/BlogCard'
+import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 export default function BlogPage() {
   const { openModal } = useModal()
@@ -14,6 +15,12 @@ export default function BlogPage() {
   const [posts, setPosts] = useState(staticPosts)
   const [loading, setLoading] = useState(true)
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
+
+  const openDashboard = (e) => {
+    if (openBpexchLoginInNewTab()) {
+      e?.preventDefault?.()
+    }
+  }
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
 
@@ -194,6 +201,7 @@ export default function BlogPage() {
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                   <Link
                     to="/dashboard"
+                    onClick={openDashboard}
                     className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
                   >
                     Open Dashboard

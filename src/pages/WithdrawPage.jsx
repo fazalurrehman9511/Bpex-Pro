@@ -3,9 +3,15 @@ import { Link } from 'react-router-dom'
 import { Home } from 'lucide-react'
 import TransactionPanel from '../components/TransactionPanel'
 import { getEmbedAvailableBalance } from '../utils/embedBalance'
+import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 export default function WithdrawPage() {
   const balance = getEmbedAvailableBalance()
+  const openDashboard = (e) => {
+    if (openBpexchLoginInNewTab()) {
+      e?.preventDefault?.()
+    }
+  }
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -23,7 +29,7 @@ export default function WithdrawPage() {
             Home
           </Link>
           <span className="text-[#c8ced3]">|</span>
-          <Link to="/dashboard" className="text-[#73818f] hover:text-[#00b181] transition-colors">
+          <Link to="/dashboard" onClick={openDashboard} className="text-[#73818f] hover:text-[#00b181] transition-colors">
             Dashboard
           </Link>
         </div>

@@ -1,1 +1,0 @@
-var e=`https://bpexch.xyz`,t=`/bpexch/Users/Login`,n=`/bpexch/Common/Dashboard`;export{n,t as r,e as t};
