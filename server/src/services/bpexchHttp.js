@@ -14,6 +14,7 @@ let proxyUrlCached = null
 
 const PROXY_REQUIRED_MESSAGE =
   'Residential proxy is required for all BPEXCH requests. Set BPEXCH_HTTP_PROXY and make sure it is working.'
+const DEFAULT_TIMEOUT_MS = Number(process.env.BPEXCH_HTTP_TIMEOUT_MS) || 20_000
 
 function resolveProxyUrl() {
   return (
@@ -60,17 +61,56 @@ function getProxyAgent() {
   return proxyAgent
 }
 
+function buildTimeoutSignal(signal, timeoutMs) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return signal
+
+  const timeoutSignal = AbortSignal.timeout(timeoutMs)
+  if (!signal) return timeoutSignal
+  if (typeof AbortSignal.any === 'function') {
+    return AbortSignal.any([signal, timeoutSignal])
+  }
+
+  const controller = new AbortController()
+  const abortFrom = (source) => {
+    if (controller.signal.aborted) return
+    controller.abort(source.reason)
+  }
+
+  signal.addEventListener('abort', () => abortFrom(signal), { once: true })
+  timeoutSignal.addEventListener('abort', () => abortFrom(timeoutSignal), { once: true })
+  return controller.signal
+}
+
 /**
  * fetch() with optional proxy dispatcher (undici).
  */
 export async function bpexchHttpFetch(url, options = {}) {
-  const { requireProxy = isBpexchProxyRequired(), ...fetchOptions } = options
+  const {
+    requireProxy = isBpexchProxyRequired(),
+    timeoutMs = DEFAULT_TIMEOUT_MS,
+    signal,
+    ...fetchOptions
+  } = options
   const dispatcher = getProxyAgent()
-  if (!dispatcher) {
-    if (requireProxy) {
-      throw createBpexchProxyRequiredError()
-    }
-    return fetch(url, fetchOptions)
+  const finalOptions = {
+    ...fetchOptions,
+    signal: buildTimeoutSignal(signal, timeoutMs),
   }
-  return undiciFetch(url, { ...fetchOptions, dispatcher })
+
+  try {
+    if (!dispatcher) {
+      if (requireProxy) {
+        throw createBpexchProxyRequiredError()
+      }
+      return await fetch(url, finalOptions)
+    }
+    return await undiciFetch(url, { ...finalOptions, dispatcher })
+  } catch (err) {
+    if (err?.name === 'AbortError' || err?.code === 'UND_ERR_ABORTED') {
+      const timeoutErr = new Error(`BPEXCH request timed out after ${timeoutMs}ms`)
+      timeoutErr.code = 'BPEXCH_HTTP_TIMEOUT'
+      throw timeoutErr
+    }
+    throw err
+  }
 }

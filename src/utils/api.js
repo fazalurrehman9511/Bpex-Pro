@@ -75,6 +75,16 @@ export function getUserPhone() {
   return sessionStorage.getItem(USER_PHONE_KEY) || ''
 }
 
+function summarizeNonJsonBody(raw) {
+  const clean = String(raw || '')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return clean.slice(0, 140)
+}
+
 async function apiFetch(path, options = {}) {
   const headers = { ...(options.headers || {}) }
   const token = getAdminToken()
@@ -104,8 +114,10 @@ async function apiFetch(path, options = {}) {
     try {
       data = JSON.parse(raw)
     } catch {
+      const contentType = res.headers.get('content-type') || 'unknown'
+      const bodyHint = summarizeNonJsonBody(raw)
       throw new Error(
-        `API ne JSON nahi diya (${res.status}). Node app /api routes check karein.`,
+        `API ${path} ne JSON nahi diya (${res.status}, ${contentType}). ${bodyHint || 'Upstream/proxy error page mila.'}`,
       )
     }
   } else {

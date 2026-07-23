@@ -144,6 +144,11 @@ app.use('/api/contact', contactRouter)
 app.use('/api/register', registerRouter)
 app.use('/api/payment-accounts', paymentAccountsRouter)
 app.use('/api/whatsapp-agents', whatsappAgentsRouter)
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    error: `API route not found: ${req.method} ${req.originalUrl || req.url}`,
+  })
+})
 
 // Uploads — no directory listing
 app.use(
@@ -247,3 +252,9 @@ function shutdown(signal) {
 
 process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason)
+})
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err)
+})
