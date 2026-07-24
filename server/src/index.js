@@ -14,6 +14,8 @@ import liveEventsRouter from './routes/liveEvents.js'
 import contactRouter from './routes/contact.js'
 import registerRouter from './routes/register.js'
 import paymentAccountsRouter from './routes/paymentAccounts.js'
+import withdrawMethodsRouter from './routes/withdrawMethods.js'
+import supportContactRouter from './routes/supportContact.js'
 import whatsappAgentsRouter from './routes/whatsappAgents.js'
 import bpexchBalanceRouter from './routes/bpexchBalance.js'
 import { startLiveEventsPoller } from './services/bpexchLive.js'
@@ -143,6 +145,8 @@ app.use('/api/live-events', liveEventsRouter)
 app.use('/api/contact', contactRouter)
 app.use('/api/register', registerRouter)
 app.use('/api/payment-accounts', paymentAccountsRouter)
+app.use('/api/withdraw-methods', withdrawMethodsRouter)
+app.use('/api/support-contact', supportContactRouter)
 app.use('/api/whatsapp-agents', whatsappAgentsRouter)
 app.use('/api', (req, res) => {
   res.status(404).json({

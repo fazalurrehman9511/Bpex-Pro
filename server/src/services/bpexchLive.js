@@ -64,6 +64,27 @@ function sportLabel(filter) {
   )
 }
 
+const CRICKET_COMPETITION_MATCHERS = [
+  /\bthe hundred\b/i,
+  /\btest matches?\b/i,
+  /\binternational twenty20 matches?\b/i,
+  /\binternational\b/i,
+  /\blanka premier league\b/i,
+  /\bpsl\b/i,
+  /\bpakistan super league\b/i,
+  /\bipl\b/i,
+  /\bindian premier league\b/i,
+  /\bgsl\b/i,
+  /\bglobal super league\b/i,
+]
+
+function isAllowedCricketEvent(event = {}) {
+  if (String(event.filter || '').toLowerCase() !== 'cricket') return true
+  const competition = String(event.competition || '').trim()
+  if (!competition) return false
+  return CRICKET_COMPETITION_MATCHERS.some((matcher) => matcher.test(competition))
+}
+
 function formatSize(n) {
   const v = Number(n)
   if (!Number.isFinite(v) || v <= 0) return '—'
@@ -511,6 +532,7 @@ function mergeEvents(...lists) {
   const map = new Map()
   for (const list of lists) {
     for (const e of list || []) {
+      if (!isAllowedCricketEvent(e)) continue
       const key = e.marketId || e.id || e.teams
       const prev = map.get(key)
       if (!prev || rankEvent(e) >= rankEvent(prev)) map.set(key, e)
@@ -594,7 +616,7 @@ export function normalizeMarketsPayload(payload) {
   const list = Array.isArray(payload)
     ? payload
     : payload?.markets || payload?.Markets || []
-  return list.map(normalizeMarket)
+  return list.map(normalizeMarket).filter(isAllowedCricketEvent)
 }
 
 export function startLiveEventsPoller() {

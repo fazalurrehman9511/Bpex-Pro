@@ -18,7 +18,8 @@ import {
   UserRound,
 } from 'lucide-react'
 import { BPEXCH_BASE_URL, BPEXCH_LOGIN_URL } from '../config/embed'
-import { openCustomWhatsApp } from '../utils/whatsapp'
+import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
+import { openSupportWhatsApp } from '../utils/whatsapp'
 import { PaymentMethodLogo } from './PaymentLogos'
 import { BRAND_LOGO_MD, BRAND_LOGO_LG, BRAND_NAME } from '../config/brand'
 
@@ -47,12 +48,16 @@ function WhatsAppIcon({ className = 'h-5 w-5' }) {
 
 /** Fixed circular WhatsApp support button (bottom-right). */
 export function WhatsAppFab({ username = '', className = '' }) {
+  useEffect(() => {
+    loadSupportWhatsAppNumber().catch(() => {})
+  }, [])
+
   return (
     <button
       type="button"
       onClick={() => {
         const id = username && username !== 'your_id' ? username : ''
-        openCustomWhatsApp(
+        openSupportWhatsApp(
           `Hi BpExch Support! 👋\n\nI need help${id ? ` (ID: ${id})` : ''}.\nPlease assist me.`,
         )
       }}
@@ -710,6 +715,7 @@ export function ScreenMethod({
   methodOpen = false,
   accountTitle = 'BpExch Agent',
   accountNumber = '03001234567',
+  qrCodeImage = '',
   onToggleMethods,
   onSelectMethod,
   onCopyName,
@@ -788,6 +794,17 @@ export function ScreenMethod({
             </button>
           </div>
 
+          {qrCodeImage ? (
+            <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-[11px] font-semibold text-slate-700">Scan QR Code</p>
+              <img
+                src={qrCodeImage}
+                alt={`${selected.name} QR code`}
+                className="mt-2 h-44 w-full rounded-lg bg-white object-contain p-2"
+              />
+            </div>
+          ) : null}
+
           <p className="mt-4 text-[11px] leading-relaxed text-rose-500">
             Please submit your deposit on mentioned account no &amp; submit receipt on next step
           </p>
@@ -856,8 +873,7 @@ export function ScreenProof({
   methodLabel = 'EasyPaisa',
   accountTitle = 'BpExch Agent',
   accountNumber = '0300 1234567',
-  phone = '',
-  onPhoneChange,
+  qrCodeImage = '',
   screenshotPreview,
   onScreenshotChange,
   submitting = false,
@@ -888,17 +904,6 @@ export function ScreenProof({
           <span className="font-bold text-accent">{methodLabel}</span>
         </div>
       </div>
-
-      <label className="mt-4 block">
-        <span className="text-sm font-bold text-slate-800">Your WhatsApp / Phone</span>
-        <input
-          value={phone}
-          onChange={(e) => onPhoneChange?.(e.target.value.replace(/\D/g, ''))}
-          placeholder="03XXXXXXXXX"
-          inputMode="tel"
-          className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm text-slate-800 outline-none focus:border-accent"
-        />
-      </label>
 
       <p className="mt-4 text-sm font-bold text-slate-800">Upload Payment Proof</p>
       <label className="mt-2 flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-slate-200 px-3 py-6">
@@ -943,6 +948,16 @@ export function ScreenProof({
             <Copy className="h-3.5 w-3.5 text-accent" />
           </button>
         </div>
+        {qrCodeImage ? (
+          <div className="mt-3">
+            <p className="text-[9px] text-slate-400">QR Code</p>
+            <img
+              src={qrCodeImage}
+              alt={`${methodLabel} QR code`}
+              className="mt-1 h-40 w-full rounded-lg border border-slate-200 bg-white object-contain p-2"
+            />
+          </div>
+        ) : null}
         <p className="mt-2 text-[9px] leading-snug text-rose-500">
           Please submit deposit on mentioned account &amp; upload receipt
         </p>
@@ -972,6 +987,11 @@ export function ScreenProof({
 
 export function ScreenWithdraw({
   method = 'easypaisa',
+  methods = [
+    { id: 'easypaisa', label: 'EasyPaisa' },
+    { id: 'jazzcash', label: 'JazzCash' },
+    { id: 'bank', label: 'Bank Transfer' },
+  ],
   onSelectMethod,
   amount,
   holder,
@@ -988,11 +1008,6 @@ export function ScreenWithdraw({
   submitting = false,
   preview = false,
 }) {
-  const methods = [
-    { id: 'easypaisa', name: 'EasyPaisa' },
-    { id: 'jazzcash', name: 'JazzCash' },
-    { id: 'bank', name: 'Bank Transfer' },
-  ]
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
   const blocked = !balanceLoading && balance != null && !canWithdraw
   const amtNum = Number(amount || 0)
@@ -1044,7 +1059,7 @@ export function ScreenWithdraw({
                 }`}
               />
               <PaymentMethodLogo id={m.id} className="h-8 w-8" />
-              <span className="text-sm font-medium text-slate-800">{m.name}</span>
+              <span className="text-sm font-medium text-slate-800">{m.label || m.name || m.id}</span>
             </button>
           ))}
         </div>
@@ -1085,7 +1100,7 @@ export function ScreenWithdraw({
             <input
               value={mobile || ''}
               onChange={(e) => onMobile?.(e.target.value.replace(/\D/g, ''))}
-              placeholder="Mobile Number"
+              placeholder="Wallet / Account Number"
               inputMode="tel"
               disabled={blocked}
               className="w-full bg-transparent outline-none placeholder:text-slate-400 disabled:opacity-50"

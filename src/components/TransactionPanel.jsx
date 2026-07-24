@@ -18,6 +18,11 @@ import {
   getPaymentAccount,
   loadPaymentAccounts,
 } from '../data/paymentAccounts'
+import {
+  getWithdrawMethod,
+  getWithdrawMethodIds,
+  loadWithdrawMethods,
+} from '../data/withdrawMethods'
 import { getPaymentMethod } from '../data/paymentMethods'
 import {
   parseBalanceAmount,
@@ -27,8 +32,6 @@ import {
   readScreenshotFile,
 } from '../utils/transactions'
 import { screenshotUrl } from '../utils/api'
-import { detectCountryCode } from '../utils/detectCountry'
-import { getCountryByCode } from '../data/countries'
 import {
   getBpexchUsername,
   subscribeBpexchUsername,
@@ -166,9 +169,7 @@ export default function TransactionPanel({
   const [tab, setTab] = useState('form')
   const [methodId, setMethodId] = useState(initialPaymentMethod)
   const [amount, setAmount] = useState('')
-  const [phone, setPhone] = useState('')
   const [bpexchUsername, setBpexchUsernameState] = useState(() => getBpexchUsername())
-  const [countryCode, setCountryCode] = useState('PK')
   const [payoutTitle, setPayoutTitle] = useState('')
   const [payoutNumber, setPayoutNumber] = useState('')
   const [screenshot, setScreenshot] = useState(null)
@@ -179,10 +180,13 @@ export default function TransactionPanel({
   const [accountsTick, setAccountsTick] = useState(0)
 
   const isDeposit = type === 'deposit'
-  const methodIds = getPaymentMethodIds()
-  const account = getPaymentAccount(methodId)
-  const methodMeta = getPaymentMethod(methodId)
-  const selectedCountry = getCountryByCode(countryCode)
+  const methodIds = isDeposit ? getPaymentMethodIds() : getWithdrawMethodIds()
+  const account = isDeposit ? getPaymentAccount(methodId) : null
+  const withdrawMethod = isDeposit ? null : getWithdrawMethod(methodId)
+  const selectedMethodLabel = isDeposit
+    ? account?.label || ''
+    : withdrawMethod?.label || ''
+  const methodMeta = isDeposit ? getPaymentMethod(methodId) : null
   void accountsTick
 
   const availableBalance = useMemo(
@@ -193,7 +197,9 @@ export default function TransactionPanel({
   const pendingCount = transactions.filter((t) => t.status === 'pending').length
 
   useEffect(() => {
-    loadPaymentAccounts().then(() => setAccountsTick((n) => n + 1))
+    Promise.all([loadPaymentAccounts(), loadWithdrawMethods()]).then(() =>
+      setAccountsTick((n) => n + 1),
+    )
   }, [])
 
   useEffect(() => {
@@ -207,16 +213,15 @@ export default function TransactionPanel({
     setTab('form')
     setAmount('')
     setBpexchUsernameState(getBpexchUsername())
-    setPhone('')
     setPayoutTitle('')
     setPayoutNumber('')
     setScreenshot(null)
     setScreenshotPreview(null)
     setErrors({})
     setSuccessId(null)
-    setCountryCode(detectCountryCode())
-    setMethodId(initialPaymentMethod)
-  }, [type, initialPaymentMethod, isDeposit])
+    const nextIds = isDeposit ? getPaymentMethodIds() : getWithdrawMethodIds()
+    setMethodId(nextIds.includes(initialPaymentMethod) ? initialPaymentMethod : nextIds[0] || '')
+  }, [type, initialPaymentMethod, isDeposit, accountsTick])
 
   const validate = () => {
     const next = {}
@@ -249,10 +254,6 @@ export default function TransactionPanel({
     if (!username) {
       next.form = 'Pehle BPEXCH login karo — username auto attach hota hai.'
     }
-    if (!phone.trim()) next.phone = 'Phone number is required'
-    else if (!/^[\d\s+\-()]{7,}$/.test(phone.trim())) {
-      next.phone = 'Enter a valid phone number'
-    }
 
     setErrors(next)
     return Object.keys(next).length === 0
@@ -284,15 +285,14 @@ export default function TransactionPanel({
         type,
         amount: parseFloat(amount),
         paymentMethodId: methodId,
-        paymentMethodLabel: account.label,
+        paymentMethodLabel: selectedMethodLabel,
         accountTitle: isDeposit ? account.accountTitle : payoutTitle.trim(),
         accountNumber: isDeposit ? account.accountNumber : payoutNumber.trim(),
-        bankName: account.bankName,
+        bankName: isDeposit ? account.bankName : '',
         screenshot: isDeposit ? screenshot : null,
         payoutAccountTitle: isDeposit ? '' : payoutTitle.trim(),
         payoutAccountNumber: isDeposit ? '' : payoutNumber.trim(),
         name: username,
-        phone: phone.trim(),
         availableBalance: availableBalanceProp ?? null,
       })
       setSuccessId(tx.id)
@@ -403,7 +403,7 @@ export default function TransactionPanel({
                   className="w-full rounded border border-border bg-navy-dark px-3 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
                 >
                   {methodIds.map((id) => {
-                    const acc = getPaymentAccount(id)
+                    const acc = isDeposit ? getPaymentAccount(id) : getWithdrawMethod(id)
                     return (
                       <option key={id} value={id}>
                         {acc.label}
@@ -421,6 +421,16 @@ export default function TransactionPanel({
                   <p className="text-xs font-semibold text-text">Send payment to</p>
                   <CopyField label="Account Title" value={account.accountTitle} />
                   <CopyField label={account.bankName} value={account.accountNumber} />
+                  {account.qrCodeImage ? (
+                    <div className="rounded border border-border bg-navy-dark px-3 py-3">
+                      <p className="text-[10px] uppercase tracking-wide text-muted">QR Code</p>
+                      <img
+                        src={account.qrCodeImage}
+                        alt={`${account.label} QR code`}
+                        className="mt-2 h-44 w-full rounded bg-white object-contain p-2"
+                      />
+                    </div>
+                  ) : null}
                   <p className="text-[11px] text-muted">
                     Transfer the exact amount, then upload your payment screenshot below.
                   </p>
@@ -445,7 +455,7 @@ export default function TransactionPanel({
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-text mb-1.5">
-                      {account.label} Number / Bank Account
+                      {selectedMethodLabel} Number / Bank Account
                     </label>
                     <input
                       type="text"
@@ -509,22 +519,6 @@ export default function TransactionPanel({
                   )}
                 </div>
               )}
-
-              <div>
-                <label className="block text-xs font-semibold text-text mb-1.5">
-                  Phone ({selectedCountry.dialCode})
-                </label>
-                <input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={selectedCountry.phonePlaceholder}
-                  className="w-full rounded border border-border bg-navy-dark px-4 py-2.5 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
-                />
-                {errors.phone && (
-                  <p className="mt-1 text-xs text-red-400">{errors.phone}</p>
-                )}
-              </div>
 
               <button
                 type="submit"
@@ -600,7 +594,7 @@ export default function TransactionPanel({
                           </p>
                         )}
                         <p>
-                          {tx.name} · {tx.phone}
+                          {tx.name}
                         </p>
                       </li>
                     ))}

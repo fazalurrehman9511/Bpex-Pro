@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { MessageCircle, X, Send } from 'lucide-react'
-import { openCustomWhatsApp } from '../utils/whatsapp'
+import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
+import { openSupportWhatsApp } from '../utils/whatsapp'
 import { useModal } from '../context/ModalContext'
 
 const AGENT = {
@@ -128,6 +129,10 @@ export default function FloatingWhatsApp() {
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
+  useEffect(() => {
+    loadSupportWhatsAppNumber().catch(() => {})
+  }, [])
+
   const resetChat = () => {
     setDraft('')
     setStepIndex(0)
@@ -154,7 +159,7 @@ export default function FloatingWhatsApp() {
   }
 
   const openWhatsAppWithAnswers = () => {
-    if (pendingSummary) openCustomWhatsApp(pendingSummary)
+    if (pendingSummary) openSupportWhatsApp(pendingSummary)
   }
 
   const openSelfRegister = () => {

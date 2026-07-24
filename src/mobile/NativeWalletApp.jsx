@@ -2,8 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import { getPaymentAccount, loadPaymentAccounts } from '../data/paymentAccounts'
 import {
+  getWithdrawMethod,
+  getWithdrawMethodIds,
+  getWithdrawMethodOptions,
+  loadWithdrawMethods,
+} from '../data/withdrawMethods'
+import {
   createTransaction,
-  setUserPhone,
   fetchBpexchBalance,
   fetchUserTransactions,
   selfRegister,
@@ -27,7 +32,6 @@ import {
 const STORAGE_KEY = 'flowexch.wallet.session'
 const TX_KEY = 'flowexch.wallet.transactions'
 const NOTICE_KEY = 'flowexch.wallet.notifications'
-const PHONE_KEY = 'flowexch.wallet.phone'
 const NOTICE_TTL_MS = 12_000
 const SYNC_MS = 8_000
 
@@ -121,7 +125,6 @@ export default function NativeWalletApp() {
   const [withdrawAmount, setWithdrawAmount] = useState('')
   const [holder, setHolder] = useState('')
   const [mobile, setMobile] = useState('')
-  const [phone, setPhone] = useState(() => localStorage.getItem(PHONE_KEY) || '')
   const [screenshotPreview, setScreenshotPreview] = useState('')
   const [screenshotData, setScreenshotData] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -150,7 +153,14 @@ export default function NativeWalletApp() {
   }
 
   useEffect(() => {
-    loadPaymentAccounts().then(() => setAccountsReady((n) => n + 1))
+    Promise.all([loadPaymentAccounts(), loadWithdrawMethods()]).then(() => {
+      setMethod((prev) => (getPaymentAccount(prev)?.id ? prev : 'easypaisa'))
+      const nextWithdrawIds = getWithdrawMethodIds()
+      setWithdrawMethod((prev) =>
+        nextWithdrawIds.includes(prev) ? prev : nextWithdrawIds[0] || prev,
+      )
+      setAccountsReady((n) => n + 1)
+    })
   }, [])
 
   useEffect(() => {
@@ -284,11 +294,10 @@ export default function NativeWalletApp() {
 
   const syncTransactions = async (user = username) => {
     const u = String(user || '').trim()
-    const p = (localStorage.getItem(PHONE_KEY) || phone || '').trim()
-    if (!u && !p) return
+    if (!u) return
 
     try {
-      const rows = await fetchUserTransactions({ phone: p, username: u })
+      const rows = await fetchUserTransactions({ username: u })
       if (!Array.isArray(rows)) return
 
       const mapped = rows.map(mapServerTx)
@@ -340,7 +349,8 @@ export default function NativeWalletApp() {
   }, [screen, username])
 
   const account = getPaymentAccount(method)
-  const withdrawAccount = getPaymentAccount(withdrawMethod)
+  const withdrawAccount = getWithdrawMethod(withdrawMethod)
+  const withdrawMethodOptions = getWithdrawMethodOptions()
   void accountsReady
 
   const login = async () => {
@@ -404,10 +414,6 @@ export default function NativeWalletApp() {
       })
       const createdUser = data.user?.username
       if (!createdUser) throw new Error('Account ban gaya magar username nahi mila')
-      if (regPhone.trim()) {
-        localStorage.setItem(PHONE_KEY, regPhone.trim())
-        setPhone(regPhone.trim())
-      }
       flash('Account created successfully')
       finishRegisterLogin({ username: createdUser, password: regPassword })
     } catch (err) {
@@ -453,10 +459,6 @@ export default function NativeWalletApp() {
   }
 
   const submitDeposit = async () => {
-    if (!phone.trim() || phone.trim().length < 10) {
-      flash('Phone number likho (10+ digits)')
-      return
-    }
     if (!screenshotData) {
       flash('Payment screenshot upload karo')
       return
@@ -473,10 +475,7 @@ export default function NativeWalletApp() {
         bankName: account.bankName,
         screenshot: screenshotData,
         name: username,
-        phone: phone.trim(),
       })
-      setUserPhone(phone.trim())
-      localStorage.setItem(PHONE_KEY, phone.trim())
       const mapped = mapServerTx(tx)
       statusMapRef.current[mapped.id] = mapped.status
       pushTx(mapped)
@@ -533,11 +532,8 @@ export default function NativeWalletApp() {
         payoutAccountTitle: holder.trim(),
         payoutAccountNumber: mobile.trim(),
         name: username,
-        phone: mobile.trim(),
         availableBalance: balance,
       })
-      setUserPhone(mobile.trim())
-      localStorage.setItem(PHONE_KEY, mobile.trim())
       const mapped = mapServerTx(tx)
       statusMapRef.current[mapped.id] = mapped.status
       pushTx(mapped)
@@ -674,6 +670,7 @@ export default function NativeWalletApp() {
           methodOpen={methodOpen}
           accountTitle={account.accountTitle}
           accountNumber={account.accountNumber}
+          qrCodeImage={account.qrCodeImage}
           onToggleMethods={() => setMethodOpen((v) => !v)}
           onSelectMethod={(id) => {
             setMethod(id)
@@ -710,8 +707,7 @@ export default function NativeWalletApp() {
           methodLabel={account.label}
           accountTitle={account.accountTitle}
           accountNumber={account.accountNumber}
-          phone={phone}
-          onPhoneChange={setPhone}
+          qrCodeImage={account.qrCodeImage}
           screenshotPreview={screenshotPreview}
           onScreenshotChange={onScreenshotFile}
           submitting={submitting}
@@ -737,6 +733,7 @@ export default function NativeWalletApp() {
       <div className="fixed inset-0 z-[100] overflow-y-auto bg-white">
         <ScreenWithdraw
           method={withdrawMethod}
+          methods={withdrawMethodOptions}
           onSelectMethod={setWithdrawMethod}
           amount={withdrawAmount}
           holder={holder}

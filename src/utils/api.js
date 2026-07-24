@@ -1,4 +1,5 @@
 import { Capacitor } from '@capacitor/core'
+import { getBpexchUsername } from './bpexchAuth'
 
 function resolveApiBase() {
   const fromEnv = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
@@ -19,7 +20,6 @@ function resolveApiBase() {
 
 const API_BASE = resolveApiBase()
 const TOKEN_KEY = 'flowexch_admin_token'
-const USER_PHONE_KEY = 'flowexch_user_phone'
 
 function storageGet(key) {
   try {
@@ -65,14 +65,6 @@ export function setAdminToken(token) {
 
 export function clearAdminToken() {
   storageRemove(TOKEN_KEY)
-}
-
-export function setUserPhone(phone) {
-  sessionStorage.setItem(USER_PHONE_KEY, phone.trim())
-}
-
-export function getUserPhone() {
-  return sessionStorage.getItem(USER_PHONE_KEY) || ''
 }
 
 function summarizeNonJsonBody(raw) {
@@ -149,10 +141,9 @@ export async function createTransaction(payload) {
 
 export async function fetchUserTransactions({ phone, username } = {}) {
   const params = new URLSearchParams()
-  if (phone?.trim()) params.set('phone', phone.trim())
   if (username?.trim()) params.set('name', username.trim())
   if (![...params.keys()].length) {
-    throw new Error('Phone or username is required')
+    throw new Error('Username is required')
   }
   return apiFetch(`/api/transactions?${params}`)
 }
@@ -257,6 +248,14 @@ export async function fetchPaymentAccounts() {
   return apiFetch('/api/payment-accounts')
 }
 
+export async function fetchWithdrawMethods() {
+  return apiFetch('/api/withdraw-methods')
+}
+
+export async function fetchSupportContact() {
+  return apiFetch('/api/support-contact')
+}
+
 export async function fetchAdminPaymentAccounts() {
   return asArray(await apiFetch('/api/admin/payment-accounts'), 'payment accounts')
 }
@@ -277,6 +276,30 @@ export async function createAdminPaymentAccount(payload) {
 
 export async function deleteAdminPaymentAccount(id) {
   return apiFetch(`/api/admin/payment-accounts/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function fetchAdminWithdrawMethods() {
+  return asArray(await apiFetch('/api/admin/withdraw-methods'), 'withdraw methods')
+}
+
+export async function updateAdminWithdrawMethod(id, payload) {
+  return apiFetch(`/api/admin/withdraw-methods/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function createAdminWithdrawMethod(payload) {
+  return apiFetch('/api/admin/withdraw-methods', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteAdminWithdrawMethod(id) {
+  return apiFetch(`/api/admin/withdraw-methods/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   })
 }
@@ -351,6 +374,17 @@ export async function fetchAdminBpexchAgent() {
 
 export async function updateAdminBpexchAgent(payload) {
   return apiFetch('/api/admin/bpexch-agent', {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function fetchAdminSupportContact() {
+  return apiFetch('/api/admin/support-contact')
+}
+
+export async function updateAdminSupportContact(payload) {
+  return apiFetch('/api/admin/support-contact', {
     method: 'PUT',
     body: JSON.stringify(payload),
   })

@@ -3,9 +3,11 @@ import { applyExpiry } from '../utils/transactions'
 import {
   createTransaction as apiCreateTransaction,
   fetchUserTransactions,
-  setUserPhone,
-  getUserPhone,
 } from '../utils/api'
+import {
+  getBpexchUsername,
+  subscribeBpexchUsername,
+} from '../utils/bpexchAuth'
 
 const TransactionContext = createContext(null)
 
@@ -15,16 +17,17 @@ export function TransactionProvider({ children }) {
   const [options, setOptions] = useState({})
   const [transactions, setTransactions] = useState([])
   const [loading, setLoading] = useState(false)
+  const [username, setUsername] = useState(() => getBpexchUsername())
 
   const refreshTransactions = useCallback(async () => {
-    const phone = getUserPhone()
-    if (!phone) {
+    const activeUsername = String(getBpexchUsername() || '').trim()
+    if (!activeUsername) {
       setTransactions([])
       return
     }
 
     try {
-      const list = await fetchUserTransactions({ phone })
+      const list = await fetchUserTransactions({ username: activeUsername })
       setTransactions(applyExpiry(list))
     } catch (err) {
       console.error('Failed to load transactions:', err.message)
@@ -36,6 +39,16 @@ export function TransactionProvider({ children }) {
     const tick = setInterval(refreshTransactions, 5000)
     return () => clearInterval(tick)
   }, [refreshTransactions])
+
+  useEffect(() => {
+    return subscribeBpexchUsername((nextUsername) => {
+      setUsername(String(nextUsername || '').trim())
+    })
+  }, [])
+
+  useEffect(() => {
+    refreshTransactions()
+  }, [username, refreshTransactions])
 
   const openTransaction = useCallback((txType = 'deposit', opts = {}) => {
     setType(txType)
@@ -54,8 +67,10 @@ export function TransactionProvider({ children }) {
     setLoading(true)
     try {
       const tx = await apiCreateTransaction({ ...data, type: txType })
-      setUserPhone(data.phone)
-      setTransactions((prev) => applyExpiry([tx, ...prev]))
+      setTransactions((prev) => {
+        const rest = prev.filter((item) => item.id !== tx.id)
+        return applyExpiry([tx, ...rest])
+      })
       return tx
     } finally {
       setLoading(false)

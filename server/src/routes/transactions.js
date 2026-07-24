@@ -26,7 +26,6 @@ router.post('/', async (req, res) => {
       payoutAccountTitle,
       payoutAccountNumber,
       name,
-      phone,
       availableBalance,
     } = req.body
 
@@ -39,8 +38,8 @@ router.post('/', async (req, res) => {
     if (!paymentMethodId || !paymentMethodLabel) {
       return res.status(400).json({ error: 'Payment method is required' })
     }
-    if (!name?.trim() || !phone?.trim()) {
-      return res.status(400).json({ error: 'Name and phone are required' })
+    if (!name?.trim()) {
+      return res.status(400).json({ error: 'Username is required' })
     }
     if (type === 'deposit' && !screenshot) {
       return res.status(400).json({ error: 'Payment screenshot is required for deposits' })
@@ -117,7 +116,7 @@ router.post('/', async (req, res) => {
       payoutAccountTitle: payoutAccountTitle || '',
       payoutAccountNumber: payoutAccountNumber || '',
       name: name.trim(),
-      phone: phone.trim(),
+      phone: '',
       availableBalance: resolvedAvailableBalance,
       createdAt,
       expiresAt,
@@ -135,47 +134,21 @@ router.get('/', (req, res) => {
   try {
     expirePendingTransactions()
 
-    const phone = String(req.query.phone || '').trim()
     const name = String(req.query.name || req.query.username || '').trim()
-    if (!phone && !name) {
-      return res.status(400).json({ error: 'Phone or username is required' })
+    if (!name) {
+      return res.status(400).json({ error: 'Username is required' })
     }
 
-    let rows
-    if (phone && name) {
-      rows = db
-        .prepare(
-          `
-        SELECT * FROM transactions
-        WHERE phone = ? OR name = ?
-        ORDER BY created_at DESC
-        LIMIT 100
-      `,
-        )
-        .all(phone, name)
-    } else if (name) {
-      rows = db
-        .prepare(
-          `
-        SELECT * FROM transactions
-        WHERE name = ?
-        ORDER BY created_at DESC
-        LIMIT 100
-      `,
-        )
-        .all(name)
-    } else {
-      rows = db
-        .prepare(
-          `
-        SELECT * FROM transactions
-        WHERE phone = ?
-        ORDER BY created_at DESC
-        LIMIT 100
-      `,
-        )
-        .all(phone)
-    }
+    const rows = db
+      .prepare(
+        `
+      SELECT * FROM transactions
+      WHERE name = ?
+      ORDER BY created_at DESC
+      LIMIT 100
+    `,
+      )
+      .all(name)
 
     res.json(rows.map(rowToTransaction))
   } catch (err) {

@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Mail, Send, CheckCircle2, MessageCircle } from 'lucide-react'
+import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import { submitContact } from '../utils/api'
-import { useModal } from '../context/ModalContext'
+import { openSupportWhatsApp } from '../utils/whatsapp'
 
 const inputClass =
   'w-full rounded border border-border bg-navy-dark px-4 py-2.5 text-sm text-text placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors'
 
 export default function ContactUs() {
-  const { openModal } = useModal()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
@@ -17,6 +17,10 @@ export default function ContactUs() {
   const [submitting, setSubmitting] = useState(false)
   const [done, setDone] = useState(false)
   const [submitError, setSubmitError] = useState('')
+
+  useEffect(() => {
+    loadSupportWhatsAppNumber().catch(() => {})
+  }, [])
 
   const validate = () => {
     const next = {}
@@ -196,7 +200,11 @@ export default function ContactUs() {
             </p>
             <button
               type="button"
-              onClick={() => openModal('contact')}
+              onClick={() =>
+                openSupportWhatsApp(
+                  'Hi BpxPro Support! 👋\n\nI need help with deposits, withdrawals, or my account.\nPlease assist me.',
+                )
+              }
               className="mt-4 flex w-full items-center justify-center gap-2 rounded bg-accent/15 border border-accent/30 px-4 py-2.5 text-xs font-bold text-accent hover:bg-accent/25 transition-colors"
             >
               <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />

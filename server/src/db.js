@@ -113,6 +113,13 @@ db.exec(`
     account_title TEXT NOT NULL DEFAULT '',
     account_number TEXT NOT NULL DEFAULT '',
     bank_name TEXT NOT NULL DEFAULT '',
+    qr_code_image TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS withdraw_methods (
+    id TEXT PRIMARY KEY,
+    label TEXT NOT NULL,
     updated_at TEXT NOT NULL
   );
 
@@ -148,6 +155,7 @@ ensureColumn('bpexch_users', 'credit', 'REAL')
 ensureColumn('bpexch_users', 'max_withdraw', 'REAL')
 ensureColumn('bpexch_users', 'balance_updated_at', 'TEXT')
 ensureColumn('bpexch_users', 'agent_username', "TEXT DEFAULT ''")
+ensureColumn('payment_accounts', 'qr_code_image', "TEXT NOT NULL DEFAULT ''")
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS bpexch_agent_config (
@@ -155,6 +163,12 @@ db.exec(`
     username TEXT NOT NULL DEFAULT '',
     password TEXT NOT NULL DEFAULT '',
     label TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS support_contact_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    whatsapp TEXT NOT NULL DEFAULT '',
     updated_at TEXT NOT NULL
   );
 `)
@@ -185,6 +199,22 @@ db.exec(`
     if (Number(stats?.total) > 0 && Number(stats?.empty) === Number(stats?.total)) {
       db.prepare('UPDATE bpexch_users SET agent_username = ?').run(agentUser)
     }
+  }
+
+  const supportRow = db.prepare('SELECT id FROM support_contact_config WHERE id = 1').get()
+  if (!supportRow) {
+    const supportWhatsApp = String(
+      process.env.SUPPORT_WHATSAPP ||
+        process.env.WHATSAPP_SUPPORT ||
+        process.env.VITE_WHATSAPP_SUPPORT ||
+        '',
+    )
+      .replace(/[^\d]/g, '')
+      .trim()
+    db.prepare(`
+      INSERT INTO support_contact_config (id, whatsapp, updated_at)
+      VALUES (1, ?, ?)
+    `).run(supportWhatsApp, new Date().toISOString())
   }
 })()
 
@@ -222,6 +252,21 @@ for (const row of defaultPaymentAccounts) {
   insertPaymentAccount.run({ ...row, updated_at: seedNow })
 }
 
+const defaultWithdrawMethods = [
+  { id: 'easypaisa', label: 'EasyPaisa' },
+  { id: 'jazzcash', label: 'JazzCash' },
+  { id: 'bank', label: 'Bank Transfer' },
+]
+
+const insertWithdrawMethod = db.prepare(`
+  INSERT OR IGNORE INTO withdraw_methods (id, label, updated_at)
+  VALUES (@id, @label, @updated_at)
+`)
+
+for (const row of defaultWithdrawMethods) {
+  insertWithdrawMethod.run({ ...row, updated_at: seedNow })
+}
+
 export function rowToPaymentAccount(row) {
   if (!row) return null
   return {
@@ -230,6 +275,7 @@ export function rowToPaymentAccount(row) {
     accountTitle: row.account_title || '',
     accountNumber: row.account_number || '',
     bankName: row.bank_name || '',
+    qrCodeImage: row.qr_code_image || '',
     updatedAt: row.updated_at || null,
   }
 }
@@ -253,13 +299,14 @@ export function updatePaymentAccount(id, patch) {
   const updatedAt = new Date().toISOString()
   db.prepare(`
     UPDATE payment_accounts
-    SET account_title = ?, account_number = ?, bank_name = ?, label = ?, updated_at = ?
+    SET account_title = ?, account_number = ?, bank_name = ?, label = ?, qr_code_image = ?, updated_at = ?
     WHERE id = ?
   `).run(
     patch.accountTitle ?? existing.account_title,
     patch.accountNumber ?? existing.account_number,
     patch.bankName ?? existing.bank_name,
     patch.label ?? existing.label,
+    patch.qrCodeImage ?? existing.qr_code_image ?? '',
     updatedAt,
     id,
   )
@@ -288,14 +335,15 @@ export function createPaymentAccount(payload) {
   }
   const updatedAt = new Date().toISOString()
   db.prepare(`
-    INSERT INTO payment_accounts (id, label, account_title, account_number, bank_name, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO payment_accounts (id, label, account_title, account_number, bank_name, qr_code_image, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     label,
     accountTitle,
     accountNumber,
     String(payload.bankName || '').trim(),
+    String(payload.qrCodeImage || '').trim(),
     updatedAt,
   )
   return getPaymentAccountRow(id)
@@ -305,6 +353,74 @@ export function deletePaymentAccount(id) {
   const existing = getPaymentAccountRow(id)
   if (!existing) return null
   db.prepare('DELETE FROM payment_accounts WHERE id = ?').run(id)
+  return existing
+}
+
+export function rowToWithdrawMethod(row) {
+  if (!row) return null
+  return {
+    id: row.id,
+    label: row.label,
+    updatedAt: row.updated_at || null,
+  }
+}
+
+export function listWithdrawMethods() {
+  return db
+    .prepare('SELECT rowid, * FROM withdraw_methods ORDER BY rowid ASC')
+    .all()
+    .map(rowToWithdrawMethod)
+}
+
+export function getWithdrawMethodRow(id) {
+  return rowToWithdrawMethod(
+    db.prepare('SELECT * FROM withdraw_methods WHERE id = ?').get(id),
+  )
+}
+
+export function updateWithdrawMethod(id, patch) {
+  const existing = db.prepare('SELECT * FROM withdraw_methods WHERE id = ?').get(id)
+  if (!existing) return null
+  const updatedAt = new Date().toISOString()
+  db.prepare(`
+    UPDATE withdraw_methods
+    SET label = ?, updated_at = ?
+    WHERE id = ?
+  `).run(
+    patch.label ?? existing.label,
+    updatedAt,
+    id,
+  )
+  return getWithdrawMethodRow(id)
+}
+
+export function createWithdrawMethod(payload) {
+  let id = String(payload.id || payload.label || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+  if (!id) throw new Error('Withdraw method id is required')
+  if (!/^[a-z][a-z0-9-]{1,31}$/.test(id)) {
+    throw new Error('Id must be lowercase letters / numbers / dashes (e.g. nayapay)')
+  }
+  if (getWithdrawMethodRow(id)) {
+    throw new Error('Withdraw method already exists')
+  }
+  const label = String(payload.label || '').trim()
+  if (!label) throw new Error('Label is required')
+  const updatedAt = new Date().toISOString()
+  db.prepare(`
+    INSERT INTO withdraw_methods (id, label, updated_at)
+    VALUES (?, ?, ?)
+  `).run(id, label, updatedAt)
+  return getWithdrawMethodRow(id)
+}
+
+export function deleteWithdrawMethod(id) {
+  const existing = getWithdrawMethodRow(id)
+  if (!existing) return null
+  db.prepare('DELETE FROM withdraw_methods WHERE id = ?').run(id)
   return existing
 }
 
@@ -782,6 +898,45 @@ export function updateBpexchAgentConfig(patch = {}) {
       updated_at = excluded.updated_at
   `).run(username, password, label || username, updatedAt)
   return getBpexchAgentConfig()
+}
+
+export function getSupportContactConfig() {
+  const row = db.prepare('SELECT * FROM support_contact_config WHERE id = 1').get()
+  const envWhatsApp = String(
+    process.env.SUPPORT_WHATSAPP ||
+      process.env.WHATSAPP_SUPPORT ||
+      process.env.VITE_WHATSAPP_SUPPORT ||
+      '',
+  )
+    .replace(/[^\d]/g, '')
+    .trim()
+  const whatsapp = String(row?.whatsapp || '').trim() || envWhatsApp
+  return {
+    whatsapp,
+    updatedAt: row?.updated_at || null,
+    source: String(row?.whatsapp || '').trim() ? 'db' : envWhatsApp ? 'env' : 'none',
+    configured: Boolean(whatsapp),
+  }
+}
+
+export function updateSupportContactConfig(patch = {}) {
+  const existing = getSupportContactConfig()
+  const whatsapp =
+    patch.whatsapp != null
+      ? String(patch.whatsapp).replace(/[^\d]/g, '').trim()
+      : existing.whatsapp
+  if (!whatsapp || whatsapp.length < 8) {
+    throw new Error('Support WhatsApp number is required')
+  }
+  const updatedAt = new Date().toISOString()
+  db.prepare(`
+    INSERT INTO support_contact_config (id, whatsapp, updated_at)
+    VALUES (1, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      whatsapp = excluded.whatsapp,
+      updated_at = excluded.updated_at
+  `).run(whatsapp, updatedAt)
+  return getSupportContactConfig()
 }
 
 /**

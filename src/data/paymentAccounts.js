@@ -8,6 +8,7 @@ export const paymentAccounts = {
     accountTitle: import.meta.env.VITE_JAZZCASH_ACCOUNT_TITLE || 'BpxPro Agent',
     accountNumber: import.meta.env.VITE_JAZZCASH_ACCOUNT_NUMBER || '03001234567',
     bankName: 'JazzCash',
+    qrCodeImage: '',
   },
   easypaisa: {
     id: 'easypaisa',
@@ -15,6 +16,7 @@ export const paymentAccounts = {
     accountTitle: import.meta.env.VITE_EASYPAISA_ACCOUNT_TITLE || 'BpxPro Agent',
     accountNumber: import.meta.env.VITE_EASYPAISA_ACCOUNT_NUMBER || '03451234567',
     bankName: 'EasyPaisa',
+    qrCodeImage: '',
   },
   bank: {
     id: 'bank',
@@ -22,6 +24,7 @@ export const paymentAccounts = {
     accountTitle: import.meta.env.VITE_BANK_ACCOUNT_TITLE || 'BpxPro (Pvt) Ltd',
     accountNumber: import.meta.env.VITE_BANK_ACCOUNT_NUMBER || '12345678901234',
     bankName: import.meta.env.VITE_BANK_NAME || 'HBL — Main Branch',
+    qrCodeImage: '',
   },
 }
 
@@ -54,6 +57,7 @@ export async function loadPaymentAccounts() {
           accountTitle: row.accountTitle || '',
           accountNumber: row.accountNumber || '',
           bankName: row.bankName || '',
+          qrCodeImage: row.qrCodeImage || '',
         }
       }
       cache = next

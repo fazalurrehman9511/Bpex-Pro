@@ -18,7 +18,7 @@ const EMPTY_MESSAGE = 'Live data is not available right now'
 
 export default function LiveEvents() {
   const { openModal } = useModal()
-  const [activeFilter, setActiveFilter] = useState('all')
+  const [activeFilter, setActiveFilter] = useState('cricket')
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
   const [empty, setEmpty] = useState(false)

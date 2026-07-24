@@ -32,6 +32,27 @@ function sportLabel(filter) {
   )
 }
 
+const CRICKET_COMPETITION_MATCHERS = [
+  /\bthe hundred\b/i,
+  /\btest matches?\b/i,
+  /\binternational twenty20 matches?\b/i,
+  /\binternational\b/i,
+  /\blanka premier league\b/i,
+  /\bpsl\b/i,
+  /\bpakistan super league\b/i,
+  /\bipl\b/i,
+  /\bindian premier league\b/i,
+  /\bgsl\b/i,
+  /\bglobal super league\b/i,
+]
+
+function isAllowedCricketEvent(event = {}) {
+  if (String(event.filter || '').toLowerCase() !== 'cricket') return true
+  const competition = String(event.competition || '').trim()
+  if (!competition) return false
+  return CRICKET_COMPETITION_MATCHERS.some((matcher) => matcher.test(competition))
+}
+
 function formatTime(iso) {
   if (!iso) return ''
   const d = new Date(iso)
@@ -154,7 +175,7 @@ export async function fetchLiveEvents() {
   /* Never surface raw API/session errors to the UI — return empty payload */
   if (!res.ok) {
     return {
-      events: Array.isArray(data.events) ? data.events : [],
+      events: Array.isArray(data.events) ? data.events.filter(isAllowedCricketEvent) : [],
       error: null,
       updatedAt: data.updatedAt || Date.now(),
       source: data.source || 'none',
@@ -162,7 +183,7 @@ export async function fetchLiveEvents() {
   }
   return {
     ...data,
-    events: Array.isArray(data.events) ? data.events : [],
+    events: Array.isArray(data.events) ? data.events.filter(isAllowedCricketEvent) : [],
     error: null,
   }
 }
@@ -182,7 +203,7 @@ export async function fetchSessionMarkets() {
     if (payload?.error) return null
     const list = Array.isArray(payload) ? payload : payload.markets || payload.Markets || []
     if (!list.length) return null
-    const events = list.map(normalizeMarket)
+    const events = list.map(normalizeMarket).filter(isAllowedCricketEvent)
     events.sort((a, b) => {
       const rank = (e) =>
         (e.status === 'IN PLAY' ? 100 : 0) +

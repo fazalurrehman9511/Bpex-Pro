@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { useModal } from '../context/ModalContext'
+import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
+import { openSupportWhatsApp } from '../utils/whatsapp'
 
 const faqs = [
   {
@@ -27,7 +28,10 @@ const faqs = [
 
 export default function FAQ() {
   const [open, setOpen] = useState(0)
-  const { openModal } = useModal()
+
+  useEffect(() => {
+    loadSupportWhatsAppNumber().catch(() => {})
+  }, [])
 
   return (
     <section id="faq" className="bg-navy-dark px-4 py-8 sm:px-6">
@@ -63,12 +67,16 @@ export default function FAQ() {
 
         <div className="mt-6 rounded border border-accent/20 bg-accent/5 p-4 text-center">
           <p className="text-sm font-semibold text-text">Still have questions?</p>
-          <p className="mt-1 text-xs text-muted">Chat with your local agent on WhatsApp</p>
+          <p className="mt-1 text-xs text-muted">Chat with BpxPro Support on WhatsApp</p>
           <button
-            onClick={() => openModal('contact')}
+            onClick={() =>
+              openSupportWhatsApp(
+                'Hi BpxPro Support! 👋\n\nI have a few questions before getting started.\nPlease assist me.',
+              )
+            }
             className="mt-3 rounded bg-accent px-6 py-2 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors"
           >
-            Contact Agent
+            Contact Support
           </button>
         </div>
       </div>

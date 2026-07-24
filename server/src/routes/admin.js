@@ -9,6 +9,10 @@ import {
   updatePaymentAccount,
   createPaymentAccount,
   deletePaymentAccount,
+  listWithdrawMethods,
+  updateWithdrawMethod,
+  createWithdrawMethod,
+  deleteWithdrawMethod,
   listWhatsappAgents,
   updateWhatsappAgent,
   createWhatsappAgent,
@@ -21,6 +25,8 @@ import {
   updateBpexchUserBalance,
   getBpexchAgentConfig,
   updateBpexchAgentConfig,
+  getSupportContactConfig,
+  updateSupportContactConfig,
 } from '../db.js'
 import { config } from '../config.js'
 import { requireAdmin } from '../middleware/auth.js'
@@ -189,7 +195,7 @@ router.get('/payment-accounts', requireAdmin, (_req, res) => {
 router.put('/payment-accounts/:id', requireAdmin, (req, res) => {
   try {
     const { id } = req.params
-    const { accountTitle, accountNumber, bankName, label } = req.body
+    const { accountTitle, accountNumber, bankName, label, qrCodeImage } = req.body
     if (!accountTitle?.trim() || !accountNumber?.trim()) {
       return res.status(400).json({ error: 'Account title and number are required' })
     }
@@ -198,6 +204,7 @@ router.put('/payment-accounts/:id', requireAdmin, (req, res) => {
       accountNumber: accountNumber.trim(),
       bankName: bankName?.trim() || '',
       label: label?.trim(),
+      qrCodeImage: typeof qrCodeImage === 'string' ? qrCodeImage.trim() : undefined,
     })
     if (!updated) {
       return res.status(404).json({ error: 'Payment account not found' })
@@ -211,7 +218,7 @@ router.put('/payment-accounts/:id', requireAdmin, (req, res) => {
 
 router.post('/payment-accounts', requireAdmin, (req, res) => {
   try {
-    const { id, label, accountTitle, accountNumber, bankName } = req.body
+    const { id, label, accountTitle, accountNumber, bankName, qrCodeImage } = req.body
     if (!label?.trim()) {
       return res.status(400).json({ error: 'Label is required' })
     }
@@ -224,6 +231,7 @@ router.post('/payment-accounts', requireAdmin, (req, res) => {
       accountTitle: accountTitle.trim(),
       accountNumber: accountNumber.trim(),
       bankName: bankName?.trim() || '',
+      qrCodeImage: typeof qrCodeImage === 'string' ? qrCodeImage.trim() : '',
     })
     res.status(201).json(created)
   } catch (err) {
@@ -244,6 +252,65 @@ router.delete('/payment-accounts/:id', requireAdmin, (req, res) => {
   } catch (err) {
     console.error('Admin delete payment account error:', err)
     res.status(500).json({ error: 'Failed to delete payment account' })
+  }
+})
+
+router.get('/withdraw-methods', requireAdmin, (_req, res) => {
+  try {
+    res.json(listWithdrawMethods())
+  } catch (err) {
+    console.error('Admin withdraw methods error:', err)
+    res.status(500).json({ error: 'Failed to fetch withdraw methods' })
+  }
+})
+
+router.put('/withdraw-methods/:id', requireAdmin, (req, res) => {
+  try {
+    const { id } = req.params
+    const { label } = req.body
+    if (!label?.trim()) {
+      return res.status(400).json({ error: 'Label is required' })
+    }
+    const updated = updateWithdrawMethod(id, { label: label.trim() })
+    if (!updated) {
+      return res.status(404).json({ error: 'Withdraw method not found' })
+    }
+    res.json(updated)
+  } catch (err) {
+    console.error('Admin update withdraw method error:', err)
+    res.status(500).json({ error: 'Failed to update withdraw method' })
+  }
+})
+
+router.post('/withdraw-methods', requireAdmin, (req, res) => {
+  try {
+    const { id, label } = req.body
+    if (!label?.trim()) {
+      return res.status(400).json({ error: 'Label is required' })
+    }
+    const created = createWithdrawMethod({
+      id: id?.trim() || label.trim(),
+      label: label.trim(),
+    })
+    res.status(201).json(created)
+  } catch (err) {
+    const msg = err.message || 'Failed to add withdraw method'
+    const status = /already exists|required|Id must|lowercase/i.test(msg) ? 400 : 500
+    if (status === 500) console.error('Admin create withdraw method error:', err)
+    res.status(status).json({ error: msg })
+  }
+})
+
+router.delete('/withdraw-methods/:id', requireAdmin, (req, res) => {
+  try {
+    const removed = deleteWithdrawMethod(req.params.id)
+    if (!removed) {
+      return res.status(404).json({ error: 'Withdraw method not found' })
+    }
+    res.json({ ok: true, id: req.params.id })
+  } catch (err) {
+    console.error('Admin delete withdraw method error:', err)
+    res.status(500).json({ error: 'Failed to delete withdraw method' })
   }
 })
 
@@ -437,6 +504,40 @@ router.put('/bpexch-agent', requireAdmin, (req, res) => {
     const msg = err.message || 'Failed to update BPEXCH agent'
     const status = /required/i.test(msg) ? 400 : 500
     if (status === 500) console.error('Admin update BPEXCH agent error:', err)
+    res.status(status).json({ error: msg })
+  }
+})
+
+router.get('/support-contact', requireAdmin, (_req, res) => {
+  try {
+    const cfg = getSupportContactConfig()
+    res.json({
+      whatsapp: cfg.whatsapp,
+      updatedAt: cfg.updatedAt,
+      source: cfg.source,
+      configured: cfg.configured,
+    })
+  } catch (err) {
+    console.error('Admin get support contact error:', err)
+    res.status(500).json({ error: 'Failed to fetch support contact config' })
+  }
+})
+
+router.put('/support-contact', requireAdmin, (req, res) => {
+  try {
+    const updated = updateSupportContactConfig({
+      whatsapp: req.body?.whatsapp,
+    })
+    res.json({
+      whatsapp: updated.whatsapp,
+      updatedAt: updated.updatedAt,
+      source: updated.source,
+      configured: updated.configured,
+    })
+  } catch (err) {
+    const msg = err.message || 'Failed to update support contact'
+    const status = /required/i.test(msg) ? 400 : 500
+    if (status === 500) console.error('Admin update support contact error:', err)
     res.status(status).json({ error: msg })
   }
 })

@@ -31,6 +31,7 @@ import {
   formatCurrency,
   getRemainingMs,
   formatRemaining,
+  readScreenshotFile,
 } from '../utils/transactions'
 import {
   fetchAdminTransactions,
@@ -48,10 +49,16 @@ import {
   updateAdminPaymentAccount,
   createAdminPaymentAccount,
   deleteAdminPaymentAccount,
+  fetchAdminWithdrawMethods,
+  updateAdminWithdrawMethod,
+  createAdminWithdrawMethod,
+  deleteAdminWithdrawMethod,
   fetchAdminWhatsappAgents,
   updateAdminWhatsappAgent,
   createAdminWhatsappAgent,
   deleteAdminWhatsappAgent,
+  fetchAdminSupportContact,
+  updateAdminSupportContact,
   fetchAdminExpenses,
   createAdminExpense,
   updateAdminExpense,
@@ -418,6 +425,7 @@ const SIDEBAR_TABS = [
   { id: 'expenses', label: 'Expenses', icon: Receipt, section: 'finance' },
   { id: 'users', label: 'BPEXCH Users', icon: Users, section: 'users' },
   { id: 'accounts', label: 'Payment Accounts', icon: CreditCard, section: 'settings' },
+  { id: 'withdrawMethods', label: 'Withdraw Methods', icon: Wallet, section: 'settings' },
   { id: 'whatsapp', label: 'WhatsApp Agents', icon: MessageCircle, section: 'settings' },
   { id: 'blog', label: 'Blog Posts', icon: FileText, section: 'blog' },
 ]
@@ -1886,6 +1894,7 @@ function PaymentAccountsPanel({
     accountTitle: '',
     accountNumber: '',
     bankName: '',
+    qrCodeImage: '',
   })
 
   useEffect(() => {
@@ -1896,6 +1905,7 @@ function PaymentAccountsPanel({
         accountTitle: a.accountTitle || '',
         accountNumber: a.accountNumber || '',
         bankName: a.bankName || '',
+        qrCodeImage: a.qrCodeImage || '',
       }
     }
     setDrafts(next)
@@ -1922,9 +1932,19 @@ function PaymentAccountsPanel({
         accountTitle: '',
         accountNumber: '',
         bankName: '',
+        qrCodeImage: '',
       })
       setShowAdd(false)
     }
+  }
+
+  const handleQrFile = async (file, onChange) => {
+    if (!file) {
+      onChange('')
+      return
+    }
+    const dataUrl = await readScreenshotFile(file)
+    onChange(dataUrl)
   }
 
   const inputClass =
@@ -2004,6 +2024,52 @@ function PaymentAccountsPanel({
                 className="mt-1 w-full rounded border border-border bg-navy-dark px-3 py-2 text-sm text-text"
               />
             </label>
+            <div className="sm:col-span-2">
+              <p className="text-xs text-muted">QR Code (optional)</p>
+              <div className="mt-1 flex flex-wrap items-center gap-3 rounded border border-border bg-navy-dark/50 px-3 py-3">
+                {newAccount.qrCodeImage ? (
+                  <img
+                    src={newAccount.qrCodeImage}
+                    alt="QR preview"
+                    className="h-24 w-24 rounded border border-border bg-white object-contain"
+                  />
+                ) : (
+                  <div className="flex h-24 w-24 items-center justify-center rounded border border-dashed border-border text-[10px] text-muted">
+                    No QR
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-2">
+                  <label className="inline-flex cursor-pointer items-center rounded border border-border px-3 py-2 text-xs font-semibold text-text">
+                    Upload QR
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={async (e) => {
+                        try {
+                          await handleQrFile(
+                            e.target.files?.[0] || null,
+                            (value) => setNewAccount((p) => ({ ...p, qrCodeImage: value })),
+                          )
+                        } catch (err) {
+                          alert(err.message)
+                        }
+                        e.target.value = ''
+                      }}
+                    />
+                  </label>
+                  {newAccount.qrCodeImage ? (
+                    <button
+                      type="button"
+                      onClick={() => setNewAccount((p) => ({ ...p, qrCodeImage: '' }))}
+                      className="rounded border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-300"
+                    >
+                      Remove QR
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
           </div>
           <button
             type="button"
@@ -2027,6 +2093,7 @@ function PaymentAccountsPanel({
                 <th className="px-3 py-3 font-semibold">Account Title</th>
                 <th className="px-3 py-3 font-semibold">Account Number</th>
                 <th className="px-3 py-3 font-semibold">Bank / Wallet</th>
+                <th className="px-3 py-3 font-semibold">QR Code</th>
                 <th className="px-3 py-3 font-semibold">Actions</th>
               </tr>
             </thead>
@@ -2037,6 +2104,7 @@ function PaymentAccountsPanel({
                   accountTitle: '',
                   accountNumber: '',
                   bankName: '',
+                  qrCodeImage: '',
                 }
                 const busy = savingId === account.id
                 const deleting = deletingId === account.id
@@ -2078,6 +2146,51 @@ function PaymentAccountsPanel({
                       />
                     </td>
                     <td className="px-3 py-2.5">
+                      <div className="flex min-w-[170px] items-center gap-2">
+                        {draft.qrCodeImage ? (
+                          <img
+                            src={draft.qrCodeImage}
+                            alt={`${account.label} QR`}
+                            className="h-14 w-14 rounded border border-border bg-white object-contain"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded border border-dashed border-border text-[9px] text-muted">
+                            No QR
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-1">
+                          <label className="inline-flex cursor-pointer items-center rounded border border-border px-2 py-1 text-[10px] font-semibold text-text">
+                            Upload
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="sr-only"
+                              onChange={async (e) => {
+                                try {
+                                  await handleQrFile(
+                                    e.target.files?.[0] || null,
+                                    (value) => patch('qrCodeImage', value),
+                                  )
+                                } catch (err) {
+                                  alert(err.message)
+                                }
+                                e.target.value = ''
+                              }}
+                            />
+                          </label>
+                          {draft.qrCodeImage ? (
+                            <button
+                              type="button"
+                              onClick={() => patch('qrCodeImage', '')}
+                              className="rounded border border-red-500/40 px-2 py-1 text-[10px] font-semibold text-red-300"
+                            >
+                              Clear
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-3 py-2.5">
                       <div className="flex items-center gap-1.5">
                         <button
                           type="button"
@@ -2113,8 +2226,196 @@ function PaymentAccountsPanel({
   )
 }
 
+function WithdrawMethodsPanel({
+  methods,
+  onSave,
+  onCreate,
+  onDelete,
+  savingId,
+  creating,
+  deletingId,
+}) {
+  const [drafts, setDrafts] = useState({})
+  const [showAdd, setShowAdd] = useState(false)
+  const [newMethod, setNewMethod] = useState({
+    label: '',
+    id: '',
+  })
+
+  useEffect(() => {
+    const next = {}
+    for (const method of methods) {
+      next[method.id] = {
+        label: method.label || '',
+      }
+    }
+    setDrafts(next)
+  }, [methods])
+
+  const slugFromLabel = (label) =>
+    String(label || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '')
+      .slice(0, 32)
+
+  const handleCreate = async () => {
+    const payload = {
+      ...newMethod,
+      id: newMethod.id.trim() || slugFromLabel(newMethod.label),
+    }
+    const created = await onCreate(payload)
+    if (created) {
+      setNewMethod({
+        label: '',
+        id: '',
+      })
+      setShowAdd(false)
+    }
+  }
+
+  const inputClass =
+    'w-full min-w-0 rounded border border-border bg-navy-dark px-2 py-1.5 text-xs text-text'
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-muted">
+          Yeh list withdraw form ke payment method options ke liye hai. Deposit accounts alag tab
+          se manage hote hain.
+        </p>
+        <button
+          type="button"
+          onClick={() => setShowAdd((v) => !v)}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-accent px-3 py-2 text-xs font-bold text-navy-dark"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          {showAdd ? 'Cancel' : 'Add Withdraw Method'}
+        </button>
+      </div>
+
+      {showAdd && (
+        <div className="rounded-xl border border-accent/40 bg-accent/5 p-4">
+          <p className="mb-3 text-sm font-bold text-text">Add new withdraw method</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-xs text-muted">
+              Display name
+              <input
+                value={newMethod.label}
+                onChange={(e) => {
+                  const label = e.target.value
+                  setNewMethod((p) => ({
+                    ...p,
+                    label,
+                    id: p.id || slugFromLabel(label),
+                  }))
+                }}
+                placeholder="NayaPay"
+                className="mt-1 w-full rounded border border-border bg-navy-dark px-3 py-2 text-sm text-text"
+              />
+            </label>
+            <label className="block text-xs text-muted">
+              Id (slug)
+              <input
+                value={newMethod.id}
+                onChange={(e) =>
+                  setNewMethod((p) => ({
+                    ...p,
+                    id: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''),
+                  }))
+                }
+                placeholder="nayapay"
+                className="mt-1 w-full rounded border border-border bg-navy-dark px-3 py-2 text-sm text-text font-mono"
+              />
+            </label>
+          </div>
+          <button
+            type="button"
+            disabled={creating || !newMethod.label.trim()}
+            onClick={handleCreate}
+            className="mt-3 rounded-lg bg-accent px-4 py-2 text-xs font-bold text-navy-dark disabled:opacity-60"
+          >
+            {creating ? 'Adding…' : 'Add Withdraw Method'}
+          </button>
+        </div>
+      )}
+
+      {!methods.length ? (
+        <p className="text-sm text-muted">No withdraw methods yet. Add a method above.</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full min-w-[520px] text-left text-xs">
+            <thead className="bg-navy-light text-muted">
+              <tr>
+                <th className="px-3 py-3 font-semibold">Method</th>
+                <th className="px-3 py-3 font-semibold">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {methods.map((method) => {
+                const draft = drafts[method.id] || { label: '' }
+                const busy = savingId === method.id
+                const deleting = deletingId === method.id
+
+                return (
+                  <tr key={method.id} className="bg-navy/50 hover:bg-surface-hover/20">
+                    <td className="px-3 py-2.5">
+                      <input
+                        value={draft.label}
+                        onChange={(e) =>
+                          setDrafts((prev) => ({
+                            ...prev,
+                            [method.id]: { label: e.target.value },
+                          }))
+                        }
+                        className={`${inputClass} min-w-[160px] font-semibold`}
+                      />
+                      <p className="mt-0.5 text-[10px] text-muted font-mono">{method.id}</p>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => onSave(method.id, draft)}
+                          className="rounded bg-accent px-2.5 py-1.5 text-[10px] font-bold text-navy-dark disabled:opacity-60"
+                        >
+                          {busy ? '…' : 'Save'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={deleting}
+                          onClick={() => {
+                            if (window.confirm(`Delete ${method.label} (${method.id})?`)) {
+                              onDelete(method.id)
+                            }
+                          }}
+                          className="inline-flex items-center gap-1 rounded border border-red-500/40 px-2 py-1.5 text-[10px] font-semibold text-red-300 hover:bg-red-500/10 disabled:opacity-60"
+                          title="Delete"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function WhatsappAgentsPanel({
   agents,
+  supportContact,
+  supportContactForm,
+  setSupportContactForm,
+  onSaveSupportContact,
+  savingSupportContact,
   onSave,
   onCreate,
   onDelete,
@@ -2193,6 +2494,60 @@ function WhatsappAgentsPanel({
 
   return (
     <div className="space-y-4">
+      <div className="rounded-xl border border-border bg-navy-light p-4">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-bold text-text">BpxPro Support WhatsApp</h3>
+            <p className="mt-1 text-xs text-muted">
+              Yeh number Support buttons, floating support chat, FAQ aur Contact Us ke liye use hota
+              hai. Yeh local agent country list se alag handle hota hai.
+            </p>
+          </div>
+          {supportContact?.configured ? (
+            <span className="rounded border border-accent/40 bg-accent/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-accent">
+              Active
+            </span>
+          ) : (
+            <span className="rounded border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-300">
+              Fallback
+            </span>
+          )}
+        </div>
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <label className="block text-xs text-muted">
+            Support WhatsApp (digits with country code)
+            <input
+              value={supportContactForm.whatsapp}
+              onChange={(e) =>
+                setSupportContactForm({ whatsapp: e.target.value.replace(/[^\d]/g, '') })
+              }
+              placeholder="923001234567"
+              className="mt-1 w-full rounded border border-border bg-navy-dark px-3 py-2 text-sm text-text font-mono"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={onSaveSupportContact}
+            disabled={savingSupportContact || !supportContactForm.whatsapp.trim()}
+            className="rounded-lg bg-accent px-4 py-2 text-xs font-bold text-navy-dark disabled:opacity-60"
+          >
+            {savingSupportContact ? 'Saving…' : 'Save Support Number'}
+          </button>
+        </div>
+        {supportContact?.updatedAt ? (
+          <p className="mt-2 text-[10px] text-muted">
+            Last updated{' '}
+            {new Date(supportContact.updatedAt).toLocaleString(undefined, {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+            {supportContact.source ? ` · ${supportContact.source}` : ''}
+          </p>
+        ) : null}
+      </div>
+
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted">
           Register → WhatsApp Agent tab pe yeh countries aur numbers dikhte hain. Number country
@@ -2443,7 +2798,14 @@ function AdminDashboard({ onLogout }) {
   const [savingAccountId, setSavingAccountId] = useState('')
   const [creatingAccount, setCreatingAccount] = useState(false)
   const [deletingAccountId, setDeletingAccountId] = useState('')
+  const [withdrawMethods, setWithdrawMethods] = useState([])
+  const [savingWithdrawMethodId, setSavingWithdrawMethodId] = useState('')
+  const [creatingWithdrawMethod, setCreatingWithdrawMethod] = useState(false)
+  const [deletingWithdrawMethodId, setDeletingWithdrawMethodId] = useState('')
   const [whatsappAgents, setWhatsappAgents] = useState([])
+  const [supportContact, setSupportContact] = useState(null)
+  const [supportContactForm, setSupportContactForm] = useState({ whatsapp: '' })
+  const [savingSupportContact, setSavingSupportContact] = useState(false)
   const [savingWhatsappCode, setSavingWhatsappCode] = useState('')
   const [creatingWhatsapp, setCreatingWhatsapp] = useState(false)
   const [deletingWhatsappCode, setDeletingWhatsappCode] = useState('')
@@ -2458,11 +2820,12 @@ function AdminDashboard({ onLogout }) {
   const isUsersTab = activeTab === 'users'
   const isBlogTab = activeTab === 'blog'
   const isAccountsTab = activeTab === 'accounts'
+  const isWithdrawMethodsTab = activeTab === 'withdrawMethods'
   const isWhatsappTab = activeTab === 'whatsapp'
   const isPnlTab = activeTab === 'pnl'
   const isExpensesTab = activeTab === 'expenses'
   const isFinanceTab = isPnlTab || isExpensesTab
-  const isSettingsPanel = isAccountsTab || isWhatsappTab || isFinanceTab
+  const isSettingsPanel = isAccountsTab || isWithdrawMethodsTab || isWhatsappTab || isFinanceTab
 
   const loadTransactions = async ({ silent = false } = {}) => {
     if (isUsersTab || isBlogTab || isSettingsPanel) return
@@ -2603,8 +2966,29 @@ function AdminDashboard({ onLogout }) {
     setLoading(true)
     setLoadError('')
     try {
-      const list = await fetchAdminWhatsappAgents()
+      const [list, support] = await Promise.all([
+        fetchAdminWhatsappAgents(),
+        fetchAdminSupportContact().catch(() => null),
+      ])
       setWhatsappAgents(list)
+      if (support) {
+        setSupportContact(support)
+        setSupportContactForm({ whatsapp: support.whatsapp || '' })
+      }
+    } catch (err) {
+      setLoadError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadWithdrawMethodsAdmin = async () => {
+    if (!isWithdrawMethodsTab) return
+    setLoading(true)
+    setLoadError('')
+    try {
+      const list = await fetchAdminWithdrawMethods()
+      setWithdrawMethods(list)
     } catch (err) {
       setLoadError(err.message)
     } finally {
@@ -2650,6 +3034,7 @@ function AdminDashboard({ onLogout }) {
     if (isUsersTab) return loadUsers()
     if (isBlogTab) return loadBlogPosts()
     if (isAccountsTab) return loadPaymentAccountsAdmin()
+    if (isWithdrawMethodsTab) return loadWithdrawMethodsAdmin()
     if (isWhatsappTab) return loadWhatsappAgentsAdmin()
     if (isExpensesTab) return loadExpensesAdmin()
     if (isPnlTab) return loadProfitLossAdmin()
@@ -2670,6 +3055,10 @@ function AdminDashboard({ onLogout }) {
     }
     if (isAccountsTab) {
       loadPaymentAccountsAdmin()
+      return undefined
+    }
+    if (isWithdrawMethodsTab) {
+      loadWithdrawMethodsAdmin()
       return undefined
     }
     if (isWhatsappTab) {
@@ -2874,6 +3263,59 @@ function AdminDashboard({ onLogout }) {
       alert(err.message)
     } finally {
       setDeletingAccountId('')
+    }
+  }
+
+  const handleSaveWithdrawMethod = async (id, draft) => {
+    setSavingWithdrawMethodId(id)
+    try {
+      const updated = await updateAdminWithdrawMethod(id, draft)
+      setWithdrawMethods((prev) => prev.map((m) => (m.id === id ? updated : m)))
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setSavingWithdrawMethodId('')
+    }
+  }
+
+  const handleCreateWithdrawMethod = async (payload) => {
+    setCreatingWithdrawMethod(true)
+    try {
+      const created = await createAdminWithdrawMethod(payload)
+      setWithdrawMethods((prev) => [...prev, created].sort((a, b) => a.id.localeCompare(b.id)))
+      return created
+    } catch (err) {
+      alert(err.message)
+      return null
+    } finally {
+      setCreatingWithdrawMethod(false)
+    }
+  }
+
+  const handleDeleteWithdrawMethod = async (id) => {
+    setDeletingWithdrawMethodId(id)
+    try {
+      await deleteAdminWithdrawMethod(id)
+      setWithdrawMethods((prev) => prev.filter((m) => m.id !== id))
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setDeletingWithdrawMethodId('')
+    }
+  }
+
+  const handleSaveSupportContact = async () => {
+    setSavingSupportContact(true)
+    try {
+      const updated = await updateAdminSupportContact({
+        whatsapp: supportContactForm.whatsapp,
+      })
+      setSupportContact(updated)
+      setSupportContactForm({ whatsapp: updated.whatsapp || '' })
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setSavingSupportContact(false)
     }
   }
 
@@ -3099,13 +3541,15 @@ function AdminDashboard({ onLogout }) {
                   </h1>
                   <p className="text-[10px] text-muted">
                     {activeTab === 'deposit'
-                      ? 'All deposit requests from users'
-                      : activeTab === 'withdraw'
-                        ? 'All withdraw requests from users'
-                        : activeTab === 'blog'
-                          ? 'Create and manage blog articles'
-                          : activeTab === 'accounts'
-                            ? 'JazzCash / EasyPaisa / Bank details for the app'
+                    ? 'All deposit requests from users'
+                    : activeTab === 'withdraw'
+                      ? 'All withdraw requests from users'
+                      : activeTab === 'blog'
+                        ? 'Create and manage blog articles'
+                        : activeTab === 'accounts'
+                          ? 'JazzCash / EasyPaisa / Bank details for the app'
+                          : activeTab === 'withdrawMethods'
+                            ? 'Separate withdraw payment method options'
                             : activeTab === 'whatsapp'
                               ? 'Country agents & WhatsApp numbers for register'
                               : activeTab === 'pnl'
@@ -3153,6 +3597,22 @@ function AdminDashboard({ onLogout }) {
             <StatCard
               label="Bank"
               value={paymentAccounts.some((a) => a.id === 'bank') ? 'ON' : '—'}
+              icon={Wallet}
+            />
+          </div>
+          )}
+
+          {isWithdrawMethodsTab && (
+          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatCard label="Methods" value={withdrawMethods.length} icon={Wallet} accent />
+            <StatCard
+              label="Wallets"
+              value={withdrawMethods.filter((m) => m.id !== 'bank').length}
+              icon={Wallet}
+            />
+            <StatCard
+              label="Bank"
+              value={withdrawMethods.some((m) => m.id === 'bank') ? 'ON' : '—'}
               icon={Wallet}
             />
           </div>
@@ -3302,6 +3762,7 @@ function AdminDashboard({ onLogout }) {
           (isUsersTab && bpexchUsers.length === 0) ||
           (isBlogTab && blogPosts.length === 0) ||
           (isAccountsTab && paymentAccounts.length === 0) ||
+          (isWithdrawMethodsTab && withdrawMethods.length === 0) ||
           (isWhatsappTab && whatsappAgents.length === 0) ||
           (isExpensesTab && expenses.length === 0) ||
           (isPnlTab && !pnlSummary) ||
@@ -3316,6 +3777,8 @@ function AdminDashboard({ onLogout }) {
                   ? 'blog posts'
                   : isAccountsTab
                     ? 'payment accounts'
+                    : isWithdrawMethodsTab
+                      ? 'withdraw methods'
                     : isWhatsappTab
                       ? 'WhatsApp agents'
                       : isExpensesTab
@@ -3360,6 +3823,11 @@ function AdminDashboard({ onLogout }) {
         ) : isWhatsappTab ? (
           <WhatsappAgentsPanel
             agents={whatsappAgents}
+            supportContact={supportContact}
+            supportContactForm={supportContactForm}
+            setSupportContactForm={setSupportContactForm}
+            onSaveSupportContact={handleSaveSupportContact}
+            savingSupportContact={savingSupportContact}
             onSave={handleSaveWhatsappAgent}
             onCreate={handleCreateWhatsappAgent}
             onDelete={handleDeleteWhatsappAgent}
@@ -3376,6 +3844,16 @@ function AdminDashboard({ onLogout }) {
             savingId={savingAccountId}
             creating={creatingAccount}
             deletingId={deletingAccountId}
+          />
+        ) : isWithdrawMethodsTab ? (
+          <WithdrawMethodsPanel
+            methods={withdrawMethods}
+            onSave={handleSaveWithdrawMethod}
+            onCreate={handleCreateWithdrawMethod}
+            onDelete={handleDeleteWithdrawMethod}
+            savingId={savingWithdrawMethodId}
+            creating={creatingWithdrawMethod}
+            deletingId={deletingWithdrawMethodId}
           />
         ) : isBlogTab ? (
           <BlogPostsPanel
@@ -3442,6 +3920,8 @@ function AdminDashboard({ onLogout }) {
               ? `Showing ${blogPosts.length} blog posts`
               : isAccountsTab
                 ? `${paymentAccounts.length} payment methods (app deposit accounts)`
+                : isWithdrawMethodsTab
+                  ? `${withdrawMethods.length} withdraw payment methods`
                 : isWhatsappTab
                   ? `${whatsappAgents.length} WhatsApp agent countries`
                   : isExpensesTab

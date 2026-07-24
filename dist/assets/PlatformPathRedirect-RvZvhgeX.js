@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-runtime-n5LQ9ujS.js";import{H as t,U as n,n as r}from"./index-CWnIYZzi.js";var i=e();function a(){let e=n(),a=r(e.pathname);return a===e.pathname?(0,i.jsx)(t,{to:`/`,replace:!0}):(0,i.jsx)(t,{to:`${a}${e.search}${e.hash}`,replace:!0})}export{a as default};

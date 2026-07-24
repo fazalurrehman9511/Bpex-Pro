@@ -35,7 +35,7 @@ function createInjectScript(brandName, syncSecret = '') {
     if(u.indexOf(P+'/')===0||u===P)return u;
     if(u.indexOf('data:')===0||u.indexOf('blob:')===0||u.indexOf('mailto:')===0)return u;
     /* FlowExch backend routes — must NOT go through BPEXCH proxy */
-    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
+    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/withdraw-methods')===0||u.indexOf('/api/support-contact')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
     if(/^https?:\\/\\//i.test(u)||u.indexOf('//')===0){
       return u.replace(/^https?:\\/\\/[^/]*bpexch[^/]*/i,location.origin+P);
     }
@@ -1544,7 +1544,7 @@ function injectAfterJquery(html) {
     if(!u||typeof u!=='string')return u;
     if(u.indexOf(P+'/')===0||u===P)return u;
     if(u.indexOf('data:')===0||u.indexOf('blob:')===0||u.indexOf('mailto:')===0)return u;
-    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
+    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/withdraw-methods')===0||u.indexOf('/api/support-contact')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
     if(/^https?:\\/\\//i.test(u)||u.indexOf('//')===0){
       return u.replace(/^https?:\\/\\/[^/]*bpexch[^/]*/i,location.origin+P);
     }

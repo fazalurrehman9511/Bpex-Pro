@@ -1,4 +1,5 @@
 import { getWhatsAppNumber, getCountryByCode } from '../data/countries'
+import { getSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import { getPaymentMethod } from '../data/paymentMethods'
 import { detectCountryCode } from './detectCountry'
 
@@ -74,6 +75,11 @@ export function buildCustomWhatsAppUrl(text, countryCode) {
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
 }
 
+export function buildSupportWhatsAppUrl(text) {
+  const number = getSupportWhatsAppNumber()
+  return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
+}
+
 export function openWhatsApp({ name, phone, intent = 'register', countryCode = 'PK', paymentMethod }) {
   window.open(
     buildWhatsAppUrl({ name, phone, intent, countryCode, paymentMethod }),
@@ -88,4 +94,8 @@ export function openQuickWhatsApp(intent = 'contact') {
 
 export function openCustomWhatsApp(text) {
   window.open(buildCustomWhatsAppUrl(text), '_blank', 'noopener,noreferrer')
+}
+
+export function openSupportWhatsApp(text) {
+  window.open(buildSupportWhatsAppUrl(text), '_blank', 'noopener,noreferrer')
 }
