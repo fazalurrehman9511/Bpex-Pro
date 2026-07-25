@@ -19,7 +19,6 @@ import {
   ScreenLogin,
   ScreenRegister,
   ScreenWallet,
-  ScreenProfile,
   ScreenDeposit,
   ScreenMethod,
   ScreenProof,
@@ -110,10 +109,8 @@ export default function NativeWalletApp() {
       ? new URLSearchParams(window.location.search).get('tab')
       : null
   const initialScreen = existing?.username
-    ? tabFromUrl === 'profile'
-      ? 'profile'
-      : tabFromUrl === 'history'
-        ? 'history'
+    ? tabFromUrl === 'history'
+      ? 'history'
       : 'wallet'
     : 'login'
   const [screen, setScreen] = useState(initialScreen)
@@ -192,9 +189,9 @@ export default function NativeWalletApp() {
         setScreen('login')
         return
       }
-      if (tab === 'profile') setScreen('profile')
-      else if (tab === 'history') setScreen('history')
+      if (tab === 'history') setScreen('history')
       else if (tab === 'home' || tab === 'wallet') setScreen('wallet')
+      else setScreen('wallet')
     }
     window.addEventListener('bpexch-nav', onNav)
     const onPop = () => onNav({ detail: new URLSearchParams(window.location.search).get('tab') })
@@ -205,7 +202,7 @@ export default function NativeWalletApp() {
     }
   }, [])
 
-  const showChrome = ['login', 'register', 'wallet', 'history', 'profile', 'betting', 'deposit', 'method', 'proof', 'withdraw'].includes(
+  const showChrome = ['login', 'register', 'wallet', 'history', 'betting', 'deposit', 'method', 'proof', 'withdraw'].includes(
     screen,
   )
   /** Show React footer on app screens (native BPEXCH uses Android overlay). */
@@ -347,7 +344,7 @@ export default function NativeWalletApp() {
   }
 
   useEffect(() => {
-    if (screen !== 'wallet' && screen !== 'withdraw' && screen !== 'profile') return undefined
+    if (screen !== 'wallet' && screen !== 'withdraw' && screen !== 'history') return undefined
     refreshBalance(username, { quiet: screen === 'wallet' })
     syncTransactions(username)
     const t = window.setInterval(() => {
@@ -640,7 +637,6 @@ export default function NativeWalletApp() {
             setScreen('withdraw')
           }}
           onOpenBetting={() => setScreen('betting')}
-          onOpenProfile={() => setScreen('profile')}
           onRefresh={() => {
             refreshBalance(username)
             syncTransactions(username)
@@ -657,35 +653,8 @@ export default function NativeWalletApp() {
   if (screen === 'betting') {
     return (
       <div className="fixed inset-0 z-[100] flex flex-col bg-navy-dark">
-        <ScreenBetting
-          onBack={() => setScreen('wallet')}
-        />
+        <ScreenBetting onBack={() => setScreen('wallet')} />
         {chrome}
-      </div>
-    )
-  }
-
-  if (screen === 'profile') {
-    return (
-      <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#063822]">
-        <ScreenProfile
-          username={username}
-          passwordText={password || '—'}
-          balance={balance}
-          balanceLoading={balanceLoading}
-          onCopyUsername={() => {
-            copyText(username)
-            flash('Username copied')
-          }}
-          onCopyPassword={() => {
-            copyText(password)
-            flash(password ? 'Password copied' : 'No password saved')
-          }}
-          onLogout={logout}
-          onOpenBetting={() => setScreen('betting')}
-        />
-        {chrome}
-        {toast ? <Toast text={toast} /> : null}
       </div>
     )
   }
@@ -832,7 +801,6 @@ export default function NativeWalletApp() {
           setScreen('withdraw')
         }}
         onOpenBetting={() => setScreen('betting')}
-        onOpenProfile={() => setScreen('profile')}
         onRefresh={() => {
           refreshBalance(username)
           syncTransactions(username)

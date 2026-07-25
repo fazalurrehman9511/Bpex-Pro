@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Capacitor } from '@capacitor/core'
 import {
   Copy,
   User,
@@ -464,7 +465,6 @@ export function ScreenWallet({
   onDeposit,
   onWithdraw,
   onOpenBetting,
-  onOpenProfile,
   onRefresh,
   onLogout,
   historyOnly = false,
@@ -487,183 +487,175 @@ export function ScreenWallet({
         <div className="mb-3 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <BpxLogo className="h-8 w-8" />
-            <p className="truncate text-sm font-bold text-white">{BRAND_NAME} Wallet</p>
+            <p className="truncate text-sm font-bold text-white">
+              {historyOnly ? 'Transaction History' : `${BRAND_NAME} Wallet`}
+            </p>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={onOpenProfile}
-              className="inline-flex items-center gap-1 rounded-lg border border-accent/25 bg-accent/10 px-2.5 py-1.5 text-[10px] font-bold text-accent active:opacity-80"
-            >
-              <User className="h-3.5 w-3.5" />
-              Profile
-            </button>
-            <button
-              type="button"
-              onClick={onLogout}
-              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/20 bg-black/20 px-2.5 py-1.5 text-[10px] font-bold text-white active:opacity-80"
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Logout
-            </button>
-          </div>
-        </div>
-
-      <button
-        type="button"
-        onClick={onRefresh}
-        className="mb-2 w-full rounded-xl border border-accent/30 bg-[#0a3d28]/90 px-3 py-3 text-left active:opacity-90"
-      >
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-white/50">
-            BPEXCH Balance
-          </p>
-          <span className="inline-flex items-center gap-1 text-[8px] font-bold text-accent/80">
-            <RefreshCw className={`h-3 w-3 ${balanceLoading ? 'animate-spin' : ''}`} />
-            Tap refresh
-          </span>
-        </div>
-        <p className="mt-0.5 text-2xl font-black text-accent">{balanceLabel}</p>
-      </button>
-
-      <div className="mb-2 rounded-xl border border-white/10 bg-[#0a3d28]/90 px-3 py-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <p className="text-[9px] text-white/50">Username</p>
-            <p className="text-xs font-semibold text-white">{username || 'your_id'}</p>
-          </div>
-          <button type="button" onClick={onCopyUsername} aria-label="Copy username">
-            <Copy className="h-3.5 w-3.5 text-accent" />
-          </button>
-        </div>
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <div>
-            <p className="text-[9px] text-white/50">Password</p>
-            <p className="text-xs font-semibold text-white">{passwordMask}</p>
-          </div>
-          <button type="button" onClick={onCopyPassword} aria-label="Copy password">
-            <Copy className="h-3.5 w-3.5 text-accent" />
-          </button>
-        </div>
-      </div>
-
-      {latestNotice ? (
-        <div className="mb-3 overflow-hidden rounded-md bg-[#0d5c38] px-2 py-1.5">
-          <p className="truncate text-[9px] text-accent">
-            {typeof latestNotice === 'string' ? latestNotice : latestNotice.text}
-          </p>
-        </div>
-      ) : null}
-
-      {!historyOnly ? (
-        <>
           <button
             type="button"
-            onClick={onOpenBetting}
-            className="mb-4 flex w-full items-center gap-4 rounded-2xl border-2 border-accent/50 bg-gradient-to-r from-[#062a1c] via-[#0a4d2e] to-[#0d5c38] px-4 py-5 text-left shadow-lg shadow-black/25 active:scale-[0.99]"
+            onClick={onLogout}
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/20 bg-black/20 px-2.5 py-1.5 text-[10px] font-bold text-white active:opacity-80"
           >
-            <BpxLogo className="h-16 w-16 ring-2 ring-accent/40" />
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-black tracking-tight text-white">{BRAND_NAME} ID Login</p>
-              <p className="mt-1 text-[11px] leading-snug text-white/70">
-                Open BPEXCH betting — same ID, auto sign-in
-              </p>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-accent px-4 py-1.5 text-[11px] font-black uppercase tracking-wide text-navy-dark">
-                  TAP TO OPEN
-                </span>
-                <span className="text-[11px] font-bold text-accent">In-app →</span>
-              </div>
-            </div>
-          </button>
-
-          <p className="mb-1.5 text-[10px] font-bold text-white">Quick Actions</p>
-          <div className="mb-3 grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              onClick={onDeposit}
-              className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-accent to-emerald-600 py-3 active:opacity-90"
-            >
-              <Wallet className="h-5 w-5 text-navy-dark" />
-              <span className="text-[10px] font-bold text-navy-dark">Deposit</span>
-            </button>
-            <button
-              type="button"
-              onClick={onWithdraw}
-              className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-[#0a3d28] py-3 active:opacity-90"
-            >
-              <ArrowUpCircle className="h-5 w-5 text-white" />
-              <span className="text-[10px] font-bold text-white">Withdrawal</span>
-            </button>
-          </div>
-        </>
-      ) : null}
-      </div>
-
-      <div className="mt-1 flex min-h-0 flex-1 flex-col">
-        <div className="flex shrink-0 items-center justify-between">
-          <p className="text-[10px] font-bold text-white">
-            {historyOnly ? 'Transaction History' : 'Recent Transactions'}
-          </p>
-          <button
-            type="button"
-            onClick={onRefresh}
-            className="text-[8px] font-bold uppercase tracking-wide text-accent/90"
-          >
-            Refresh
+            <LogOut className="h-3.5 w-3.5" />
+            Logout
           </button>
         </div>
-        <div className="mt-1.5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className={`${historyOnly ? 'space-y-1.5 pb-1' : 'max-h-[5.5rem] space-y-1.5 overflow-y-auto overscroll-contain pb-1'}`}>
-        {transactions.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-white/20 bg-black/15 px-3 py-6 text-center">
-            <p className="text-[11px] font-semibold text-white/80">No transactions</p>
-            <p className="mt-1 text-[9px] text-white/45">Deposit ya withdraw ke baad yahan dikhega</p>
-          </div>
-        ) : (
-          transactions.map((tx) => (
-            <div
-              key={tx.id}
-              className="flex items-center justify-between rounded-lg bg-white px-2.5 py-2"
+
+        {!historyOnly ? (
+          <>
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="mb-2 w-full rounded-xl border border-accent/30 bg-[#0a3d28]/90 px-3 py-3 text-left active:opacity-90"
             >
-              <div>
-                <p className="text-[10px] font-bold text-slate-800">{tx.title}</p>
-                <p className="text-[8px] text-slate-400">{tx.meta}</p>
-              </div>
-              <div className="text-right">
-                <p
-                  className={`text-[10px] font-bold ${
-                    tx.kind === 'deposit' ? 'text-emerald-600' : 'text-orange-500'
-                  }`}
-                >
-                  {tx.amountLabel}
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[9px] font-semibold uppercase tracking-wide text-white/50">
+                  BPEXCH Balance
                 </p>
-                <span
-                  className={`rounded px-1.5 py-0.5 text-[7px] font-bold ${
-                    tx.status === 'APPROVED'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : tx.status === 'REJECTED'
-                        ? 'bg-rose-100 text-rose-700'
-                        : tx.status === 'EXPIRED'
-                          ? 'bg-slate-100 text-slate-500'
-                          : 'bg-amber-100 text-amber-800'
-                  }`}
-                >
-                  {tx.status === 'APPROVED'
-                    ? 'APPROVED'
-                    : tx.status === 'REJECTED'
-                      ? 'REJECTED'
-                      : tx.status === 'EXPIRED'
-                        ? 'EXPIRED'
-                        : 'PENDING'}
+                <span className="inline-flex items-center gap-1 text-[8px] font-bold text-accent/80">
+                  <RefreshCw className={`h-3 w-3 ${balanceLoading ? 'animate-spin' : ''}`} />
+                  Tap refresh
                 </span>
               </div>
+              <p className="mt-0.5 text-2xl font-black text-accent">{balanceLabel}</p>
+            </button>
+
+            <div className="mb-2 rounded-xl border border-white/10 bg-[#0a3d28]/90 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-[9px] text-white/50">Username</p>
+                  <p className="text-xs font-semibold text-white">{username || 'your_id'}</p>
+                </div>
+                <button type="button" onClick={onCopyUsername} aria-label="Copy username">
+                  <Copy className="h-3.5 w-3.5 text-accent" />
+                </button>
+              </div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div>
+                  <p className="text-[9px] text-white/50">Password</p>
+                  <p className="text-xs font-semibold text-white">{passwordMask}</p>
+                </div>
+                <button type="button" onClick={onCopyPassword} aria-label="Copy password">
+                  <Copy className="h-3.5 w-3.5 text-accent" />
+                </button>
+              </div>
             </div>
-          ))
-        )}
+
+            {latestNotice ? (
+              <div className="mb-3 overflow-hidden rounded-md bg-[#0d5c38] px-2 py-1.5">
+                <p className="truncate text-[9px] text-accent">
+                  {typeof latestNotice === 'string' ? latestNotice : latestNotice.text}
+                </p>
+              </div>
+            ) : null}
+
+            <button
+              type="button"
+              onClick={onOpenBetting}
+              className="mb-4 flex w-full items-center gap-4 rounded-2xl border-2 border-accent/50 bg-gradient-to-r from-[#062a1c] via-[#0a4d2e] to-[#0d5c38] px-4 py-5 text-left shadow-lg shadow-black/25 active:scale-[0.99]"
+            >
+              <BpxLogo className="h-16 w-16 ring-2 ring-accent/40" />
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-black tracking-tight text-white">{BRAND_NAME} ID Login</p>
+                <p className="mt-1 text-[11px] leading-snug text-white/70">
+                  Open BPEXCH betting — same ID, auto sign-in
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-accent px-4 py-1.5 text-[11px] font-black uppercase tracking-wide text-navy-dark">
+                    TAP TO OPEN
+                  </span>
+                  <span className="text-[11px] font-bold text-accent">In-app →</span>
+                </div>
+              </div>
+            </button>
+
+            <p className="mb-1.5 text-[10px] font-bold text-white">Quick Actions</p>
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onDeposit}
+                className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-accent to-emerald-600 py-3 active:opacity-90"
+              >
+                <Wallet className="h-5 w-5 text-navy-dark" />
+                <span className="text-[10px] font-bold text-navy-dark">Deposit</span>
+              </button>
+              <button
+                type="button"
+                onClick={onWithdraw}
+                className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-[#0a3d28] py-3 active:opacity-90"
+              >
+                <ArrowUpCircle className="h-5 w-5 text-white" />
+                <span className="text-[10px] font-bold text-white">Withdrawal</span>
+              </button>
+            </div>
+          </>
+        ) : null}
+      </div>
+
+      {historyOnly ? (
+        <div className="mt-1 flex min-h-0 flex-1 flex-col">
+          <div className="flex shrink-0 items-center justify-between">
+            <p className="text-[10px] font-bold text-white">Transaction History</p>
+            <button
+              type="button"
+              onClick={onRefresh}
+              className="text-[8px] font-bold uppercase tracking-wide text-accent/90"
+            >
+              Refresh
+            </button>
+          </div>
+          <div className="mt-1.5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <div className="space-y-1.5 pb-1">
+              {transactions.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-white/20 bg-black/15 px-3 py-6 text-center">
+                  <p className="text-[11px] font-semibold text-white/80">No transactions</p>
+                  <p className="mt-1 text-[9px] text-white/45">Deposit or withdrawal requests will appear here</p>
+                </div>
+              ) : (
+                transactions.map((tx) => (
+                  <div
+                    key={tx.id}
+                    className="flex items-center justify-between rounded-lg bg-white px-2.5 py-2"
+                  >
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-800">{tx.title}</p>
+                      <p className="text-[8px] text-slate-400">{tx.meta}</p>
+                    </div>
+                    <div className="text-right">
+                      <p
+                        className={`text-[10px] font-bold ${
+                          tx.kind === 'deposit' ? 'text-emerald-600' : 'text-orange-500'
+                        }`}
+                      >
+                        {tx.amountLabel}
+                      </p>
+                      <span
+                        className={`rounded px-1.5 py-0.5 text-[7px] font-bold ${
+                          tx.status === 'APPROVED'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : tx.status === 'REJECTED'
+                              ? 'bg-rose-100 text-rose-700'
+                              : tx.status === 'EXPIRED'
+                                ? 'bg-slate-100 text-slate-500'
+                                : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {tx.status === 'APPROVED'
+                          ? 'APPROVED'
+                          : tx.status === 'REJECTED'
+                            ? 'REJECTED'
+                            : tx.status === 'EXPIRED'
+                              ? 'EXPIRED'
+                              : 'PENDING'}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
     </div>
   )
 }
@@ -1175,6 +1167,9 @@ export function ScreenBetting({
   preview = false,
 }) {
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
+  const targetLoginUrl = Capacitor.isNativePlatform()
+    ? `${BPEXCH_BASE_URL}/Users/Login`
+    : BPEXCH_LOGIN_URL
   const [status, setStatus] = useState('Opening BPEXCH login…')
   const [failed, setFailed] = useState(false)
 
@@ -1186,7 +1181,7 @@ export function ScreenBetting({
       try {
         setFailed(false)
         setStatus('Opening BPEXCH login inside the app…')
-        window.location.href = BPEXCH_LOGIN_URL
+        window.location.href = targetLoginUrl
         if (!cancelled) setStatus('Opening BPEXCH…')
       } catch (err) {
         if (cancelled) return
@@ -1198,7 +1193,7 @@ export function ScreenBetting({
     return () => {
       cancelled = true
     }
-  }, [preview])
+  }, [preview, targetLoginUrl])
 
   return (
     <div className={`flex ${shell} flex-col bg-navy-dark pb-[calc(5.5rem+env(safe-area-inset-bottom))]`}>
@@ -1233,7 +1228,7 @@ export function ScreenBetting({
                 onClick={() => {
                   setFailed(false)
                   setStatus('Retrying…')
-                  window.location.href = BPEXCH_LOGIN_URL
+                  window.location.href = targetLoginUrl
                 }}
                 className="rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-navy-dark"
               >
@@ -1252,7 +1247,6 @@ export function ScreenBetting({
 export const PREVIEW_SCREENS = [
   { id: 'login', label: 'Login' },
   { id: 'wallet', label: 'Wallet' },
-  { id: 'profile', label: 'Profile' },
   { id: 'deposit', label: 'Deposit' },
   { id: 'method', label: 'Method' },
   { id: 'proof', label: 'Proof' },
