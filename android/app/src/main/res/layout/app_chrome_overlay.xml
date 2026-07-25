@@ -7,22 +7,7 @@
     android:clickable="false"
     android:focusable="false">
 
-    <!-- Circular WhatsApp FAB -->
-    <ImageButton
-        android:id="@+id/btn_whatsapp_fab"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="72dp"
-        android:background="@drawable/bg_whatsapp_fab"
-        android:contentDescription="@string/whatsapp_support"
-        android:padding="14dp"
-        android:scaleType="centerInside"
-        android:src="@drawable/ic_whatsapp"
-        android:elevation="8dp" />
-
-    <!-- Bottom footer: Home | Profile -->
+    <!-- Bottom footer: Home only on BPEXCH screen -->
     <LinearLayout
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
@@ -56,32 +41,6 @@
                 android:layout_marginTop="2dp"
                 android:text="@string/nav_home"
                 android:textColor="#25D366"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/btn_nav_profile"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="?android:attr/selectableItemBackground">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_nav_profile"
-                android:contentDescription="@string/nav_profile" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/nav_profile"
-                android:textColor="#8FFFFFFF"
                 android:textSize="10sp"
                 android:textStyle="bold" />
         </LinearLayout>

@@ -26,7 +26,6 @@ import {
   ScreenWithdraw,
   ScreenBetting,
   WalletBottomNav,
-  WhatsAppFab,
 } from './walletScreens'
 
 const STORAGE_KEY = 'flowexch.wallet.session'
@@ -113,6 +112,8 @@ export default function NativeWalletApp() {
   const initialScreen = existing?.username
     ? tabFromUrl === 'profile'
       ? 'profile'
+      : tabFromUrl === 'history'
+        ? 'history'
       : 'wallet'
     : 'login'
   const [screen, setScreen] = useState(initialScreen)
@@ -192,6 +193,7 @@ export default function NativeWalletApp() {
         return
       }
       if (tab === 'profile') setScreen('profile')
+      else if (tab === 'history') setScreen('history')
       else if (tab === 'home' || tab === 'wallet') setScreen('wallet')
     }
     window.addEventListener('bpexch-nav', onNav)
@@ -203,23 +205,31 @@ export default function NativeWalletApp() {
     }
   }, [])
 
-  const showChrome = ['wallet', 'profile', 'betting', 'deposit', 'method', 'proof', 'withdraw'].includes(
+  const showChrome = ['login', 'register', 'wallet', 'history', 'profile', 'betting', 'deposit', 'method', 'proof', 'withdraw'].includes(
     screen,
   )
   /** Show React footer on app screens (native BPEXCH uses Android overlay). */
   const useReactChrome = showChrome
 
-  const goHome = () => setScreen('wallet')
-  const goProfile = () => setScreen('profile')
+  const goHome = () => setScreen(username ? 'wallet' : 'login')
+  const goHistory = () => {
+    if (!username) {
+      flash('Please log in to view history')
+      setScreen('login')
+      return
+    }
+    setScreen('history')
+  }
 
   const chrome = useReactChrome ? (
     <>
       <WalletBottomNav
-        active={screen === 'profile' ? 'profile' : 'home'}
+        active={screen === 'history' ? 'history' : 'home'}
+        username={username}
         onHome={goHome}
-        onProfile={goProfile}
+        onHistory={goHistory}
+        homeOnly={screen === 'betting'}
       />
-      <WhatsAppFab username={username} />
     </>
   ) : null
 
@@ -560,6 +570,7 @@ export default function NativeWalletApp() {
           onLogin={login}
           onRegister={openRegister}
         />
+        {chrome}
         {toast ? <Toast text={toast} /> : null}
       </div>
     )
@@ -596,6 +607,48 @@ export default function NativeWalletApp() {
             flash('Copied ✓')
           }}
         />
+        {chrome}
+        {toast ? <Toast text={toast} /> : null}
+      </div>
+    )
+  }
+
+  if (screen === 'history') {
+    return (
+      <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#063822]">
+        <ScreenWallet
+          username={username}
+          passwordMask={password ? '••••••••' : '••••••••'}
+          balance={balance}
+          balanceLoading={balanceLoading}
+          notifications={notifications}
+          transactions={transactions}
+          onCopyUsername={() => {
+            copyText(username)
+            flash('Username copied')
+          }}
+          onCopyPassword={() => {
+            copyText(password)
+            flash(password ? 'Password copied' : 'No password saved')
+          }}
+          onDeposit={() => setScreen('deposit')}
+          onWithdraw={() => {
+            if (balance != null && balance < minBalanceForWithdraw) {
+              flash(`Withdrawal requires at least PKR ${minBalanceForWithdraw} available balance`)
+              return
+            }
+            setScreen('withdraw')
+          }}
+          onOpenBetting={() => setScreen('betting')}
+          onOpenProfile={() => setScreen('profile')}
+          onRefresh={() => {
+            refreshBalance(username)
+            syncTransactions(username)
+          }}
+          onLogout={logout}
+          historyOnly
+        />
+        {chrome}
         {toast ? <Toast text={toast} /> : null}
       </div>
     )
@@ -781,6 +834,7 @@ export default function NativeWalletApp() {
           setScreen('withdraw')
         }}
         onOpenBetting={() => setScreen('betting')}
+        onOpenProfile={() => setScreen('profile')}
         onRefresh={() => {
           refreshBalance(username)
           syncTransactions(username)

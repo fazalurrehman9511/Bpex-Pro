@@ -15,7 +15,7 @@ import {
   Eye,
   EyeOff,
   Home,
-  UserRound,
+  History,
 } from 'lucide-react'
 import { BPEXCH_BASE_URL, BPEXCH_LOGIN_URL } from '../config/embed'
 import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
@@ -69,8 +69,21 @@ export function WhatsAppFab({ username = '', className = '' }) {
   )
 }
 
-/** Bottom footer: Home + Profile */
-export function WalletBottomNav({ active = 'home', onHome, onProfile }) {
+function openWalletSupport(username = '') {
+  const id = username && username !== 'your_id' ? username : ''
+  openSupportWhatsApp(
+    `Hi BpExch Support! 👋\n\nI need help${id ? ` (ID: ${id})` : ''}.\nPlease assist me.`,
+  )
+}
+
+/** Bottom footer: Home + History + WhatsApp Support */
+export function WalletBottomNav({
+  active = 'home',
+  username = '',
+  onHome,
+  onHistory,
+  homeOnly = false,
+}) {
   const item = (id, label, Icon, onClick) => {
     const selected = active === id
     return (
@@ -91,7 +104,17 @@ export function WalletBottomNav({ active = 'home', onHome, onProfile }) {
     <nav className="fixed inset-x-0 bottom-0 z-[115] border-t border-white/10 bg-[#062a1c]/98 pb-[env(safe-area-inset-bottom)] backdrop-blur-sm">
       <div className="mx-auto flex max-w-lg items-stretch">
         {item('home', 'Home', Home, onHome)}
-        {item('profile', 'Profile', UserRound, onProfile)}
+        {!homeOnly ? item('history', 'History', History, onHistory) : null}
+        {!homeOnly ? (
+          <button
+            type="button"
+            onClick={() => openWalletSupport(username)}
+            className="flex flex-1 flex-col items-center gap-0.5 py-2 text-white/55 active:opacity-80"
+          >
+            <WhatsAppIcon className="h-5 w-5" />
+            <span className="text-[10px] font-bold">Support</span>
+          </button>
+        ) : null}
       </div>
     </nav>
   )
@@ -188,7 +211,7 @@ export function ScreenLogin({
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
   return (
     <div
-      className={`flex ${shell} flex-col items-center justify-center bg-gradient-to-b from-[#0a2a18] via-[#0f5c32] to-[#25D366] px-8 pb-10 pt-[max(3.5rem,env(safe-area-inset-top))]`}
+      className={`flex ${shell} flex-col items-center justify-center bg-gradient-to-b from-[#0a2a18] via-[#0f5c32] to-[#25D366] px-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(3.5rem,env(safe-area-inset-top))]`}
     >
       <div className="flex w-full max-w-xs flex-col items-center">
         <img
@@ -277,7 +300,7 @@ export function ScreenRegister({
   if (created) {
     return (
       <div
-        className={`flex ${shell} flex-col bg-gradient-to-b from-[#063822] to-[#0a4d2e] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]`}
+        className={`flex ${shell} flex-col bg-gradient-to-b from-[#063822] to-[#0a4d2e] px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]`}
       >
         <div className="mx-auto w-full max-w-sm">
           <div className="rounded-xl border border-accent/40 bg-accent/10 px-4 py-4 text-center">
@@ -320,7 +343,7 @@ export function ScreenRegister({
 
   return (
     <div
-      className={`flex ${shell} flex-col overflow-y-auto bg-gradient-to-b from-[#063822] to-[#0a4d2e] px-5 pb-10 pt-[max(2.5rem,env(safe-area-inset-top))]`}
+      className={`flex ${shell} flex-col overflow-y-auto bg-gradient-to-b from-[#063822] to-[#0a4d2e] px-5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]`}
     >
       <div className="mx-auto w-full max-w-sm">
         <button
@@ -441,8 +464,10 @@ export function ScreenWallet({
   onDeposit,
   onWithdraw,
   onOpenBetting,
+  onOpenProfile,
   onRefresh,
   onLogout,
+  historyOnly = false,
   preview = false,
 }) {
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
@@ -464,14 +489,24 @@ export function ScreenWallet({
             <BpxLogo className="h-8 w-8" />
             <p className="truncate text-sm font-bold text-white">{BRAND_NAME} Wallet</p>
           </div>
-          <button
-            type="button"
-            onClick={onLogout}
-            className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/20 bg-black/20 px-2.5 py-1.5 text-[10px] font-bold text-white active:opacity-80"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            Logout
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={onOpenProfile}
+              className="inline-flex items-center gap-1 rounded-lg border border-accent/25 bg-accent/10 px-2.5 py-1.5 text-[10px] font-bold text-accent active:opacity-80"
+            >
+              <User className="h-3.5 w-3.5" />
+              Profile
+            </button>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-white/20 bg-black/20 px-2.5 py-1.5 text-[10px] font-bold text-white active:opacity-80"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              Logout
+            </button>
+          </div>
         </div>
 
       <button
@@ -520,50 +555,56 @@ export function ScreenWallet({
         </div>
       ) : null}
 
-      <button
-        type="button"
-        onClick={onOpenBetting}
-        className="mb-4 flex w-full items-center gap-4 rounded-2xl border-2 border-accent/50 bg-gradient-to-r from-[#062a1c] via-[#0a4d2e] to-[#0d5c38] px-4 py-5 text-left shadow-lg shadow-black/25 active:scale-[0.99]"
-      >
-        <BpxLogo className="h-16 w-16 ring-2 ring-accent/40" />
-        <div className="min-w-0 flex-1">
-          <p className="text-base font-black tracking-tight text-white">{BRAND_NAME} ID Login</p>
-          <p className="mt-1 text-[11px] leading-snug text-white/70">
-            Open BPEXCH betting — same ID, auto sign-in
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-accent px-4 py-1.5 text-[11px] font-black uppercase tracking-wide text-navy-dark">
-              TAP TO OPEN
-            </span>
-            <span className="text-[11px] font-bold text-accent">In-app →</span>
-          </div>
-        </div>
-      </button>
+      {!historyOnly ? (
+        <>
+          <button
+            type="button"
+            onClick={onOpenBetting}
+            className="mb-4 flex w-full items-center gap-4 rounded-2xl border-2 border-accent/50 bg-gradient-to-r from-[#062a1c] via-[#0a4d2e] to-[#0d5c38] px-4 py-5 text-left shadow-lg shadow-black/25 active:scale-[0.99]"
+          >
+            <BpxLogo className="h-16 w-16 ring-2 ring-accent/40" />
+            <div className="min-w-0 flex-1">
+              <p className="text-base font-black tracking-tight text-white">{BRAND_NAME} ID Login</p>
+              <p className="mt-1 text-[11px] leading-snug text-white/70">
+                Open BPEXCH betting — same ID, auto sign-in
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-accent px-4 py-1.5 text-[11px] font-black uppercase tracking-wide text-navy-dark">
+                  TAP TO OPEN
+                </span>
+                <span className="text-[11px] font-bold text-accent">In-app →</span>
+              </div>
+            </div>
+          </button>
 
-      <p className="mb-1.5 text-[10px] font-bold text-white">Quick Actions</p>
-      <div className="mb-3 grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={onDeposit}
-          className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-accent to-emerald-600 py-3 active:opacity-90"
-        >
-          <Wallet className="h-5 w-5 text-navy-dark" />
-          <span className="text-[10px] font-bold text-navy-dark">Deposit</span>
-        </button>
-        <button
-          type="button"
-          onClick={onWithdraw}
-          className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-[#0a3d28] py-3 active:opacity-90"
-        >
-          <ArrowUpCircle className="h-5 w-5 text-white" />
-          <span className="text-[10px] font-bold text-white">Withdrawal</span>
-        </button>
-      </div>
+          <p className="mb-1.5 text-[10px] font-bold text-white">Quick Actions</p>
+          <div className="mb-3 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={onDeposit}
+              className="flex flex-col items-center gap-1 rounded-xl bg-gradient-to-br from-accent to-emerald-600 py-3 active:opacity-90"
+            >
+              <Wallet className="h-5 w-5 text-navy-dark" />
+              <span className="text-[10px] font-bold text-navy-dark">Deposit</span>
+            </button>
+            <button
+              type="button"
+              onClick={onWithdraw}
+              className="flex flex-col items-center gap-1 rounded-xl border border-white/15 bg-[#0a3d28] py-3 active:opacity-90"
+            >
+              <ArrowUpCircle className="h-5 w-5 text-white" />
+              <span className="text-[10px] font-bold text-white">Withdrawal</span>
+            </button>
+          </div>
+        </>
+      ) : null}
       </div>
 
       <div className="mt-1 flex min-h-0 flex-1 flex-col">
         <div className="flex shrink-0 items-center justify-between">
-          <p className="text-[10px] font-bold text-white">Recent Transactions</p>
+          <p className="text-[10px] font-bold text-white">
+            {historyOnly ? 'Transaction History' : 'Recent Transactions'}
+          </p>
           <button
             type="button"
             onClick={onRefresh}
@@ -1237,6 +1278,7 @@ export function ScreenBetting({
 export const PREVIEW_SCREENS = [
   { id: 'login', label: 'Login' },
   { id: 'wallet', label: 'Wallet' },
+  { id: 'profile', label: 'Profile' },
   { id: 'deposit', label: 'Deposit' },
   { id: 'method', label: 'Method' },
   { id: 'proof', label: 'Proof' },
