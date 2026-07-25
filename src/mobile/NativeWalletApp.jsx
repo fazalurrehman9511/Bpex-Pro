@@ -30,6 +30,7 @@ import {
 const STORAGE_KEY = 'flowexch.wallet.session'
 const TX_KEY = 'flowexch.wallet.transactions'
 const NOTICE_KEY = 'flowexch.wallet.notifications'
+const BALANCE_CACHE_KEY = 'flowexch.wallet.balance'
 const NOTICE_TTL_MS = 12_000
 const SYNC_MS = 8_000
 
@@ -104,6 +105,7 @@ function loadActiveNotices() {
  */
 export default function NativeWalletApp() {
   const existing = loadJson(STORAGE_KEY, null)
+  const balanceCache = loadJson(BALANCE_CACHE_KEY, {})
   const tabFromUrl =
     typeof window !== 'undefined'
       ? new URLSearchParams(window.location.search).get('tab')
@@ -130,8 +132,14 @@ export default function NativeWalletApp() {
   const [notifications, setNotifications] = useState(() => loadActiveNotices())
   const [toast, setToast] = useState('')
   const [accountsReady, setAccountsReady] = useState(0)
-  const [balance, setBalance] = useState(null)
+  const [balance, setBalance] = useState(
+    existing?.username && balanceCache?.username === existing.username ? balanceCache.balance ?? null : null,
+  )
   const [balanceLoading, setBalanceLoading] = useState(false)
+  const [balanceCached, setBalanceCached] = useState(
+    Boolean(existing?.username && balanceCache?.username === existing.username && balanceCache?.balance != null),
+  )
+  const [loggingIn, setLoggingIn] = useState(false)
   const [canWithdraw, setCanWithdraw] = useState(false)
   const [minBalanceForWithdraw, setMinBalanceForWithdraw] = useState(500)
   const [regPassword, setRegPassword] = useState('')
@@ -202,7 +210,7 @@ export default function NativeWalletApp() {
     }
   }, [])
 
-  const showChrome = ['login', 'register', 'wallet', 'history', 'betting', 'deposit', 'method', 'proof', 'withdraw'].includes(
+  const showChrome = ['register', 'wallet', 'history', 'betting', 'deposit', 'method', 'proof', 'withdraw'].includes(
     screen,
   )
   /** Show React footer on app screens (native BPEXCH uses Android overlay). */
@@ -264,16 +272,25 @@ export default function NativeWalletApp() {
     if (!u) return null
     setBalanceLoading(true)
     try {
-      const data = await fetchBpexchBalance(u)
+      const data = await fetchBpexchBalance(u, { timeoutMs: 12000 })
       const nextBalance = data.balance == null ? null : Number(data.balance)
       setBalance(nextBalance)
+      setBalanceCached(Boolean(data.cached))
+      saveJson(BALANCE_CACHE_KEY, {
+        username: u,
+        balance: nextBalance,
+        updatedAt: data.updatedAt || new Date().toISOString(),
+      })
       setCanWithdraw(Boolean(data.canWithdraw))
       if (data.minBalanceForWithdraw != null) {
         setMinBalanceForWithdraw(Number(data.minBalanceForWithdraw))
       }
       return data
     } catch (err) {
-      setBalance(null)
+      const cached = loadJson(BALANCE_CACHE_KEY, {})
+      const hasCached = cached?.username === u && Number.isFinite(Number(cached?.balance))
+      setBalance(hasCached ? Number(cached.balance) : null)
+      setBalanceCached(hasCached)
       setCanWithdraw(false)
       if (!quiet) flash(err.message || 'Unable to load balance')
       return null
@@ -304,7 +321,7 @@ export default function NativeWalletApp() {
     if (!u) return
 
     try {
-      const rows = await fetchUserTransactions({ username: u })
+      const rows = await fetchUserTransactions({ username: u }, { timeoutMs: 12000 })
       if (!Array.isArray(rows)) return
 
       const mapped = rows.map(mapServerTx)
@@ -319,11 +336,11 @@ export default function NativeWalletApp() {
             if (tx.kind === 'deposit') {
               approvedDeposit = true
               pushNotice(
-                `${u || 'User'} [APPROVED] Deposit ${tx.amountLabel} · balance update ho raha hai`,
+                `${u || 'User'} [APPROVED] Deposit ${tx.amountLabel} · balance is updating`,
               )
             } else {
               approvedWithdraw = true
-              pushNotice(`${u || 'User'} [APPROVED] Withdraw ${tx.amountLabel}`)
+              pushNotice(`${u || 'User'} [APPROVED] Withdrawal ${tx.amountLabel}`)
             }
           } else if (tx.status === 'REJECTED') {
             pushNotice(`${u || 'User'} [REJECTED] ${tx.title} ${tx.amountLabel}`)
@@ -367,17 +384,20 @@ export default function NativeWalletApp() {
       flash('Enter your username and password')
       return
     }
+    setLoggingIn(true)
     try {
-      await verifyBpexchUser({ username: u, password: p })
+      await verifyBpexchUser({ username: u, password: p }, { timeoutMs: 12000 })
     } catch (err) {
       flash(err.message || 'Login verification failed — please register first')
+      setLoggingIn(false)
       return
     }
     saveJson(STORAGE_KEY, { username: u, password: p })
     setUsername(u)
+    setPassword(p)
     setScreen('wallet')
-    refreshBalance(u)
-    syncTransactions(u)
+    await Promise.allSettled([refreshBalance(u), syncTransactions(u)])
+    setLoggingIn(false)
   }
 
   const resetRegisterForm = () => {
@@ -562,6 +582,7 @@ export default function NativeWalletApp() {
         <ScreenLogin
           username={username}
           password={password}
+          loggingIn={loggingIn}
           onUsername={setUsername}
           onPassword={setPassword}
           onLogin={login}
@@ -636,14 +657,15 @@ export default function NativeWalletApp() {
             }
             setScreen('withdraw')
           }}
-          onOpenBetting={() => setScreen('betting')}
-          onRefresh={() => {
-            refreshBalance(username)
-            syncTransactions(username)
-          }}
-          onLogout={logout}
-          historyOnly
-        />
+        onOpenBetting={() => setScreen('betting')}
+        onRefresh={() => {
+          refreshBalance(username)
+          syncTransactions(username)
+        }}
+        onLogout={logout}
+        balanceCached={balanceCached}
+        historyOnly
+      />
         {chrome}
         {toast ? <Toast text={toast} /> : null}
       </div>
@@ -806,6 +828,7 @@ export default function NativeWalletApp() {
           syncTransactions(username)
         }}
         onLogout={logout}
+        balanceCached={balanceCached}
       />
       {chrome}
       {toast ? <Toast text={toast} /> : null}

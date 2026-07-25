@@ -1,15 +1,52 @@
 import { Capacitor } from '@capacitor/core'
 import { getBpexchUsername } from './bpexchAuth'
 
+function isPrivateNetworkHost(hostname = '') {
+  const host = String(hostname || '').toLowerCase()
+  return (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host === '::1' ||
+    host.startsWith('192.168.') ||
+    host.startsWith('10.') ||
+    /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+  )
+}
+
+function isPrivateNetworkUrl(url = '') {
+  try {
+    return isPrivateNetworkHost(new URL(url).hostname)
+  } catch {
+    return false
+  }
+}
+
+function normalizePreferredApiBase(url = '') {
+  const raw = String(url || '').trim()
+  if (!raw) return ''
+  try {
+    const next = new URL(raw)
+    if (next.hostname === 'bpexpro.com') {
+      next.hostname = 'www.bpexpro.com'
+    }
+    return next.toString().replace(/\/$/, '')
+  } catch {
+    return raw.replace(/\/$/, '')
+  }
+}
+
 function resolveApiBase() {
-  const fromEnv = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
+  const fromEnv = normalizePreferredApiBase(import.meta.env.VITE_API_URL || '')
   if (fromEnv) return fromEnv
   try {
     if (Capacitor.isNativePlatform()) {
-      const native = (import.meta.env.VITE_NATIVE_API_URL || '').trim().replace(/\/$/, '')
+      const native = normalizePreferredApiBase(import.meta.env.VITE_NATIVE_API_URL || '')
+      const site = normalizePreferredApiBase(import.meta.env.VITE_SITE_URL || '')
+      const preferNative = import.meta.env.VITE_NATIVE_API_PRIORITY === 'native'
+      if (preferNative && native) return native
+      if (site) return site
+      if (native && !isPrivateNetworkUrl(native)) return native
       if (native) return native
-      // Same site as production web when native API is not set
-      const site = (import.meta.env.VITE_SITE_URL || '').trim().replace(/\/$/, '')
       if (site) return site
     }
   } catch {
@@ -78,6 +115,7 @@ function summarizeNonJsonBody(raw) {
 }
 
 async function apiFetch(path, options = {}) {
+  const { timeoutMs = 0, ...fetchOptions } = options
   const headers = { ...(options.headers || {}) }
   const token = getAdminToken()
 
@@ -85,19 +123,38 @@ async function apiFetch(path, options = {}) {
     headers.Authorization = `Bearer ${token}`
   }
 
-  if (options.body && !(options.body instanceof FormData)) {
+  if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json'
   }
 
   const url = `${API_BASE}${path}`
+  const controller =
+    timeoutMs > 0 && !fetchOptions.signal && typeof AbortController !== 'undefined'
+      ? new AbortController()
+      : null
+  const timeoutId =
+    controller != null
+      ? globalThis.setTimeout(() => controller.abort(), timeoutMs)
+      : null
   let res
   try {
-    res = await fetch(url, { ...options, headers })
+    res = await fetch(url, {
+      ...fetchOptions,
+      headers,
+      signal: fetchOptions.signal || controller?.signal,
+    })
   } catch (err) {
     const base = API_BASE || window.location.origin
+    if (err?.name === 'AbortError') {
+      throw new Error(`API request timed out (${base}). Please check your internet or server.`)
+    }
     throw new Error(
       `API connection failed (${base}). Please restart the server / Node app.`,
     )
+  } finally {
+    if (timeoutId != null) {
+      globalThis.clearTimeout(timeoutId)
+    }
   }
 
   const raw = await res.text()
@@ -139,13 +196,13 @@ export async function createTransaction(payload) {
   })
 }
 
-export async function fetchUserTransactions({ phone, username } = {}) {
+export async function fetchUserTransactions({ phone, username } = {}, options = {}) {
   const params = new URLSearchParams()
   if (username?.trim()) params.set('name', username.trim())
   if (![...params.keys()].length) {
     throw new Error('Username is required')
   }
-  return apiFetch(`/api/transactions?${params}`)
+  return apiFetch(`/api/transactions?${params}`, options)
 }
 
 export async function adminLogin(username, password) {
@@ -187,9 +244,9 @@ export async function syncBpexchUsersFromBpexch(options = {}) {
   })
 }
 
-export async function fetchBpexchBalance(username) {
+export async function fetchBpexchBalance(username, options = {}) {
   const params = new URLSearchParams({ username: String(username || '').trim() })
-  return apiFetch(`/api/bpexch/balance?${params}`)
+  return apiFetch(`/api/bpexch/balance?${params}`, options)
 }
 
 export async function createBpexchUser(payload) {
@@ -402,8 +459,9 @@ export async function selfRegister(payload) {
 }
 
 /** Ensure username exists (and is active) in our DB before app/web login */
-export async function verifyBpexchUser(payload) {
+export async function verifyBpexchUser(payload, options = {}) {
   return apiFetch('/api/bpexch/users/verify', {
+    ...options,
     method: 'POST',
     body: JSON.stringify(payload),
   })

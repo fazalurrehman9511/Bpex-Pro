@@ -53,8 +53,10 @@ public class MainActivity extends BridgeActivity {
 
     private void updateChromeVisibility(String url) {
         if (chromeOverlay == null) return;
-        boolean onBpexch = url != null && url.toLowerCase().contains("bpexch");
-        chromeOverlay.setVisibility(onBpexch ? View.VISIBLE : View.GONE);
+        String safeUrl = url == null ? "" : url.toLowerCase();
+        boolean onBpexch = safeUrl.contains("bpexch");
+        boolean onLogin = safeUrl.contains("/users/login") || safeUrl.matches(".*/login([?#].*)?$");
+        chromeOverlay.setVisibility(onBpexch && !onLogin ? View.VISIBLE : View.GONE);
     }
 
     private void goAppTab(String tab) {

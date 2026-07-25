@@ -203,6 +203,7 @@ export function ScreenProfile({
 export function ScreenLogin({
   username,
   password,
+  loggingIn = false,
   onUsername,
   onPassword,
   onLogin,
@@ -252,9 +253,10 @@ export function ScreenLogin({
         <button
           type="button"
           onClick={onLogin}
-          className="mt-14 w-full rounded-full bg-white py-3.5 text-center text-sm font-bold text-slate-700 shadow-lg active:scale-[0.99]"
+          disabled={loggingIn}
+          className="mt-14 w-full rounded-full bg-white py-3.5 text-center text-sm font-bold text-slate-700 shadow-lg active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-70"
         >
-          Login
+          {loggingIn ? 'Logging in…' : 'Login'}
         </button>
 
         <p className="mt-6 text-center text-sm text-white/80">
@@ -458,6 +460,7 @@ export function ScreenWallet({
   passwordMask = '••••••••',
   balance = null,
   balanceLoading = false,
+  balanceCached = false,
   notifications = [],
   transactions = [],
   onCopyUsername,
@@ -514,10 +517,15 @@ export function ScreenWallet({
                 </p>
                 <span className="inline-flex items-center gap-1 text-[8px] font-bold text-accent/80">
                   <RefreshCw className={`h-3 w-3 ${balanceLoading ? 'animate-spin' : ''}`} />
-                  Tap refresh
+                  {balanceLoading ? 'Loading' : balanceCached ? 'Cached' : 'Tap refresh'}
                 </span>
               </div>
               <p className="mt-0.5 text-2xl font-black text-accent">{balanceLabel}</p>
+              {!balanceLoading && balanceCached ? (
+                <p className="mt-1 text-[9px] font-medium text-white/55">
+                  Showing last synced balance. Tap refresh to update.
+                </p>
+              ) : null}
             </button>
 
             <div className="mb-2 rounded-xl border border-white/10 bg-[#0a3d28]/90 px-3 py-2.5">
@@ -729,7 +737,7 @@ export function ScreenDeposit({
         ))}
       </div>
 
-      <div className="mt-auto px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5">
+      <div className="mt-auto px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5">
         <button
           type="button"
           onClick={onNext}
@@ -881,7 +889,7 @@ export function ScreenMethod({
         />
       )}
 
-      <div className="mt-auto grid grid-cols-2 gap-3 px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-6">
+      <div className="mt-auto grid grid-cols-2 gap-3 px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-6">
         <button
           type="button"
           onClick={onPrevious}
@@ -921,7 +929,7 @@ export function ScreenProof({
 
   return (
     <div
-      className={`flex ${shell} flex-col bg-white px-3 pb-[max(1rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]`}
+      className={`flex ${shell} flex-col bg-white px-3 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))]`}
     >
       <div className="rounded-xl border border-slate-200 px-3 py-3">
         <div className="flex justify-between text-[11px]">
@@ -1141,7 +1149,7 @@ export function ScreenWithdraw({
           </label>
         </div>
       </div>
-      <div className="mt-auto px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="mt-auto px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={onSubmit}
