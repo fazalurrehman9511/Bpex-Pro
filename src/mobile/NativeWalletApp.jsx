@@ -658,8 +658,6 @@ export default function NativeWalletApp() {
     return (
       <div className="fixed inset-0 z-[100] flex flex-col bg-navy-dark">
         <ScreenBetting
-          username={username}
-          password={password}
           onBack={() => setScreen('wallet')}
         />
         {chrome}

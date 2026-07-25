@@ -614,7 +614,7 @@ export function ScreenWallet({
           </button>
         </div>
         <div className="mt-1.5 min-h-0 flex-1 overflow-y-auto overscroll-contain">
-          <div className="space-y-1.5 pb-1">
+          <div className={`${historyOnly ? 'space-y-1.5 pb-1' : 'max-h-[5.5rem] space-y-1.5 overflow-y-auto overscroll-contain pb-1'}`}>
         {transactions.length === 0 ? (
           <div className="rounded-lg border border-dashed border-white/20 bg-black/15 px-3 py-6 text-center">
             <p className="text-[11px] font-semibold text-white/80">No transactions</p>
@@ -1169,15 +1169,13 @@ export function ScreenWithdraw({
   )
 }
 
-/** In-app BPEXCH — auto sign-in with wallet credentials (no second login). */
+/** In-app BPEXCH — simple open/login flow inside the app. */
 export function ScreenBetting({
-  username = '',
-  password = '',
   onBack,
   preview = false,
 }) {
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
-  const [status, setStatus] = useState('Signing in to BPEXCH…')
+  const [status, setStatus] = useState('Opening BPEXCH login…')
   const [failed, setFailed] = useState(false)
 
   useEffect(() => {
@@ -1187,9 +1185,8 @@ export function ScreenBetting({
     ;(async () => {
       try {
         setFailed(false)
-        setStatus('Signing in with your BpExch ID…')
-        const { openBpexchWithAppLogin } = await import('./bpexchAutoLogin')
-        await openBpexchWithAppLogin({ username, password })
+        setStatus('Opening BPEXCH login inside the app…')
+        window.location.href = BPEXCH_LOGIN_URL
         if (!cancelled) setStatus('Opening BPEXCH…')
       } catch (err) {
         if (cancelled) return
@@ -1201,7 +1198,7 @@ export function ScreenBetting({
     return () => {
       cancelled = true
     }
-  }, [username, password, preview])
+  }, [preview])
 
   return (
     <div className={`flex ${shell} flex-col bg-navy-dark pb-[calc(5.5rem+env(safe-area-inset-bottom))]`}>
@@ -1218,7 +1215,7 @@ export function ScreenBetting({
       </div>
       {preview ? (
         <div className="flex flex-1 items-center justify-center bg-slate-100 px-4 text-center text-xs text-slate-500">
-          BPEXCH opens here with auto sign-in
+          BPEXCH login opens here inside the app
         </div>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
@@ -1236,38 +1233,15 @@ export function ScreenBetting({
                 onClick={() => {
                   setFailed(false)
                   setStatus('Retrying…')
-                  import('./bpexchAutoLogin').then(({ openBpexchWithAppLogin }) =>
-                    openBpexchWithAppLogin({ username, password }).catch((err) => {
-                      setFailed(true)
-                      setStatus(err.message || 'Could not open BPEXCH')
-                    }),
-                  )
+                  window.location.href = BPEXCH_LOGIN_URL
                 }}
                 className="rounded-xl bg-accent px-5 py-2.5 text-xs font-bold text-navy-dark"
               >
                 Try again
               </button>
-              <button
-                type="button"
-                onClick={() => {
-                  import('../utils/api')
-                    .then(({ verifyBpexchUser }) =>
-                      verifyBpexchUser({ username, password }).then(() => {
-                        window.location.href = BPEXCH_LOGIN_URL
-                      }),
-                    )
-                    .catch((err) => {
-                      setFailed(true)
-                      setStatus(err.message || 'Account verification failed')
-                    })
-                }}
-                className="block w-full text-xs font-semibold text-accent"
-              >
-                Open login page (verified users only)
-              </button>
             </div>
           ) : (
-            <p className="text-xs text-white/50">Same username &amp; password — no second login</p>
+            <p className="text-xs text-white/50">Login opens inside the app — no external browser needed</p>
           )}
         </div>
       )}
