@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { ModalProvider } from './context/ModalContext'
 import { TransactionProvider } from './context/TransactionContext'
@@ -9,6 +9,9 @@ import { shouldUseNativeWalletApp } from './mobile/nativeAppDetect'
 
 const BlogPage = lazy(() => import('./pages/BlogPage'))
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'))
+const BrandAliasesPage = lazy(() => import('./pages/BrandAliasesPage'))
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
+const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const PlatformPathRedirect = lazy(() => import('./pages/PlatformPathRedirect'))
@@ -37,6 +40,15 @@ function WebsiteApp() {
               <Route path="/bpexch/*" element={<BpexchRedirectPage />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<HomePage />} />
+                <Route path="/bpx" element={<BrandAliasesPage />} />
+                <Route path="/bpexch" element={<Navigate to="/bpx" replace />} />
+                <Route path="/bpxpro" element={<Navigate to="/bpx" replace />} />
+                <Route path="/bettpro" element={<Navigate to="/bpx" replace />} />
+                <Route path="/bett-pro" element={<Navigate to="/bpx" replace />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+                <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
+                <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
+                <Route path="/terms" element={<Navigate to="/terms-and-conditions" replace />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/deposit" element={<DepositPage />} />

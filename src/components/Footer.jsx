@@ -10,6 +10,9 @@ import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 const baseLinks = [
   { label: 'Live Events', href: '/#events' },
   { label: 'Add Balance', href: '/#payments' },
+  { label: 'Brand Guide', to: '/bpx' },
+  { label: 'Privacy Policy', to: '/privacy-policy' },
+  { label: 'Terms & Conditions', to: '/terms-and-conditions' },
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Blog', to: '/blog' },
   { label: 'FAQ', href: '/#faq' },
@@ -64,7 +67,7 @@ export default function Footer() {
               />
             </Link>
             <p className="mt-2 text-xs leading-relaxed text-muted">
-              Pakistan&apos;s trusted betting exchange agent. Cricket, Casino, Sports — with 24/7 WhatsApp support.
+              Asia&apos;s trusted betting exchange agent. Cricket, Casino, Sports — with 24/7 WhatsApp support.
             </p>
           </div>
 

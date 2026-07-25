@@ -97,6 +97,7 @@ function ProfileMenu({
   const display = username || 'User'
   const initial = display.charAt(0).toUpperCase()
   const balText = balanceLoading && !balanceLabel ? '…' : balanceLabel || '—'
+  const userText = String(username || '').trim() || '—'
   const passText = String(password || '').trim() || '—'
 
   useEffect(() => {
@@ -164,8 +165,32 @@ function ProfileMenu({
               <span className="font-semibold text-accent">{balText}</span>
             </p>
             <div className="mt-3 rounded-md border border-border bg-navy-light/70 px-3 py-2">
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-2 border-b border-border/70 pb-2">
                 <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wide text-muted">Username</p>
+                  <p className="truncate text-xs font-semibold text-text">{userText}</p>
+                </div>
+                {username ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(username)
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    aria-label="Copy username"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" />
+                )}
+              </div>
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 pt-2">
                   <p className="text-[10px] uppercase tracking-wide text-muted">Password</p>
                   <p className="truncate text-xs font-semibold text-text">{passText}</p>
                 </div>
@@ -179,13 +204,13 @@ function ProfileMenu({
                         /* ignore */
                       }
                     }}
-                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    className="mt-2 rounded p-1 text-muted transition-colors hover:text-accent"
                     aria-label="Copy password"
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 ) : (
-                  <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" />
+                  <Lock className="mt-2.5 h-3.5 w-3.5 shrink-0 text-muted" />
                 )}
               </div>
             </div>
@@ -466,6 +491,36 @@ export function HeaderBar() {
                   <p className="truncate text-sm font-bold text-accent">{username || 'User'}</p>
                   <p className="text-xs font-semibold text-text">{balanceLabel || '—'}</p>
                   <p className="truncate text-[11px] text-muted">Pass: {savedPassword || '—'}</p>
+                </div>
+                <div className="flex shrink-0 flex-col gap-1">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        if (username) await navigator.clipboard.writeText(username)
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    aria-label="Copy username"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      try {
+                        if (savedPassword) await navigator.clipboard.writeText(savedPassword)
+                      } catch {
+                        /* ignore */
+                      }
+                    }}
+                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    aria-label="Copy password"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
               <Link

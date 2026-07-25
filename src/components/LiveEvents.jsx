@@ -108,7 +108,7 @@ export default function LiveEvents() {
             <p className="mt-1 text-xs text-slate-500">Please check back in a few minutes</p>
           </div>
         ) : (
-          <div className="max-h-[calc(8*4.75rem+7*0.75rem)] overflow-y-auto overscroll-contain pr-1 sm:max-h-[calc(6*4.75rem+5*0.75rem)]">
+          <div className="max-h-[calc(3*4.75rem+2*0.75rem)] overflow-y-auto overscroll-contain pr-1 sm:max-h-[calc(6*4.75rem+5*0.75rem)]">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {filtered.map((event) => (
                 <button

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { BookOpen, Search, Sparkles, MessageCircle } from 'lucide-react'
+import { BookOpen, Search, Sparkles, MessageCircle, Download } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { ANDROID_APK_AVAILABLE, ANDROID_APK_URL } from '../config/androidApp'
 import { useModal } from '../context/ModalContext'
 import { blogCategories, blogPosts as staticPosts } from '../data/blogPosts'
 import { fetchBlogPosts } from '../utils/api'
@@ -206,6 +207,17 @@ export default function BlogPage() {
                   >
                     Open Dashboard
                   </Link>
+                  {ANDROID_APK_AVAILABLE && (
+                    <a
+                      href={ANDROID_APK_URL}
+                      download
+                      aria-label="Download Android app"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90"
+                    >
+                      <Download className="h-4 w-4 text-white" aria-hidden="true" />
+                      Download App
+                    </a>
+                  )}
                 </div>
               ) : (
                 <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
@@ -224,6 +236,17 @@ export default function BlogPage() {
                   >
                     Register Myself
                   </button>
+                  {ANDROID_APK_AVAILABLE && (
+                    <a
+                      href={ANDROID_APK_URL}
+                      download
+                      aria-label="Download Android app"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90"
+                    >
+                      <Download className="h-4 w-4 text-white" aria-hidden="true" />
+                      Download App
+                    </a>
+                  )}
                 </div>
               )}
             </div>

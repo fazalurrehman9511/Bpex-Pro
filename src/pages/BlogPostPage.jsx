@@ -6,6 +6,8 @@ import { fetchBlogPost, fetchBlogPosts } from '../utils/api'
 import { useModal } from '../context/ModalContext'
 import BlogContent from '../components/blog/BlogContent'
 import BlogCard from '../components/blog/BlogCard'
+import SeoHead from '../components/SeoHead'
+import { SITE_URL } from '../config/brand'
 
 export default function BlogPostPage() {
   const { slug } = useParams()
@@ -66,6 +68,34 @@ export default function BlogPostPage() {
 
   return (
     <div className="min-h-screen">
+      <SeoHead
+        title={`${post.title} | BpxPro Blog`}
+        description={post.excerpt}
+        canonicalPath={`/blog/${post.slug}`}
+        ogTitle={post.title}
+        ogDescription={post.excerpt}
+        twitterTitle={post.title}
+        twitterDescription={post.excerpt}
+        ogType="article"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: post.title,
+          description: post.excerpt,
+          datePublished: post.date,
+          author: {
+            '@type': 'Person',
+            name: post.author,
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'BpxPro',
+          },
+          mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
+          url: `${SITE_URL}/blog/${post.slug}`,
+        }}
+      />
+
       <div className={`bg-gradient-to-br ${post.gradient} px-4 py-12 sm:px-6 sm:py-16`}>
         <div className="mx-auto max-w-5xl">
           <Link

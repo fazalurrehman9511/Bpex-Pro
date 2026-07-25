@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
+import { BRAND_ALIAS_TEXT } from '../config/brand'
 import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import { openSupportWhatsApp } from '../utils/whatsapp'
 
@@ -14,7 +15,11 @@ const faqs = [
   },
   {
     q: 'Which countries are supported?',
-    a: 'We have dedicated agents in Pakistan, UAE, Saudi Arabia, United Kingdom, Bangladesh and India. Select your country during registration to connect with the right agent.',
+    a: 'We have dedicated agents across Asia, plus support for users in the UAE, Saudi Arabia and the United Kingdom. Select your country during registration to connect with the right agent.',
+  },
+  {
+    q: 'Is BpxPro the same as BPX, BPEXCH or BettPro?',
+    a: `Yes. BpxPro is also searched as ${BRAND_ALIAS_TEXT}. They all refer to the same betting exchange platform and WhatsApp agent service.`,
   },
   {
     q: 'How fast are withdrawals?',

@@ -60,7 +60,7 @@ export default defineConfig(({ mode }) => {
         manifest: {
           name: 'BpxPro — Betting Exchange',
           short_name: 'BpxPro',
-          description: "Pakistan's trusted betting exchange. Cricket, Casino & Sports.",
+          description: "Asia's trusted betting exchange. Cricket, Casino & Sports.",
           theme_color: '#0a4d2e',
           background_color: '#0a4d2e',
           display: 'standalone',

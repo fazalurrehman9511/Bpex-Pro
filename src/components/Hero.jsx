@@ -1,6 +1,8 @@
-import { MessageCircle, Shield, Zap, Clock, UserPlus } from 'lucide-react'
+import { MessageCircle, Shield, Zap, Clock, UserPlus, Download } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { ANDROID_APK_AVAILABLE, ANDROID_APK_URL } from '../config/androidApp'
+import { BRAND_ALIAS_TEXT } from '../config/brand'
 import { useModal } from '../context/ModalContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
@@ -41,13 +43,19 @@ export default function Hero() {
         </div>
 
         <h1 className="max-w-xl text-2xl font-extrabold leading-snug tracking-tight text-text sm:text-4xl sm:leading-tight">
-          Pakistan&apos;s #1{' '}
+          Asia&apos;s #1{' '}
           <span className="text-accent">Betting Exchange</span>
         </h1>
 
         <p className="mt-3 max-w-md text-sm leading-relaxed text-muted sm:text-base">
           Cricket, Football, Tennis, Horse Racing &amp; Live Casino —
           best odds with your personal agent on WhatsApp. Register in 60 seconds.
+        </p>
+        <p className="mt-2 text-xs font-medium text-muted/80">
+          Also searched as {BRAND_ALIAS_TEXT}.{' '}
+          <Link to="/bpx" className="text-accent transition-colors hover:text-accent-hover hover:underline">
+            Official brand guide
+          </Link>
         </p>
 
         <ul className="mt-5 grid grid-cols-2 gap-2">
@@ -68,6 +76,17 @@ export default function Hero() {
             >
               Open Dashboard
             </Link>
+            {ANDROID_APK_AVAILABLE && (
+              <a
+                href={ANDROID_APK_URL}
+                download
+                aria-label="Download Android app"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90 active:scale-[0.98] sm:w-auto"
+              >
+                <Download className="h-4 w-4 text-white" aria-hidden="true" />
+                Download App
+              </a>
+            )}
           </div>
         ) : (
           <div className="mt-7 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:gap-3">
@@ -89,6 +108,17 @@ export default function Hero() {
               <UserPlus className="h-4 w-4 text-accent" aria-hidden="true" />
               Register Myself
             </button>
+            {ANDROID_APK_AVAILABLE && (
+              <a
+                href={ANDROID_APK_URL}
+                download
+                aria-label="Download Android app"
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90 active:scale-[0.98] sm:w-auto"
+              >
+                <Download className="h-4 w-4 text-white" aria-hidden="true" />
+                Download App
+              </a>
+            )}
           </div>
         )}
       </div>
