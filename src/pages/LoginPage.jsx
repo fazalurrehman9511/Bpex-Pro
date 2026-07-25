@@ -35,7 +35,7 @@ export default function LoginPage() {
     const u = username.trim()
     const p = password
     if (!u || !p) {
-      setError('Username aur password likhein.')
+      setError('Enter your username and password.')
       return
     }
 
@@ -77,7 +77,7 @@ export default function LoginPage() {
           />
           <h1 className="mt-4 text-2xl font-black text-white">{BRAND_NAME} Login</h1>
           <p className="mt-2 text-sm text-white/60">
-            Ek dafa yahan login karo. Dashboard par BPEXCH auto-login ho jayega.
+            Log in here once. The dashboard will auto-login to BPEXCH.
           </p>
         </div>
 
@@ -135,7 +135,7 @@ export default function LoginPage() {
         <div className="mt-6 rounded-2xl border border-white/8 bg-white/4 px-4 py-3 text-center text-sm text-white/65">
           New user?{' '}
           <Link to="/" className="font-bold text-accent hover:underline">
-            Home par ja kar registration karein
+            Go to the home page to register
           </Link>
         </div>
       </div>

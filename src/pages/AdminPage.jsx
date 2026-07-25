@@ -398,7 +398,7 @@ function TransactionDetailModal({ tx, onClose, onApprove, onReject, acting = nul
               </div>
               {busy && (
                 <p className="text-center text-[11px] text-muted">
-                  BPEXCH update chal rahi hai — dobara click mat karo.
+                  BPEXCH update in progress — please do not click again.
                 </p>
               )}
             </div>
@@ -3205,7 +3205,7 @@ function AdminDashboard({ onLogout }) {
 
   const handleStatus = async (id, status, notes) => {
     if (statusLockRef.current) {
-      throw new Error('Pehle wali approve/reject request abhi puri nahi hui.')
+      throw new Error('The previous approve/reject request is still in progress.')
     }
     statusLockRef.current = id
     setActing({ id, kind: status === 'approved' ? 'approve' : 'reject' })
@@ -3216,7 +3216,7 @@ function AdminDashboard({ onLogout }) {
       if (status === 'approved' && updated?.bpexch) {
         const sign = updated.type === 'deposit' ? '+' : '-'
         window.alert(
-          `Approved.\nBPEXCH pe ${sign}${updated.amount} update ho gaya (${updated.name}).`,
+          `Approved.\nBPEXCH was updated with ${sign}${updated.amount} (${updated.name}).`,
         )
       }
     } catch (err) {

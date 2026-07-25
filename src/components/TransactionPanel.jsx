@@ -252,7 +252,7 @@ export default function TransactionPanel({
     }
 
     if (!username) {
-      next.form = 'Pehle BPEXCH login karo — username auto attach hota hai.'
+      next.form = 'Please log in to BPEXCH first — your username is attached automatically.'
     }
 
     setErrors(next)

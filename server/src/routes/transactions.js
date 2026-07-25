@@ -61,20 +61,20 @@ router.post('/', async (req, res) => {
           const info = await getBpexchUserBalance(name.trim())
           const bal = Number(info.balance)
           resolvedAvailableBalance = bal
-          if (!(bal > MIN_BALANCE_FOR_WITHDRAW)) {
+          if (!Number.isFinite(bal) || bal < MIN_BALANCE_FOR_WITHDRAW) {
             return res.status(400).json({
-              error: `Withdraw nahi ho sakta — balance PKR ${MIN_BALANCE_FOR_WITHDRAW} se zyada hona chahiye (current: ${bal})`,
+              error: `Withdrawal requires at least PKR ${MIN_BALANCE_FOR_WITHDRAW} available balance (current: ${bal})`,
             })
           }
           if (amt > bal) {
             return res.status(400).json({
-              error: `Amount balance se zyada nahi ho sakti (balance: PKR ${bal})`,
+              error: `Withdrawal amount cannot exceed available balance (balance: PKR ${bal})`,
             })
           }
         } catch (err) {
           console.error('Withdraw balance check failed:', err)
           return res.status(502).json({
-            error: `Balance check fail: ${err.message}`,
+            error: `Balance check failed: ${err.message}`,
           })
         }
       }

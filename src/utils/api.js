@@ -96,7 +96,7 @@ async function apiFetch(path, options = {}) {
   } catch (err) {
     const base = API_BASE || window.location.origin
     throw new Error(
-      `API connect nahi hui (${base}). Server / Node app restart karein.`,
+      `API connection failed (${base}). Please restart the server / Node app.`,
     )
   }
 
@@ -109,7 +109,7 @@ async function apiFetch(path, options = {}) {
       const contentType = res.headers.get('content-type') || 'unknown'
       const bodyHint = summarizeNonJsonBody(raw)
       throw new Error(
-        `API ${path} ne JSON nahi diya (${res.status}, ${contentType}). ${bodyHint || 'Upstream/proxy error page mila.'}`,
+        `API ${path} returned non-JSON (${res.status}, ${contentType}). ${bodyHint || 'Received an upstream/proxy error page.'}`,
       )
     }
   } else {

@@ -1034,11 +1034,11 @@ export function ScreenWithdraw({
           <p className="text-lg font-bold text-accent">{balanceText}</p>
           {blocked ? (
             <p className="mt-1 text-[11px] font-medium text-red-600">
-              Balance PKR {minBalanceForWithdraw} ya us se kam hai — withdraw band hai
+              Balance is below PKR {minBalanceForWithdraw} — withdrawals are unavailable
             </p>
           ) : (
             <p className="mt-1 text-[10px] text-slate-500">
-              Min PKR 500 · amount balance se zyada nahi ho sakti
+              Minimum PKR 500 · amount cannot exceed available balance
             </p>
           )}
         </div>
@@ -1079,7 +1079,7 @@ export function ScreenWithdraw({
           </label>
           {overBalance ? (
             <p className="text-[11px] font-medium text-red-600">
-              Amount balance se zyada nahi (max PKR {Number(balance).toLocaleString('en-PK')})
+              Amount cannot exceed available balance (max PKR {Number(balance).toLocaleString('en-PK')})
             </p>
           ) : null}
           {underMin && !overBalance ? (
@@ -1188,7 +1188,7 @@ export function ScreenBetting({
           {failed ? (
             <div className="mt-2 space-y-2">
               <p className="text-xs text-white/55">
-                Phone aur Mac same Wi‑Fi pe hon, phir dubara try karo.
+                Keep the phone and Mac on the same Wi-Fi, then try again.
               </p>
               <button
                 type="button"
@@ -1217,7 +1217,7 @@ export function ScreenBetting({
                     )
                     .catch((err) => {
                       setFailed(true)
-                      setStatus(err.message || 'Account verify nahi hua')
+                      setStatus(err.message || 'Account verification failed')
                     })
                 }}
                 className="block w-full text-xs font-semibold text-accent"

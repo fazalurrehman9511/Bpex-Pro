@@ -421,7 +421,7 @@ router.post('/import-clients', requireAdmin, (req, res) => {
       String(req.body?.agentUsername || getBpexchAgentConfig().username || '').trim()
     if (!agentUsername) {
       return res.status(400).json({
-        error: 'agentUsername required — pehle admin mein Agent save karo',
+        error: 'agentUsername is required — save the Agent in admin first',
       })
     }
 

@@ -151,7 +151,7 @@ router.patch('/transactions/:id', requireAdmin, async (req, res) => {
       } catch (err) {
         console.error('BPEXCH cash sync failed:', err)
         return res.status(502).json({
-          error: `BPEXCH pe amount add/cut nahi hua: ${err.message}`,
+          error: `BPEXCH amount update failed: ${err.message}`,
         })
       }
 

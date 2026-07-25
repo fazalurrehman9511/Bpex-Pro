@@ -25,7 +25,7 @@ export default function InstallPrompt() {
           <p className="mt-0.5 text-xs text-muted">
             {isIOS
               ? 'Tap Share → Add to Home Screen.'
-              : 'Home screen pe app ki tarah install karo — APK ki zaroorat nahi.'}
+              : 'Install it like an app on your home screen — no APK needed.'}
           </p>
           {!isIOS && canPrompt && (
             <button

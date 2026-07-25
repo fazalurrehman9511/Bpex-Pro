@@ -176,7 +176,7 @@ export default function NativeWalletApp() {
       setUsername('')
       setPassword('')
       setScreen('login')
-      flash(err.message || 'Session invalid — dubara login karein')
+      flash(err.message || 'Session invalid — please log in again')
     })
     return () => {
       cancelled = true
@@ -268,7 +268,7 @@ export default function NativeWalletApp() {
     } catch (err) {
       setBalance(null)
       setCanWithdraw(false)
-      if (!quiet) flash(err.message || 'Balance load nahi hua')
+      if (!quiet) flash(err.message || 'Unable to load balance')
       return null
     } finally {
       setBalanceLoading(false)
@@ -357,13 +357,13 @@ export default function NativeWalletApp() {
     const u = username.trim()
     const p = password
     if (!u || !p) {
-      flash('Username aur password likho')
+      flash('Enter your username and password')
       return
     }
     try {
       await verifyBpexchUser({ username: u, password: p })
     } catch (err) {
-      flash(err.message || 'Login verify fail — pehle register karein')
+      flash(err.message || 'Login verification failed — please register first')
       return
     }
     saveJson(STORAGE_KEY, { username: u, password: p })
@@ -392,7 +392,7 @@ export default function NativeWalletApp() {
   const submitRegister = async () => {
     setRegError('')
     if (!regPassword || regPassword.length < 8) {
-      setRegError('Password min 8 characters')
+      setRegError('Password must be at least 8 characters')
       return
     }
     if (regPassword !== regConfirm) {
@@ -413,7 +413,7 @@ export default function NativeWalletApp() {
         countryCode: 'PK',
       })
       const createdUser = data.user?.username
-      if (!createdUser) throw new Error('Account ban gaya magar username nahi mila')
+      if (!createdUser) throw new Error('Account was created but no username was returned')
       flash('Account created successfully')
       finishRegisterLogin({ username: createdUser, password: regPassword })
     } catch (err) {
@@ -460,7 +460,7 @@ export default function NativeWalletApp() {
 
   const submitDeposit = async () => {
     if (!screenshotData) {
-      flash('Payment screenshot upload karo')
+      flash('Please upload a payment screenshot')
       return
     }
     setSubmitting(true)
@@ -483,13 +483,13 @@ export default function NativeWalletApp() {
       pushNotice(
         `${username} [PENDING] Deposit PKR ${formatPkr(amount)} (+${formatPkr(bonus)} Bonus)`,
       )
-      flash('Deposit admin pe bhej diya ✓')
+      flash('Deposit request sent successfully')
       setAmount('')
       setScreenshotData('')
       setScreenshotPreview('')
       setScreen('wallet')
     } catch (err) {
-      flash(err.message || 'Deposit failed — API check karo')
+      flash(err.message || 'Deposit failed — please check the API')
     } finally {
       setSubmitting(false)
     }
@@ -498,28 +498,28 @@ export default function NativeWalletApp() {
   const submitWithdraw = async () => {
     const amt = Number(withdrawAmount)
     if (balance == null) {
-      flash('Balance load nahi hua — dobara try karo')
+      flash('Unable to load balance — please try again')
       await refreshBalance()
       return
     }
-    if (!(balance > minBalanceForWithdraw)) {
-      flash(`Withdraw band — balance PKR ${minBalanceForWithdraw} se zyada chahiye`)
+    if (balance < minBalanceForWithdraw) {
+      flash(`Withdrawal requires at least PKR ${minBalanceForWithdraw} available balance`)
       return
     }
     if (!Number.isFinite(amt) || amt < 500) {
-      flash('Minimum PKR 500')
+      flash('Minimum withdrawal is PKR 500')
       return
     }
     if (amt > balance) {
-      flash(`Amount balance se zyada nahi (balance: PKR ${formatPkr(balance)})`)
+      flash(`Withdrawal amount cannot exceed available balance (balance: PKR ${formatPkr(balance)})`)
       return
     }
     if (!holder.trim()) {
-      flash('Account holder name likho')
+      flash('Enter the account holder name')
       return
     }
     if (!mobile.trim() || mobile.trim().length < 10) {
-      flash('Mobile number likho')
+      flash('Enter the mobile / account number')
       return
     }
     setSubmitting(true)
@@ -538,12 +538,12 @@ export default function NativeWalletApp() {
       statusMapRef.current[mapped.id] = mapped.status
       pushTx(mapped)
       pushNotice(`${username} [PENDING] Withdraw PKR ${formatPkr(withdrawAmount)}`)
-      flash('Withdraw admin pe bhej diya ✓')
+      flash('Withdrawal request sent successfully')
       setWithdrawAmount('')
       setScreen('wallet')
       refreshBalance(username, { quiet: true })
     } catch (err) {
-      flash(err.message || 'Withdraw failed — API check karo')
+      flash(err.message || 'Withdrawal failed — please check the API')
     } finally {
       setSubmitting(false)
     }
@@ -687,7 +687,7 @@ export default function NativeWalletApp() {
           onPrevious={() => setScreen('deposit')}
           onNext={() => {
             if (methodOpen) {
-              flash('Pehle payment method select karo')
+              flash('Select a payment method first')
               return
             }
             setScreen('proof')
@@ -774,8 +774,8 @@ export default function NativeWalletApp() {
         }}
         onDeposit={() => setScreen('deposit')}
         onWithdraw={() => {
-          if (balance != null && !(balance > minBalanceForWithdraw)) {
-            flash(`Withdraw band — balance PKR ${minBalanceForWithdraw} se zyada chahiye`)
+          if (balance != null && balance < minBalanceForWithdraw) {
+            flash(`Withdrawal requires at least PKR ${minBalanceForWithdraw} available balance`)
             return
           }
           setScreen('withdraw')

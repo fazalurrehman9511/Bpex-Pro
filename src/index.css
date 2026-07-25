@@ -72,6 +72,26 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+a[href],
+button,
+[role="button"],
+summary,
+label[for],
+select,
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[aria-disabled="true"],
+select:disabled,
+input:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
 .odds-back {
   background: linear-gradient(180deg, #a8dff5 0%, #72c9ef 100%);
   color: #1a2634;

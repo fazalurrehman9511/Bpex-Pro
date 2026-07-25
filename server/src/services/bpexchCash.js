@@ -128,7 +128,7 @@ async function loginAgent(session) {
   if (!formOk) {
     const hint =
       formRes.status === 403
-        ? ' — hosting IP blocked / wrong password / WAF. Password dobara Save karo; warna host se bpexch.xyz allowlist poocho.'
+        ? ' — hosting IP may be blocked, the password may be wrong, or a WAF rule may be interfering. Save the password again or ask your host to allowlist bpexch.xyz.'
         : ''
     throw new Error(
       data.error ||

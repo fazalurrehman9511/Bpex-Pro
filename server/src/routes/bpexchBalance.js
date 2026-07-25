@@ -27,7 +27,7 @@ router.get('/', async (req, res) => {
       maxWithdraw: info.maxWithdraw,
     })
 
-    const canWithdraw = Number(info.balance) > MIN_BALANCE_FOR_WITHDRAW
+    const canWithdraw = Number(info.balance) >= MIN_BALANCE_FOR_WITHDRAW
     res.json({
       username: info.username,
       userId: info.userId,
@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
         balance,
         credit: cached.credit == null ? null : Number(cached.credit),
         maxWithdraw: cached.max_withdraw == null ? null : Number(cached.max_withdraw),
-        canWithdraw: balance > MIN_BALANCE_FOR_WITHDRAW,
+        canWithdraw: balance >= MIN_BALANCE_FOR_WITHDRAW,
         minBalanceForWithdraw: MIN_BALANCE_FOR_WITHDRAW,
         updatedAt: cached.balance_updated_at,
         cached: true,

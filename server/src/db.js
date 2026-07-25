@@ -953,14 +953,14 @@ export function verifyBpexchUserForLogin({ username, password } = {}) {
     return {
       ok: false,
       code: 'not_found',
-      error: "User doesn't exist in our database. Pehle register karein ya agent se contact karein.",
+      error: "User doesn't exist in our database. Please register first or contact support.",
     }
   }
   if (Number(row.is_active) === 0) {
     return {
       ok: false,
       code: 'inactive',
-      error: 'Yeh account disabled hai. Support / agent se contact karein.',
+      error: 'This account is disabled. Please contact support or your agent.',
     }
   }
   const storedPass = String(row.password || '')
@@ -969,7 +969,7 @@ export function verifyBpexchUserForLogin({ username, password } = {}) {
     return {
       ok: false,
       code: 'bad_password',
-      error: 'Username ya password ghalat hai.',
+      error: 'Incorrect username or password.',
     }
   }
   return {
