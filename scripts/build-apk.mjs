@@ -9,7 +9,8 @@ const jdkHome = join(root, '.tools/jdk-17.0.19+10/Contents/Home')
 const sdkHome = join(root, '.tools/android-sdk')
 const androidDir = join(root, 'android')
 const apkSrc = join(androidDir, 'app/build/outputs/apk/debug/app-debug.apk')
-const apkDest = join(root, 'public/app/bpexpro.apk')
+const publicApkDest = join(root, 'public/app/bpexpro.apk')
+const distApkDest = join(root, 'dist/app/bpexpro.apk')
 
 if (!existsSync(jdkHome)) {
   console.error('JDK 17 missing at', jdkHome)
@@ -54,6 +55,10 @@ if (!existsSync(apkSrc)) {
   process.exit(1)
 }
 
-mkdirSync(dirname(apkDest), { recursive: true })
-copyFileSync(apkSrc, apkDest)
-console.log('APK ready:', apkDest)
+for (const dest of [publicApkDest, distApkDest]) {
+  mkdirSync(dirname(dest), { recursive: true })
+  copyFileSync(apkSrc, dest)
+}
+
+console.log('APK ready:', publicApkDest)
+console.log('APK mirrored to:', distApkDest)
