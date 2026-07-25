@@ -758,12 +758,11 @@ export function getProfitLossSummary({ dateFrom, dateTo } = {}) {
 }
 
 export function expirePendingTransactions() {
-  const now = new Date().toISOString()
   db.prepare(`
     UPDATE transactions
-    SET status = 'expired'
-    WHERE status = 'pending' AND expires_at <= ?
-  `).run(now)
+    SET status = 'pending'
+    WHERE status = 'expired'
+  `).run()
 }
 
 export function rowToTransaction(row) {
@@ -771,7 +770,7 @@ export function rowToTransaction(row) {
   return {
     id: row.id,
     type: row.type,
-    status: row.status,
+    status: row.status === 'expired' ? 'pending' : row.status,
     amount: row.amount,
     paymentMethodId: row.payment_method_id,
     paymentMethodLabel: row.payment_method_label,

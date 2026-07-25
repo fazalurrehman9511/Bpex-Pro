@@ -37,14 +37,9 @@ export function saveTransactions(list) {
 }
 
 export function applyExpiry(list) {
-  const now = Date.now()
-  return list.map((tx) => {
-    if (tx.status !== 'pending') return tx
-    if (new Date(tx.expiresAt).getTime() <= now) {
-      return { ...tx, status: 'expired' }
-    }
-    return tx
-  })
+  return list.map((tx) => (
+    tx.status === 'expired' ? { ...tx, status: 'pending' } : tx
+  ))
 }
 
 export function getRemainingMs(expiresAt) {

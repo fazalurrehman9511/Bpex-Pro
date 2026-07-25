@@ -53,7 +53,7 @@ function Countdown({ expiresAt }) {
     return () => clearInterval(t)
   }, [expiresAt])
 
-  if (left <= 0) return <span className="text-muted">Expired</span>
+  if (left <= 0) return <span className="text-muted">Awaiting review</span>
   return (
     <span className="inline-flex items-center gap-1 font-mono text-amber-300">
       <Clock className="h-3 w-3" />

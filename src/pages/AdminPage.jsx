@@ -179,7 +179,7 @@ function Countdown({ expiresAt }) {
     return () => clearInterval(t)
   }, [expiresAt])
 
-  if (left <= 0) return <span className="text-muted">Expired</span>
+  if (left <= 0) return <span className="text-muted">Awaiting review</span>
   return (
     <span className="inline-flex items-center gap-1 font-mono text-amber-300">
       <Clock className="h-3 w-3" />
@@ -3707,7 +3707,6 @@ function AdminDashboard({ onLogout }) {
                 <option value="pending">Pending</option>
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
-                <option value="expired">Expired</option>
               </select>
               <select
                 value={methodFilter}
