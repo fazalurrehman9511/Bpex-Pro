@@ -9,7 +9,7 @@ function apkMimePlugin() {
   const setApkHeaders = (req, res, next) => {
     if (req.url?.split('?')[0].endsWith('.apk')) {
       res.setHeader('Content-Type', 'application/vnd.android.package-archive')
-      res.setHeader('Content-Disposition', 'attachment; filename="flowexch.apk"')
+      res.setHeader('Content-Disposition', 'attachment; filename="bpexpro.apk"')
     }
     next()
   }

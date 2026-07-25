@@ -9,7 +9,7 @@ const jdkHome = join(root, '.tools/jdk-17.0.19+10/Contents/Home')
 const sdkHome = join(root, '.tools/android-sdk')
 const androidDir = join(root, 'android')
 const apkSrc = join(androidDir, 'app/build/outputs/apk/debug/app-debug.apk')
-const apkDest = join(root, 'public/app/flowexch.apk')
+const apkDest = join(root, 'public/app/bpexpro.apk')
 
 if (!existsSync(jdkHome)) {
   console.error('JDK 17 missing at', jdkHome)

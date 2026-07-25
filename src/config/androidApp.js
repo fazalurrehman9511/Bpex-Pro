@@ -1,6 +1,6 @@
 /** Android APK — defaults to the standard public path so live deploys still show the button even if env is missing. */
 export const ANDROID_APK_URL = (
-  import.meta.env.VITE_ANDROID_APK_URL || '/app/flowexch.apk'
+  import.meta.env.VITE_ANDROID_APK_URL || '/app/bpexpro.apk'
 ).trim()
 
 /** Only true when we have a non-empty APK URL. */
