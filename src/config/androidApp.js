@@ -1,7 +1,9 @@
-/** Android APK — place real file at public/app/flowexch.apk, then set VITE_ANDROID_APK_URL=/app/flowexch.apk */
-export const ANDROID_APK_URL = (import.meta.env.VITE_ANDROID_APK_URL || '').trim()
+/** Android APK — defaults to the standard public path so live deploys still show the button even if env is missing. */
+export const ANDROID_APK_URL = (
+  import.meta.env.VITE_ANDROID_APK_URL || '/app/flowexch.apk'
+).trim()
 
-/** Only true when a real APK URL is configured (avoids broken "parse package" installs) */
+/** Only true when we have a non-empty APK URL. */
 export const ANDROID_APK_AVAILABLE = Boolean(ANDROID_APK_URL)
 
 export const ANDROID_APP = {
