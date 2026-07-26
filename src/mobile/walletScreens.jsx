@@ -1050,12 +1050,22 @@ export function ScreenWithdraw({
   preview = false,
 }) {
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
-  const blocked = !balanceLoading && balance != null && !canWithdraw
+  const waitingForInitialBalance = balanceLoading && balance == null
+  const blocked = balance != null && !canWithdraw
   const amtNum = Number(amount || 0)
-  const overBalance = balance != null && amtNum > 0 && amtNum > balance
-  const underMin = amtNum > 0 && amtNum < 500
+  const amountValue = String(amount || '').trim()
+  const holderValue = String(holder || '').trim()
+  const mobileDigits = String(mobile || '').replace(/\D/g, '')
+  const hasAmount = amountValue.length > 0
+  const hasHolder = holderValue.length > 0
+  const hasMobile = mobileDigits.length >= 10
+  const overBalance = balance != null && hasAmount && amtNum > balance
+  const underMin = hasAmount && (!Number.isFinite(amtNum) || amtNum < 500)
+  const formIncomplete = !hasAmount || !hasHolder || !hasMobile
+  const submitDisabled =
+    submitting || waitingForInitialBalance || blocked || overBalance || underMin || formIncomplete
   const balanceText =
-    balanceLoading && balance == null
+    waitingForInitialBalance
       ? 'Loading…'
       : balance == null
         ? '—'
@@ -1147,22 +1157,25 @@ export function ScreenWithdraw({
               className="w-full bg-transparent outline-none placeholder:text-slate-400 disabled:opacity-50"
             />
           </label>
+          {!blocked && formIncomplete ? (
+            <p className="text-[11px] font-medium text-slate-500">
+              Fill all fields to enable submit
+            </p>
+          ) : null}
         </div>
       </div>
       <div className="mt-auto px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
         <button
           type="button"
           onClick={onSubmit}
-          disabled={submitting || blocked || balanceLoading || overBalance || underMin}
-          className="w-full rounded-xl bg-accent py-3.5 text-center text-sm font-bold text-navy-dark disabled:opacity-60"
+          disabled={submitDisabled}
+          className="w-full rounded-xl bg-accent py-3.5 text-center text-sm font-bold text-navy-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting
             ? 'Submitting…'
             : blocked
               ? 'Withdraw Unavailable'
-              : overBalance
-                ? 'Amount too high'
-                : 'Submit Withdrawal'}
+              : 'Submit Withdrawal'}
         </button>
       </div>
     </div>
