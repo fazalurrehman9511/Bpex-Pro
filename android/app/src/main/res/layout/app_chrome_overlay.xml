@@ -7,43 +7,19 @@
     android:clickable="false"
     android:focusable="false">
 
-    <!-- Bottom footer: Home only on BPEXCH screen -->
-    <LinearLayout
-        android:id="@+id/bottom_nav"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="50dp"
-        android:background="#F2062A1C"
-        android:elevation="10dp"
-        android:orientation="horizontal"
-        android:paddingTop="6dp"
-        android:paddingBottom="10dp">
+    <ImageButton
+        android:id="@+id/btn_nav_home"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="18dp"
+        android:layout_marginBottom="28dp"
+        android:background="@drawable/bg_whatsapp_fab"
+        android:contentDescription="@string/nav_home"
+        android:elevation="12dp"
+        android:padding="15dp"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_nav_home"
+        android:tint="#062A1C" />
 
-        <LinearLayout
-            android:id="@+id/btn_nav_home"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:background="?android:attr/selectableItemBackground">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:src="@drawable/ic_nav_home"
-                android:contentDescription="@string/nav_home" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="@string/nav_home"
-                android:textColor="#25D366"
-                android:textSize="10sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-    </LinearLayout>
 </FrameLayout>
