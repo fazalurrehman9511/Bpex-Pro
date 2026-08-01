@@ -52,7 +52,7 @@ public class MainActivity extends BridgeActivity {
     }
 
     @Override
-    protected void onPause() {
+    public void onPause() {
         chromeHandler.removeCallbacks(chromeWatcher);
         super.onPause();
     }

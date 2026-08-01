@@ -204,7 +204,7 @@ export default function BlogPage() {
                   {ANDROID_APK_AVAILABLE && (
                     <a
                       href={ANDROID_APK_URL}
-                      download
+                      download="bpexpro.apk"
                       aria-label="Download Android app"
                       className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-colors hover:border-slate-400"
                     >
@@ -233,7 +233,7 @@ export default function BlogPage() {
                   {ANDROID_APK_AVAILABLE && (
                     <a
                       href={ANDROID_APK_URL}
-                      download
+                      download="bpexpro.apk"
                       aria-label="Download Android app"
                       className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-colors hover:border-slate-400"
                     >

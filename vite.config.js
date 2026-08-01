@@ -87,6 +87,7 @@ export default defineConfig(({ mode }) => {
             /^\/uploads/,
             /^\/app/,
             /^\/admin/,
+            /^\/sitemap/,
           ],
           runtimeCaching: [
             {

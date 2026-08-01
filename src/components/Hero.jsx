@@ -71,7 +71,7 @@ export default function Hero() {
               {ANDROID_APK_AVAILABLE && (
                 <a
                   href={ANDROID_APK_URL}
-                  download
+                  download="bpexpro.apk"
                   aria-label="Download Android app"
                   className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-sky-400/60 bg-sky-500/10 px-6 py-3.5 text-sm font-bold text-sky-800 shadow-sm transition hover:bg-sky-500/20 active:scale-[0.98] sm:w-auto"
                 >
@@ -103,7 +103,7 @@ export default function Hero() {
               {ANDROID_APK_AVAILABLE && (
                 <a
                   href={ANDROID_APK_URL}
-                  download
+                  download="bpexpro.apk"
                   aria-label="Download Android app"
                   className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-sky-400/60 bg-sky-500/10 px-6 py-3.5 text-sm font-bold text-sky-800 shadow-sm transition hover:bg-sky-500/20 active:scale-[0.98] sm:w-auto"
                 >

@@ -136,7 +136,7 @@ export default function BrandAliasesPage() {
               {ANDROID_APK_AVAILABLE && (
                 <a
                   href={ANDROID_APK_URL}
-                  download
+                  download="bpexpro.apk"
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90"
                 >
                   <Download className="h-4 w-4 text-white" aria-hidden="true" />
@@ -165,7 +165,7 @@ export default function BrandAliasesPage() {
               {ANDROID_APK_AVAILABLE && (
                 <a
                   href={ANDROID_APK_URL}
-                  download
+                  download="bpexpro.apk"
                   className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90"
                 >
                   <Download className="h-4 w-4 text-white" aria-hidden="true" />

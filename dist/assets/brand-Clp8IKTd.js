@@ -1,1 +1,0 @@
-var e=`BpxPro`,t=[`BPX`,`BPEXCH`,`BPXPRO`,`BettPro`,`Bett Pro`],n=`BPX, BPEXCH, BPXPRO, BettPro and Bett Pro`,r=`/icon-72x72.png`,i=`/icon-512x512.png`,a=`www.bpexpro.com`,o=`https://www.bpexpro.com`.replace(/\/$/,``);export{e as a,i,n,a as o,r,o as s,t};
