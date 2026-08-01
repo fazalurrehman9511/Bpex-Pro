@@ -1,6 +1,8 @@
 import { ArrowLeft, MessageCircle, ShieldCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+const contactLink = { pathname: '/', hash: 'contact' }
+
 export default function LegalPageLayout({
   title,
   intro,
@@ -48,19 +50,19 @@ export default function LegalPageLayout({
               the website contact form or WhatsApp support.
             </p>
             <div className="mt-4 space-y-2">
-              <a
-                href="/#contact"
+              <Link
+                to={contactLink}
                 className="block rounded-xl border border-border bg-navy px-4 py-3 text-sm font-semibold text-text transition-colors hover:border-accent/40 hover:text-accent"
               >
                 Open Contact Section
-              </a>
-              <a
-                href="/#contact"
+              </Link>
+              <Link
+                to={contactLink}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-3 text-sm font-bold text-navy-dark transition-colors hover:bg-accent-hover"
               >
                 <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
                 Contact Support
-              </a>
+              </Link>
             </div>
           </aside>
         </div>

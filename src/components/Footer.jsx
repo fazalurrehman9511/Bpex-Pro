@@ -10,15 +10,15 @@ import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 import SocialLinks from './SocialLinks'
 
 const baseLinks = [
-  { label: 'Live Events', href: '/#events' },
-  { label: 'Add Balance', href: '/#payments' },
+  { label: 'Live Events', id: 'events' },
+  { label: 'Add Balance', id: 'payments' },
   { label: 'Brand Guide', to: '/bpx' },
   { label: 'Privacy Policy', to: '/privacy-policy' },
   { label: 'Terms & Conditions', to: '/terms-and-conditions' },
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Blog', to: '/blog' },
-  { label: 'FAQ', href: '/#faq' },
-  { label: 'Contact Us', href: '/#contact' },
+  { label: 'FAQ', id: 'faq' },
+  { label: 'Contact Us', id: 'contact' },
 ]
 
 export default function Footer() {
@@ -39,12 +39,9 @@ export default function Footer() {
     ? baseLinks
     : baseLinks.filter((item) => item.to !== '/dashboard')
 
-  const handleHashLink = (e, href) => {
-    const id = href.replace('/#', '')
-    if (location.pathname === '/') {
-      e.preventDefault()
-      navigateToSection(id, navigate, location.pathname)
-    }
+  const handleSectionLink = (e, id) => {
+    e.preventDefault()
+    navigateToSection(id, navigate, location.pathname)
   }
 
   const openDashboard = (e) => {
@@ -83,7 +80,7 @@ export default function Footer() {
           <div>
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emerald-300/80">Quick Links</p>
             <nav className="flex flex-col gap-2.5" aria-label="Footer">
-              {links.map(({ label, href, to }) =>
+              {links.map(({ label, id, to }) =>
                 to ? (
                   <Link
                     key={to}
@@ -94,14 +91,14 @@ export default function Footer() {
                     {label}
                   </Link>
                 ) : (
-                  <a
-                    key={href}
-                    href={href}
-                    onClick={(e) => handleHashLink(e, href)}
-                    className="text-left text-sm text-emerald-50/90 transition-colors hover:text-[#25D366]"
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={(e) => handleSectionLink(e, id)}
+                    className="cursor-pointer text-left text-sm text-emerald-50/90 transition-colors hover:text-[#25D366]"
                   >
                     {label}
-                  </a>
+                  </button>
                 ),
               )}
               {!loggedIn && (

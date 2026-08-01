@@ -234,12 +234,12 @@ export default function BrandAliasesPage() {
               >
                 Explore all betting guides and payment posts
               </Link>
-              <a
-                href="#faq"
+              <Link
+                to={{ pathname: '/', hash: 'faq' }}
                 className="block rounded-xl border border-border bg-navy px-4 py-3 text-sm font-semibold text-text transition-colors hover:border-accent/40 hover:text-accent"
               >
                 Go to homepage FAQ and support section
-              </a>
+              </Link>
             </div>
           </div>
         </div>

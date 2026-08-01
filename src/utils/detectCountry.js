@@ -25,14 +25,24 @@ export function detectCountryCode() {
 }
 
 export function scrollToSection(id) {
-  const el = document.getElementById(id)
+  const sectionId = String(id || '').replace(/^#+/, '').trim()
+  if (!sectionId) return
+  const el = document.getElementById(sectionId)
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 export function navigateToSection(id, navigate, pathname) {
+  const sectionId = String(id || '').replace(/^#+/, '').trim()
+  if (!sectionId) return
+
   if (pathname !== '/') {
-    navigate(`/#${id}`)
-  } else {
-    scrollToSection(id)
+    navigate({ pathname: '/', hash: sectionId })
+    return
   }
+
+  const currentHash = window.location.hash.replace(/^#+/, '')
+  if (currentHash !== sectionId) {
+    navigate({ pathname: '/', hash: sectionId }, { replace: true })
+  }
+  scrollToSection(sectionId)
 }

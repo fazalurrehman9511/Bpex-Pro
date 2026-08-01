@@ -42,8 +42,8 @@ export default function HomePage() {
 
   useEffect(() => {
     if (location.hash) {
-      const id = location.hash.replace('#', '')
-      setTimeout(() => scrollToSection(id), 100)
+      const id = location.hash.replace(/^#+/, '').trim()
+      if (id) setTimeout(() => scrollToSection(id), 100)
     }
   }, [location.hash])
 
