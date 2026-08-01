@@ -65,12 +65,12 @@ export default function MarqueeTicker() {
   const doubled = [...items, ...items]
 
   return (
-    <div className="overflow-hidden border-b border-accent/20 bg-navy-dark" aria-hidden="true">
-      <div className="flex animate-marquee whitespace-nowrap py-2">
+    <div className="overflow-hidden bg-gradient-to-r from-[#0a4d2e] via-emerald-700 to-teal-600" aria-hidden="true">
+      <div className="flex animate-marquee whitespace-nowrap py-3">
         {doubled.map((item, i) => (
-          <span key={`${item}-${i}`} className="mx-6 text-xs font-medium text-muted">
+          <span key={`${item}-${i}`} className="mx-6 text-xs font-semibold text-emerald-50">
             {item}
-            <span className="mx-6 text-accent/40">•</span>
+            <span className="mx-6 text-[#25D366]">•</span>
           </span>
         ))}
       </div>

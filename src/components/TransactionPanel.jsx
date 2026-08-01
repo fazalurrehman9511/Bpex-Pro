@@ -197,9 +197,14 @@ export default function TransactionPanel({
   const pendingCount = transactions.filter((t) => t.status === 'pending').length
 
   useEffect(() => {
-    Promise.all([loadPaymentAccounts(), loadWithdrawMethods()]).then(() =>
-      setAccountsTick((n) => n + 1),
-    )
+    const reloadAccounts = () => {
+      Promise.all([loadPaymentAccounts(), loadWithdrawMethods()]).then(() =>
+        setAccountsTick((n) => n + 1),
+      )
+    }
+    reloadAccounts()
+    window.addEventListener('focus', reloadAccounts)
+    return () => window.removeEventListener('focus', reloadAccounts)
   }, [])
 
   useEffect(() => {

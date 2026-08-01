@@ -11,7 +11,8 @@ import {
   setBpexchUsername,
 } from '../utils/bpexchAuth'
 import { ensureBpexchSession } from '../utils/bpexchSession'
-import { BRAND_LOGO_LG, BRAND_NAME } from '../config/brand'
+import { BRAND_NAME } from '../config/brand'
+import BrandLogo from '../components/BrandLogo'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -67,14 +68,7 @@ export default function LoginPage() {
     <div className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-[radial-gradient(circle_at_top,#123f2b_0%,#0f1923_55%,#091117_100%)] px-4 py-8">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-navy-dark/90 p-6 shadow-2xl backdrop-blur">
         <div className="mb-8 flex flex-col items-center text-center">
-          <img
-            src={BRAND_LOGO_LG}
-            alt={BRAND_NAME}
-            width={88}
-            height={88}
-            className="h-22 w-22 rounded-[24px] object-cover shadow-lg shadow-black/30"
-            decoding="async"
-          />
+          <BrandLogo size="xl" rounded="xl" shadow className="rounded-[24px]" />
           <h1 className="mt-4 text-2xl font-black text-white">{BRAND_NAME} Login</h1>
           <p className="mt-2 text-sm text-white/60">
             Log in here once. The dashboard will auto-login to BPEXCH.

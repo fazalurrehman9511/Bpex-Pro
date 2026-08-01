@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
-import { getPaymentAccount, loadPaymentAccounts } from '../data/paymentAccounts'
+import { getPaymentAccount, getPaymentMethodOptions, loadPaymentAccounts } from '../data/paymentAccounts'
 import {
   getWithdrawMethod,
   getWithdrawMethodIds,
@@ -159,14 +159,22 @@ export default function NativeWalletApp() {
   }
 
   useEffect(() => {
-    Promise.all([loadPaymentAccounts(), loadWithdrawMethods()]).then(() => {
-      setMethod((prev) => (getPaymentAccount(prev)?.id ? prev : 'easypaisa'))
-      const nextWithdrawIds = getWithdrawMethodIds()
-      setWithdrawMethod((prev) =>
-        nextWithdrawIds.includes(prev) ? prev : nextWithdrawIds[0] || prev,
-      )
-      setAccountsReady((n) => n + 1)
-    })
+    const reloadAccounts = () => {
+      Promise.all([loadPaymentAccounts(), loadWithdrawMethods()]).then(() => {
+        setMethod((prev) => {
+          const ids = getPaymentMethodOptions().map((m) => m.id)
+          return ids.includes(prev) ? prev : ids[0] || prev
+        })
+        const nextWithdrawIds = getWithdrawMethodIds()
+        setWithdrawMethod((prev) =>
+          nextWithdrawIds.includes(prev) ? prev : nextWithdrawIds[0] || prev,
+        )
+        setAccountsReady((n) => n + 1)
+      })
+    }
+    reloadAccounts()
+    window.addEventListener('focus', reloadAccounts)
+    return () => window.removeEventListener('focus', reloadAccounts)
   }, [])
 
   useEffect(() => {
@@ -375,6 +383,7 @@ export default function NativeWalletApp() {
   const account = getPaymentAccount(method)
   const withdrawAccount = getWithdrawMethod(withdrawMethod)
   const withdrawMethodOptions = getWithdrawMethodOptions()
+  const paymentMethodOptions = getPaymentMethodOptions()
   void accountsReady
 
   const login = async () => {
@@ -685,6 +694,7 @@ export default function NativeWalletApp() {
     return (
       <div className="fixed inset-0 z-[100] overflow-y-auto bg-white">
         <ScreenDeposit
+          username={username}
           amount={amount}
           onAmountChange={setAmount}
           onBack={() => setScreen('wallet')}
@@ -709,6 +719,7 @@ export default function NativeWalletApp() {
         <ScreenMethod
           amount={amount}
           method={method}
+          methods={paymentMethodOptions}
           methodOpen={methodOpen}
           accountTitle={account.accountTitle}
           accountNumber={account.accountNumber}

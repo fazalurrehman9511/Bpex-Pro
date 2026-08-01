@@ -34,7 +34,7 @@ export function getWithdrawMethodOptions() {
 export async function loadWithdrawMethods() {
   try {
     const list = await fetchWithdrawMethods()
-    if (Array.isArray(list) && list.length) {
+    if (Array.isArray(list)) {
       const next = {}
       for (const row of list) {
         if (!row?.id) continue

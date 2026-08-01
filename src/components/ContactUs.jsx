@@ -5,7 +5,7 @@ import { submitContact } from '../utils/api'
 import { openSupportWhatsApp } from '../utils/whatsapp'
 
 const inputClass =
-  'w-full rounded border border-border bg-navy-dark px-4 py-2.5 text-sm text-text placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-colors'
+  'w-full rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-600/20 transition-colors'
 
 export default function ContactUs() {
   const [name, setName] = useState('')
@@ -67,38 +67,39 @@ export default function ContactUs() {
   }
 
   return (
-    <section id="contact" className="bg-navy px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-5 flex items-center gap-2">
-          <Mail className="h-5 w-5 text-accent" />
-          <div>
-            <h2 className="text-base font-bold text-text sm:text-lg">Contact Us</h2>
-            <p className="text-xs text-muted">Send a message — we reply within minutes</p>
+    <section id="contact" className="section-tint-emerald border-t border-emerald-200/50 px-4 py-14 sm:px-6 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 max-w-2xl">
+          <p className="editorial-section-label">Get in touch</p>
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-emerald-600" />
+            <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Contact Us</h2>
           </div>
+          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">Send a message — we reply within minutes</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
-          <div className="rounded border border-border bg-navy-light p-4 sm:p-5">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_280px]">
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
             {done ? (
               <div className="flex flex-col items-center justify-center gap-3 py-10 text-center">
-                <CheckCircle2 className="h-10 w-10 text-accent" />
-                <p className="text-sm font-bold text-text">Message sent</p>
-                <p className="max-w-sm text-xs text-muted">
+                <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+                <p className="text-base font-bold text-slate-900">Message sent</p>
+                <p className="max-w-sm text-sm text-slate-600">
                   Thanks for reaching out. Our team will get back to you shortly.
                 </p>
                 <button
                   type="button"
                   onClick={() => setDone(false)}
-                  className="mt-2 rounded border border-border px-4 py-2 text-xs font-semibold text-muted hover:border-accent/40 hover:text-text transition-colors"
+                  className="mt-2 cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition-colors hover:border-emerald-200 hover:text-emerald-700"
                 >
                   Send another message
                 </button>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
-                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="contact-name" className="mb-1.5 block text-xs font-semibold text-text">
+                    <label htmlFor="contact-name" className="mb-1.5 block text-sm font-semibold text-slate-800">
                       Full Name
                     </label>
                     <input
@@ -110,10 +111,10 @@ export default function ContactUs() {
                       autoComplete="name"
                       className={inputClass}
                     />
-                    {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+                    {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
                   </div>
                   <div>
-                    <label htmlFor="contact-phone" className="mb-1.5 block text-xs font-semibold text-text">
+                    <label htmlFor="contact-phone" className="mb-1.5 block text-sm font-semibold text-slate-800">
                       Phone Number
                     </label>
                     <input
@@ -125,14 +126,14 @@ export default function ContactUs() {
                       autoComplete="tel"
                       className={inputClass}
                     />
-                    {errors.phone && <p className="mt-1 text-xs text-red-400">{errors.phone}</p>}
+                    {errors.phone && <p className="mt-1 text-xs text-red-600">{errors.phone}</p>}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label htmlFor="contact-email" className="mb-1.5 block text-xs font-semibold text-text">
-                      Email <span className="font-normal text-muted">(optional)</span>
+                    <label htmlFor="contact-email" className="mb-1.5 block text-sm font-semibold text-slate-800">
+                      Email <span className="font-normal text-slate-400">(optional)</span>
                     </label>
                     <input
                       id="contact-email"
@@ -143,10 +144,10 @@ export default function ContactUs() {
                       autoComplete="email"
                       className={inputClass}
                     />
-                    {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
+                    {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                   </div>
                   <div>
-                    <label htmlFor="contact-subject" className="mb-1.5 block text-xs font-semibold text-text">
+                    <label htmlFor="contact-subject" className="mb-1.5 block text-sm font-semibold text-slate-800">
                       Subject
                     </label>
                     <input
@@ -161,7 +162,7 @@ export default function ContactUs() {
                 </div>
 
                 <div>
-                  <label htmlFor="contact-message" className="mb-1.5 block text-xs font-semibold text-text">
+                  <label htmlFor="contact-message" className="mb-1.5 block text-sm font-semibold text-slate-800">
                     Message
                   </label>
                   <textarea
@@ -170,13 +171,13 @@ export default function ContactUs() {
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     placeholder="How can we help?"
-                    className={`${inputClass} resize-y min-h-[100px]`}
+                    className={`${inputClass} min-h-[100px] resize-y`}
                   />
-                  {errors.message && <p className="mt-1 text-xs text-red-400">{errors.message}</p>}
+                  {errors.message && <p className="mt-1 text-xs text-red-600">{errors.message}</p>}
                 </div>
 
                 {submitError && (
-                  <p className="rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-300">
+                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                     {submitError}
                   </p>
                 )}
@@ -184,7 +185,7 @@ export default function ContactUs() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex w-full items-center justify-center gap-2 rounded bg-accent px-4 py-3 text-sm font-bold text-navy-dark hover:bg-accent-hover transition-colors disabled:opacity-60 sm:w-auto sm:min-w-[180px]"
+                  className="btn-whatsapp inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-3 text-sm font-bold transition-colors disabled:opacity-60 sm:w-auto sm:min-w-[180px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
                 >
                   <Send className="h-4 w-4" />
                   {submitting ? 'Sending…' : 'Send Message'}
@@ -193,9 +194,9 @@ export default function ContactUs() {
             )}
           </div>
 
-          <aside className="rounded border border-border bg-navy-light p-4 sm:p-5">
-            <p className="text-sm font-bold text-text">Need faster help?</p>
-            <p className="mt-1.5 text-xs leading-relaxed text-muted">
+          <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-5 sm:p-6">
+            <p className="text-base font-bold text-slate-900">Need faster help?</p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
               Chat with your local agent on WhatsApp for deposits, withdrawals, and account support.
             </p>
             <button
@@ -205,12 +206,12 @@ export default function ContactUs() {
                   'Hi BpxPro Support! 👋\n\nI need help with deposits, withdrawals, or my account.\nPlease assist me.',
                 )
               }
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded bg-accent/15 border border-accent/30 px-4 py-2.5 text-xs font-bold text-accent hover:bg-accent/25 transition-colors"
+              className="mt-4 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40"
             >
               <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
               WhatsApp Support
             </button>
-            <ul className="mt-4 space-y-2 text-[11px] text-muted">
+            <ul className="mt-5 space-y-2 text-sm text-slate-500">
               <li>· 24/7 agent support</li>
               <li>· JazzCash · EasyPaisa · Bank · Crypto</li>
               <li>· Typical reply under 5 minutes</li>

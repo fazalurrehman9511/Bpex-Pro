@@ -37,8 +37,17 @@ export function BankLogo({ className = 'h-10 w-10' }) {
   )
 }
 
-export function PaymentMethodLogo({ id, className = 'h-10 w-10' }) {
+export function PaymentMethodLogo({ id, label, className = 'h-10 w-10' }) {
   if (id === 'jazzcash') return <JazzCashLogo className={className} />
   if (id === 'easypaisa') return <EasyPaisaLogo className={className} />
-  return <BankLogo className={className} />
+  if (id === 'bank') return <BankLogo className={className} />
+  const initial = String(label || id || '?').trim().charAt(0).toUpperCase() || '?'
+  return (
+    <span
+      className={`${className} inline-flex items-center justify-center rounded-lg bg-emerald-100 text-sm font-extrabold text-emerald-800`}
+      aria-hidden="true"
+    >
+      {initial}
+    </span>
+  )
 }

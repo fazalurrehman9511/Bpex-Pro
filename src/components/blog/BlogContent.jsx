@@ -10,21 +10,24 @@ function renderBlock(block, index) {
       )
     case 'h2':
       return (
-        <h2 key={index} className="mt-8 mb-3 text-lg font-bold text-text sm:text-xl">
+        <h2
+          key={index}
+          className="mb-4 mt-12 scroll-mt-24 border-l-2 border-emerald-600 pl-4 text-2xl font-bold leading-tight tracking-tight text-slate-900 sm:text-[1.75rem]"
+        >
           {block.text}
         </h2>
       )
     case 'p':
       return (
-        <p key={index} className="mb-4 text-sm leading-relaxed text-muted sm:text-base">
+        <p key={index} className="mb-6 text-[15px] leading-7 text-slate-700 sm:text-[17px] sm:leading-8">
           {block.text}
         </p>
       )
     case 'ul':
       return (
-        <ul key={index} className="mb-4 ml-4 space-y-2">
+        <ul key={index} className="mb-7 ml-5 space-y-3 marker:text-emerald-600">
           {block.items.map((item, i) => (
-            <li key={i} className="text-sm leading-relaxed text-muted list-disc sm:text-base">
+            <li key={i} className="list-disc pl-1 text-[15px] leading-7 text-slate-700 sm:text-[17px]">
               {item}
             </li>
           ))}
@@ -32,9 +35,9 @@ function renderBlock(block, index) {
       )
     case 'ol':
       return (
-        <ol key={index} className="mb-4 ml-4 space-y-2">
+        <ol key={index} className="mb-7 ml-5 space-y-3 marker:font-bold marker:text-emerald-700">
           {block.items.map((item, i) => (
-            <li key={i} className="text-sm leading-relaxed text-muted list-decimal sm:text-base">
+            <li key={i} className="list-decimal pl-1 text-[15px] leading-7 text-slate-700 sm:text-[17px]">
               {item}
             </li>
           ))}
@@ -48,7 +51,7 @@ function renderBlock(block, index) {
 export default function BlogContent({ content }) {
   return (
     <div className="blog-content">
-      {content.map((block, i) => renderBlock(block, i))}
+      {(Array.isArray(content) ? content : []).map((block, i) => renderBlock(block, i))}
     </div>
   )
 }

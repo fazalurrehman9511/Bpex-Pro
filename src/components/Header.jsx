@@ -36,7 +36,8 @@ import {
   formatCurrency,
   parseBalanceAmount,
 } from '../utils/transactions'
-import { BRAND_LOGO, BRAND_NAME } from '../config/brand'
+import { BRAND_NAME } from '../config/brand'
+import BrandLogo from '../components/BrandLogo'
 import { BPEXCH_LOGIN_EXTERNAL_URL, openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 
 export default function Logo() {
@@ -46,15 +47,7 @@ export default function Logo() {
       className="inline-flex items-center hover:opacity-90 transition-opacity"
       aria-label={BRAND_NAME}
     >
-      <img
-        src={BRAND_LOGO}
-        alt={BRAND_NAME}
-        width={72}
-        height={72}
-        className="h-11 w-11 object-contain sm:h-12 sm:w-12"
-        decoding="async"
-        fetchPriority="high"
-      />
+      <BrandLogo size="header" />
     </Link>
   )
 }
@@ -121,54 +114,54 @@ function ProfileMenu({
   }, [open, onRefreshBalance])
 
   const itemClass =
-    'flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-text transition-colors hover:bg-navy-light'
+    'flex w-full cursor-pointer items-center gap-2.5 px-3.5 py-2.5 text-left text-[13px] text-slate-700 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40'
 
   return (
     <div className="relative shrink-0" ref={rootRef}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border bg-navy-light pl-1 pr-2 text-left transition-colors sm:h-11 sm:gap-2.5 sm:pl-1.5 sm:pr-2.5 ${
+        className={`inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border bg-white pl-1 pr-2 text-left transition-colors sm:h-11 sm:gap-2.5 sm:pl-1.5 sm:pr-2.5 ${
           open
-            ? 'border-accent/50'
-            : 'border-border hover:border-accent/35'
+            ? 'border-emerald-300 ring-2 ring-emerald-600/20'
+            : 'border-slate-200 hover:border-emerald-200'
         }`}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
       >
-        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-navy-dark sm:h-8 sm:w-8 sm:text-sm">
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white sm:h-8 sm:w-8 sm:text-sm">
           {initial}
         </span>
         <span className="hidden min-w-0 leading-tight sm:block">
-          <span className="block max-w-[8.5rem] truncate text-xs font-semibold text-text">
+          <span className="block max-w-[8.5rem] truncate text-xs font-semibold text-slate-900">
             {display}
           </span>
-          <span className="block max-w-[8.5rem] truncate text-[11px] font-semibold text-accent">
+          <span className="block max-w-[8.5rem] truncate text-[11px] font-semibold text-emerald-700">
             {balText}
           </span>
         </span>
         <ChevronDown
-          className={`h-3.5 w-3.5 shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`}
+          className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform ${open ? 'rotate-180' : ''}`}
         />
       </button>
 
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-lg border border-border bg-navy-dark shadow-xl ring-1 ring-black/20"
+          className="absolute right-0 top-[calc(100%+0.4rem)] z-50 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-slate-900/5"
         >
-          <div className="border-b border-border px-3.5 py-3">
-            <p className="truncate text-sm font-semibold text-text">{display}</p>
-            <p className="mt-0.5 text-xs text-muted">
+          <div className="border-b border-slate-100 px-3.5 py-3">
+            <p className="truncate text-sm font-semibold text-slate-900">{display}</p>
+            <p className="mt-0.5 text-xs text-slate-500">
               Available{' '}
-              <span className="font-semibold text-accent">{balText}</span>
+              <span className="font-semibold text-emerald-700">{balText}</span>
             </p>
-            <div className="mt-3 rounded-md border border-border bg-navy-light/70 px-3 py-2">
-              <div className="flex items-start justify-between gap-2 border-b border-border/70 pb-2">
+            <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+              <div className="flex items-start justify-between gap-2 border-b border-slate-200 pb-2">
                 <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-wide text-muted">Username</p>
-                  <p className="truncate text-xs font-semibold text-text">{userText}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400">Username</p>
+                  <p className="truncate text-xs font-semibold text-slate-900">{userText}</p>
                 </div>
                 {username ? (
                   <button
@@ -180,19 +173,19 @@ function ProfileMenu({
                         /* ignore */
                       }
                     }}
-                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    className="rounded p-1 text-emerald-200 transition-colors hover:text-white"
                     aria-label="Copy username"
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 ) : (
-                  <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted" />
+                  <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
                 )}
               </div>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 pt-2">
-                  <p className="text-[10px] uppercase tracking-wide text-muted">Password</p>
-                  <p className="truncate text-xs font-semibold text-text">{passText}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-slate-400">Password</p>
+                  <p className="truncate text-xs font-semibold text-slate-900">{passText}</p>
                 </div>
                 {password ? (
                   <button
@@ -210,7 +203,7 @@ function ProfileMenu({
                     <Copy className="h-3.5 w-3.5" />
                   </button>
                 ) : (
-                  <Lock className="mt-2.5 h-3.5 w-3.5 shrink-0 text-muted" />
+                  <Lock className="mt-2.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
                 )}
               </div>
             </div>
@@ -228,15 +221,15 @@ function ProfileMenu({
               }}
               className={itemClass}
             >
-              <LayoutDashboard className="h-4 w-4 text-muted" />
+              <LayoutDashboard className="h-4 w-4 text-slate-400" />
               Dashboard
             </a>
             <Link to="/deposit" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
-              <Wallet className="h-4 w-4 text-muted" />
+              <Wallet className="h-4 w-4 text-slate-400" />
               Deposit
             </Link>
             <Link to="/withdraw" role="menuitem" onClick={() => setOpen(false)} className={itemClass}>
-              <ArrowUpFromLine className="h-4 w-4 text-muted" />
+              <ArrowUpFromLine className="h-4 w-4 text-slate-400" />
               Withdraw
             </Link>
           </div>
@@ -248,7 +241,7 @@ function ProfileMenu({
               setOpen(false)
               onLogout()
             }}
-            className="flex w-full cursor-pointer items-center gap-2.5 border-t border-border px-3.5 py-2.5 text-left text-[13px] font-medium text-red-300 transition-colors hover:bg-navy-light"
+            className="flex w-full cursor-pointer items-center gap-2.5 border-t border-slate-100 px-3.5 py-2.5 text-left text-[13px] font-medium text-red-600 transition-colors hover:bg-red-50"
           >
             <LogOut className="h-4 w-4" />
             Logout
@@ -347,7 +340,7 @@ export function HeaderBar() {
     : baseNavLinks.filter((item) => item.to !== '/dashboard')
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border/50 bg-navy-dark/95 backdrop-blur-md">
+    <header className="brand-header sticky top-0 z-40">
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-2 sm:gap-4 sm:px-5">
         <div className="shrink-0">
           <Logo />
@@ -360,10 +353,10 @@ export function HeaderBar() {
                 key={to}
                 to={to}
                 onClick={to === '/dashboard' ? openDashboardExternal : undefined}
-                className={`flex items-center gap-1.5 rounded px-3 py-2 text-sm font-semibold transition-colors lg:px-3.5 ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors lg:px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                   isActive(to)
-                    ? 'bg-accent/10 text-accent'
-                    : 'text-muted hover:bg-navy-light hover:text-text'
+                    ? 'bg-white/20 text-white'
+                    : 'text-emerald-100 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 {Icon && <Icon className="h-3.5 w-3.5" />}
@@ -374,7 +367,7 @@ export function HeaderBar() {
                 key={id}
                 type="button"
                 onClick={() => handleNav(id)}
-                className="cursor-pointer rounded px-3 py-2 text-sm font-semibold text-muted transition-colors hover:bg-navy-light hover:text-text lg:px-3.5"
+                className="cursor-pointer rounded-lg px-3 py-2 text-sm font-semibold text-emerald-100 transition-colors hover:bg-white/10 hover:text-white lg:px-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 {label}
               </button>
@@ -387,24 +380,24 @@ export function HeaderBar() {
             <>
               <Link
                 to="/deposit"
-                className={`hidden cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-bold transition-colors sm:inline-flex ${
+                className={`hidden cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-bold transition-colors sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                   isActive('/deposit')
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-border text-text hover:border-accent/40'
+                    ? 'border-white/50 bg-white/20 text-white'
+                    : 'border-white/25 text-white hover:border-white/40 hover:bg-white/10'
                 }`}
               >
-                <Wallet className="h-3.5 w-3.5 text-accent" />
+                <Wallet className="h-3.5 w-3.5 text-[#25D366]" />
                 <span className="hidden lg:inline">Deposit</span>
               </Link>
               <Link
                 to="/withdraw"
-                className={`hidden cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-bold transition-colors sm:inline-flex ${
+                className={`hidden cursor-pointer items-center gap-1 rounded-lg border px-2.5 py-2 text-xs font-bold transition-colors sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                   isActive('/withdraw')
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-border text-text hover:border-accent/40'
+                    ? 'border-white/50 bg-white/20 text-white'
+                    : 'border-white/25 text-white hover:border-white/40 hover:bg-white/10'
                 }`}
               >
-                <ArrowUpFromLine className="h-3.5 w-3.5 text-accent" />
+                <ArrowUpFromLine className="h-3.5 w-3.5 text-[#25D366]" />
                 <span className="hidden lg:inline">Withdraw</span>
               </Link>
               <ProfileMenu
@@ -420,10 +413,10 @@ export function HeaderBar() {
             <>
               <Link
                 to="/login"
-                className={`hidden cursor-pointer rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:inline-flex ${
+                className={`hidden cursor-pointer rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:inline-flex focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 ${
                   isActive('/login')
-                    ? 'border-accent bg-accent/10 text-accent'
-                    : 'border-border text-text hover:border-accent/40'
+                    ? 'border-white/50 bg-white/20 text-white'
+                    : 'border-white/25 text-white hover:border-white/40 hover:bg-white/10'
                 }`}
               >
                 Login
@@ -431,7 +424,7 @@ export function HeaderBar() {
               <button
                 type="button"
                 onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-                className="hidden cursor-pointer items-center gap-1 rounded-lg bg-accent px-2.5 py-2 text-xs font-bold text-navy-dark transition-colors hover:bg-accent-hover sm:inline-flex sm:px-3"
+                className="btn-whatsapp hidden cursor-pointer items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-bold transition-colors sm:inline-flex sm:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
                 <MessageCircle className="h-3.5 w-3.5" fill="currentColor" strokeWidth={0} />
                 Agent
@@ -439,9 +432,9 @@ export function HeaderBar() {
               <button
                 type="button"
                 onClick={() => openModal('register', { registerPath: 'self' })}
-                className="hidden cursor-pointer items-center gap-1 rounded-lg border border-border bg-navy-light px-2.5 py-2 text-xs font-bold text-text transition-colors hover:border-accent/40 sm:inline-flex sm:px-3"
+                className="hidden cursor-pointer items-center gap-1 rounded-lg border border-white/30 bg-white/10 px-2.5 py-2 text-xs font-bold text-white backdrop-blur-sm transition-colors hover:bg-white/20 sm:inline-flex sm:px-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
               >
-                <UserPlus className="h-3.5 w-3.5 text-accent" />
+                <UserPlus className="h-3.5 w-3.5 text-[#25D366]" />
                 Myself
               </button>
             </>
@@ -449,7 +442,7 @@ export function HeaderBar() {
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
-            className="cursor-pointer rounded p-1.5 text-muted hover:text-text md:hidden"
+            className="cursor-pointer rounded-lg p-1.5 text-emerald-100 hover:text-white md:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
             aria-label="Menu"
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -458,14 +451,14 @@ export function HeaderBar() {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-border bg-navy-dark px-4 py-3 md:hidden">
+        <div className="border-t border-white/15 bg-emerald-900/40 px-4 py-3 backdrop-blur-sm md:hidden">
           {navLinks.map(({ label, id, to, icon: Icon }) =>
             to ? (
               <Link
                 key={to}
                 to={to}
                 onClick={() => setMenuOpen(false)}
-                className="flex w-full items-center gap-2 rounded px-3 py-2.5 text-sm font-medium text-muted hover:bg-navy-light hover:text-text"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-emerald-50 hover:bg-white/10 hover:text-white"
               >
                 {Icon && <Icon className="h-4 w-4" />}
                 {label}
@@ -475,7 +468,7 @@ export function HeaderBar() {
                 key={id}
                 type="button"
                 onClick={() => handleNav(id)}
-                className="block w-full cursor-pointer rounded px-3 py-2.5 text-left text-sm font-medium text-muted hover:bg-navy-light hover:text-text"
+                className="block w-full cursor-pointer rounded-lg px-3 py-2.5 text-left text-sm font-medium text-emerald-50 hover:bg-white/10 hover:text-white"
               >
                 {label}
               </button>
@@ -483,14 +476,14 @@ export function HeaderBar() {
           )}
           {loggedIn ? (
             <>
-              <div className="mt-2 flex items-center gap-3 rounded-xl border border-border px-3 py-3">
-                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-base font-bold text-navy-dark">
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-white/20 bg-white/10 px-3 py-3">
+                <span className="flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-base font-bold text-white">
                   {(username || 'U').charAt(0).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-accent">{username || 'User'}</p>
-                  <p className="text-xs font-semibold text-text">{balanceLabel || '—'}</p>
-                  <p className="truncate text-[11px] text-muted">Pass: {savedPassword || '—'}</p>
+                  <p className="truncate text-sm font-bold text-white">{username || 'User'}</p>
+                  <p className="text-xs font-semibold text-emerald-200">{balanceLabel || '—'}</p>
+                  <p className="truncate text-[11px] text-emerald-100/80">Pass: {savedPassword || '—'}</p>
                 </div>
                 <div className="flex shrink-0 flex-col gap-1">
                   <button
@@ -502,7 +495,7 @@ export function HeaderBar() {
                         /* ignore */
                       }
                     }}
-                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    className="rounded p-1 text-emerald-200 transition-colors hover:text-white"
                     aria-label="Copy username"
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -516,7 +509,7 @@ export function HeaderBar() {
                         /* ignore */
                       }
                     }}
-                    className="rounded p-1 text-muted transition-colors hover:text-accent"
+                    className="rounded p-1 text-emerald-200 transition-colors hover:text-white"
                     aria-label="Copy password"
                   >
                     <Copy className="h-3.5 w-3.5" />
@@ -526,23 +519,23 @@ export function HeaderBar() {
               <Link
                 to="/deposit"
                 onClick={() => setMenuOpen(false)}
-                className="mt-1 flex w-full items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+                className="mt-1 flex w-full items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-left text-sm font-medium text-white"
               >
-                <Wallet className="h-4 w-4 text-accent" />
+                <Wallet className="h-4 w-4 text-[#25D366]" />
                 Deposit
               </Link>
               <Link
                 to="/withdraw"
                 onClick={() => setMenuOpen(false)}
-                className="mt-1 flex w-full items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+                className="mt-1 flex w-full items-center gap-2 rounded-lg border border-white/20 bg-white/5 px-3 py-2.5 text-left text-sm font-medium text-white"
               >
-                <ArrowUpFromLine className="h-4 w-4 text-accent" />
+                <ArrowUpFromLine className="h-4 w-4 text-[#25D366]" />
                 Withdraw
               </Link>
               <button
                 type="button"
                 onClick={handleLogout}
-                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded border border-red-500/30 px-3 py-2.5 text-left text-sm font-semibold text-red-300"
+                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded-lg border border-red-400/40 px-3 py-2.5 text-left text-sm font-semibold text-red-200"
               >
                 <LogOut className="h-4 w-4" />
                 Logout
@@ -553,7 +546,7 @@ export function HeaderBar() {
               <Link
                 to="/login"
                 onClick={() => setMenuOpen(false)}
-                className="mt-1 block w-full rounded border border-border px-3 py-2.5 text-left text-sm font-medium text-text"
+                className="mt-1 block w-full rounded-lg border border-white/20 px-3 py-2.5 text-left text-sm font-medium text-white"
               >
                 Login
               </Link>
@@ -563,7 +556,7 @@ export function HeaderBar() {
                   setMenuOpen(false)
                   openModal('register', { registerPath: 'whatsapp' })
                 }}
-                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded bg-accent px-3 py-2.5 text-left text-sm font-bold text-navy-dark"
+                className="btn-whatsapp mt-1 flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm font-bold"
               >
                 <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />
                 Register with Agent
@@ -574,9 +567,9 @@ export function HeaderBar() {
                   setMenuOpen(false)
                   openModal('register', { registerPath: 'self' })
                 }}
-                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded border border-border px-3 py-2.5 text-left text-sm font-semibold text-text"
+                className="mt-1 flex w-full cursor-pointer items-center gap-2 rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-left text-sm font-semibold text-white"
               >
-                <UserPlus className="h-4 w-4 text-accent" />
+                <UserPlus className="h-4 w-4 text-[#25D366]" />
                 Register Myself
               </button>
             </>

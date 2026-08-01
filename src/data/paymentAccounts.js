@@ -43,11 +43,18 @@ export function getPaymentMethodIds() {
   return ids.length ? ids : ['jazzcash', 'easypaisa', 'bank']
 }
 
+export function getPaymentMethodOptions() {
+  return Object.values(cache).map((row) => ({
+    id: row.id,
+    label: row.label,
+  }))
+}
+
 /** Pull latest payment details from server (admin-editable). */
 export async function loadPaymentAccounts() {
   try {
     const list = await fetchPaymentAccounts()
-    if (Array.isArray(list) && list.length) {
+    if (Array.isArray(list)) {
       const next = {}
       for (const row of list) {
         if (!row?.id) continue

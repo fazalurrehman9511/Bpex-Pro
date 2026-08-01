@@ -22,21 +22,15 @@ import { BPEXCH_BASE_URL, BPEXCH_LOGIN_URL } from '../config/embed'
 import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import { openSupportWhatsApp } from '../utils/whatsapp'
 import { PaymentMethodLogo } from './PaymentLogos'
-import { BRAND_LOGO_MD, BRAND_LOGO_LG, BRAND_NAME } from '../config/brand'
+import BrandLogo from '../components/BrandLogo'
+import { BPEXCH_LOGIN_LOGO, BRAND_NAME } from '../config/brand'
 
 function formatPkr(n) {
   return Number(n || 0).toLocaleString('en-PK')
 }
 
-function BpxLogo({ className = 'h-7 w-7' }) {
-  return (
-    <img
-      src={BRAND_LOGO_MD}
-      alt="BPX"
-      className={`shrink-0 rounded-xl object-cover ${className}`}
-      decoding="async"
-    />
-  )
+function BpxLogo({ className = 'h-7 w-7', size = 'sm' }) {
+  return <BrandLogo src={BPEXCH_LOGIN_LOGO} size={size} className={className} rounded="xl" />
 }
 
 function WhatsAppIcon({ className = 'h-5 w-5' }) {
@@ -216,14 +210,7 @@ export function ScreenLogin({
       className={`flex ${shell} flex-col items-center justify-center bg-gradient-to-b from-[#0a2a18] via-[#0f5c32] to-[#25D366] px-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(3.5rem,env(safe-area-inset-top))]`}
     >
       <div className="flex w-full max-w-xs flex-col items-center">
-        <img
-          src={BRAND_LOGO_LG}
-          alt="BPX"
-          width={112}
-          height={112}
-          className="h-28 w-28 rounded-[28px] object-cover shadow-lg shadow-black/30"
-          decoding="async"
-        />
+        <BrandLogo src={BPEXCH_LOGIN_LOGO} size="lg" rounded="xl" shadow className="rounded-[28px]" />
         <p className="mt-4 text-center text-xl font-black text-white">{BRAND_NAME}</p>
 
         <div className="mt-12 w-full space-y-6">
@@ -669,12 +656,14 @@ export function ScreenWallet({
 }
 
 export function ScreenDeposit({
+  username = '',
   amount = '',
   onAmountChange,
   onNext,
   onBack,
   preview = false,
 }) {
+  const displayName = String(username || '').trim() || 'User'
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'X']
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
   const display = formatPkr(amount || 0)
@@ -705,7 +694,7 @@ export function ScreenDeposit({
           <p className="text-sm font-bold text-white">Deposit</p>
         </div>
         <p className="text-[13px] leading-relaxed text-white">
-          Dear Guest User, to deposit into your BpExch account, enter the amount and tap Next.
+          Dear {displayName}, to deposit into your BpExch account, enter the amount and tap Next.
         </p>
         <p className="mt-2 text-[12px] leading-relaxed text-white/95" dir="rtl">
           مطلوبہ رقم درج کریں اور Next پر کلک کریں۔
@@ -753,6 +742,7 @@ export function ScreenDeposit({
 export function ScreenMethod({
   amount = '0',
   method = 'easypaisa',
+  methods: methodsProp,
   methodOpen = false,
   accountTitle = 'BpExch Agent',
   accountNumber = '03001234567',
@@ -765,11 +755,17 @@ export function ScreenMethod({
   onNext,
   preview = false,
 }) {
-  const methods = [
-    { id: 'easypaisa', name: 'EasyPaisa' },
-    { id: 'jazzcash', name: 'JazzCash' },
-    { id: 'bank', name: 'Bank Transfer' },
+  const fallbackMethods = [
+    { id: 'easypaisa', label: 'EasyPaisa' },
+    { id: 'jazzcash', label: 'JazzCash' },
+    { id: 'bank', label: 'Bank Transfer' },
   ]
+  const methods = (Array.isArray(methodsProp) && methodsProp.length ? methodsProp : fallbackMethods).map(
+    (m) => ({
+      id: m.id,
+      label: m.label || m.name || m.id,
+    }),
+  )
   const selected = methods.find((m) => m.id === method) || methods[0]
   const bonus = Math.floor(Number(amount || 0) * 0.1)
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
@@ -790,8 +786,8 @@ export function ScreenMethod({
         className="mx-4 mt-5 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-3.5 shadow-sm"
       >
         <div className="flex items-center gap-3">
-          <PaymentMethodLogo id={selected.id} className="h-10 w-10" />
-          <span className="text-base font-semibold text-slate-800">{selected.name}</span>
+          <PaymentMethodLogo id={selected.id} label={selected.label} className="h-10 w-10" />
+          <span className="text-base font-semibold text-slate-800">{selected.label}</span>
         </div>
         <ChevronDown className="h-5 w-5 text-accent" />
       </button>
@@ -840,7 +836,7 @@ export function ScreenMethod({
               <p className="text-[11px] font-semibold text-slate-700">Scan QR Code</p>
               <img
                 src={qrCodeImage}
-                alt={`${selected.name} QR code`}
+                alt={`${selected.label} QR code`}
                 className="mt-2 h-44 w-full rounded-lg bg-white object-contain p-2"
               />
             </div>
@@ -865,8 +861,8 @@ export function ScreenMethod({
               className="flex w-full items-center justify-between border-b border-slate-100 px-4 py-3.5 last:border-0 active:bg-slate-50"
             >
               <div className="flex items-center gap-3">
-                <PaymentMethodLogo id={m.id} className="h-10 w-10" />
-                <span className="text-base font-medium text-slate-800">{m.name}</span>
+                <PaymentMethodLogo id={m.id} label={m.label} className="h-10 w-10" />
+                <span className="text-base font-medium text-slate-800">{m.label}</span>
               </div>
               <ChevronRight className="h-5 w-5 text-slate-400" />
             </button>
@@ -1109,7 +1105,7 @@ export function ScreenWithdraw({
                   method === m.id ? 'border-accent bg-accent' : 'border-slate-300'
                 }`}
               />
-              <PaymentMethodLogo id={m.id} className="h-8 w-8" />
+              <PaymentMethodLogo id={m.id} label={m.label || m.name} className="h-8 w-8" />
               <span className="text-sm font-medium text-slate-800">{m.label || m.name || m.id}</span>
             </button>
           ))}

@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { getCountries, loadWhatsappAgents } from '../data/countries'
+import { useHomepageContent } from '../context/HomepageContentContext'
 import { navigateToSection } from '../utils/detectCountry'
 import { useModal } from '../context/ModalContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import { BRAND_LOGO, BRAND_NAME, SITE_DOMAIN } from '../config/brand'
 import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
+import SocialLinks from './SocialLinks'
 
 const baseLinks = [
   { label: 'Live Events', href: '/#events' },
@@ -23,6 +25,7 @@ export default function Footer() {
   const { openModal } = useModal()
   const location = useLocation()
   const navigate = useNavigate()
+  const { footer } = useHomepageContent()
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
   const [countryList, setCountryList] = useState(() => getCountries())
 
@@ -51,9 +54,9 @@ export default function Footer() {
   }
 
   return (
-    <footer className="border-t border-border bg-navy-dark px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+    <footer className="brand-footer px-4 py-10 sm:px-6">
+      <div className="mx-auto max-w-6xl">
+        <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
           <div>
             <Link to="/" className="inline-flex items-center hover:opacity-90">
               <img
@@ -66,21 +69,27 @@ export default function Footer() {
                 loading="lazy"
               />
             </Link>
-            <p className="mt-2 text-xs leading-relaxed text-muted">
-              Asia&apos;s trusted betting exchange agent. Cricket, Casino, Sports — with 24/7 WhatsApp support.
+            <p className="mt-3 text-sm leading-relaxed text-emerald-100/90">
+              {footer.tagline}
             </p>
+            <SocialLinks
+              social={footer.social}
+              variant="footer"
+              className="mt-5"
+              title="Follow Us"
+            />
           </div>
 
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">Quick Links</p>
-            <nav className="flex flex-col gap-2" aria-label="Footer">
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emerald-300/80">Quick Links</p>
+            <nav className="flex flex-col gap-2.5" aria-label="Footer">
               {links.map(({ label, href, to }) =>
                 to ? (
                   <Link
                     key={to}
                     to={to}
                     onClick={to === '/dashboard' ? openDashboard : undefined}
-                    className="text-left text-xs text-muted transition-colors hover:text-accent"
+                    className="text-left text-sm text-emerald-50/90 transition-colors hover:text-[#25D366]"
                   >
                     {label}
                   </Link>
@@ -89,7 +98,7 @@ export default function Footer() {
                     key={href}
                     href={href}
                     onClick={(e) => handleHashLink(e, href)}
-                    className="text-left text-xs text-muted transition-colors hover:text-accent"
+                    className="text-left text-sm text-emerald-50/90 transition-colors hover:text-[#25D366]"
                   >
                     {label}
                   </a>
@@ -100,14 +109,14 @@ export default function Footer() {
                   <button
                     type="button"
                     onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-                    className="cursor-pointer text-left text-xs font-semibold text-accent hover:underline"
+                    className="cursor-pointer text-left text-sm font-semibold text-[#25D366] hover:underline"
                   >
                     Register with Agent
                   </button>
                   <button
                     type="button"
                     onClick={() => openModal('register', { registerPath: 'self' })}
-                    className="cursor-pointer text-left text-xs text-muted transition-colors hover:text-accent"
+                    className="cursor-pointer text-left text-sm text-emerald-50/90 transition-colors hover:text-[#25D366]"
                   >
                     Register Myself
                   </button>
@@ -117,26 +126,26 @@ export default function Footer() {
           </div>
 
           <div>
-            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted">Countries Served</p>
+            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emerald-300/80">Countries Served</p>
             <div className="flex flex-wrap gap-1.5">
               {countryList.map((c) => (
                 <span
                   key={c.code}
-                  className="rounded border border-border bg-navy-light px-2 py-1 text-xs text-muted"
+                  className="rounded-md border border-emerald-400/25 bg-emerald-900/30 px-2 py-1 text-xs text-emerald-50"
                 >
                   {c.flag} {c.code}
                 </span>
               ))}
             </div>
-            <p className="mt-3 text-xs text-muted">JazzCash · EasyPaisa · Bank · Crypto</p>
+            <p className="mt-3 text-xs text-emerald-200/70">JazzCash · EasyPaisa · Bank · Crypto</p>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-border pt-4 text-center">
-          <p className="text-xs text-muted/70">
+        <div className="mt-10 border-t border-emerald-500/20 pt-6 text-center">
+          <p className="text-xs text-emerald-100/80">
             18+ only. Bet responsibly. {BRAND_NAME} is an agent platform — register via WhatsApp to get started.
           </p>
-          <p className="mt-1 text-xs text-muted/50">
+          <p className="mt-1.5 text-xs text-emerald-200/50">
             &copy; {new Date().getFullYear()} {BRAND_NAME} · {SITE_DOMAIN}. All rights reserved.
           </p>
         </div>

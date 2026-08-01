@@ -65,31 +65,34 @@ export default function LiveEvents() {
   const showEmpty = !filtered.length && (empty || !loading)
 
   return (
-    <section id="events" className="hex-pattern px-4 py-6 pb-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Radio className="h-4 w-4 text-accent" />
-            <h2 className="text-base font-bold text-slate-800 sm:text-lg">Live Events</h2>
+    <section id="events" className="section-tint-sky px-4 py-14 sm:px-6 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-8 flex items-center justify-between gap-3">
+          <div>
+            <p className="editorial-section-label">Markets</p>
+            <div className="flex items-center gap-2">
+              <Radio className="h-5 w-5 text-emerald-600" />
+              <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Live Events</h2>
+            </div>
           </div>
           <div className="flex items-center gap-2">
-            {loading && <RefreshCw className="h-3.5 w-3.5 animate-spin text-slate-400" />}
-            <span className="rounded bg-accent px-2.5 py-0.5 text-[10px] font-bold text-navy-dark">
+            {loading && <RefreshCw className="h-4 w-4 animate-spin text-slate-400" />}
+            <span className="rounded-md bg-gradient-to-r from-sky-600 to-cyan-600 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm">
               {openCount} OPEN
             </span>
           </div>
         </div>
 
-        <div className="mb-4 flex gap-1.5 overflow-x-auto scrollbar-hide">
+        <div className="mb-5 flex gap-2 overflow-x-auto scrollbar-hide">
           {FILTERS.map(({ id, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => setActiveFilter(id)}
-              className={`shrink-0 rounded px-3.5 py-1.5 text-xs font-bold transition-colors ${
+              className={`shrink-0 rounded-lg px-4 py-2 text-xs font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 ${
                 activeFilter === id
-                  ? 'bg-slate-700 text-white'
-                  : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-400'
+                  ? 'bg-gradient-to-r from-sky-600 to-cyan-600 text-white shadow-md'
+                  : 'border border-sky-300/60 bg-white/80 text-sky-800 hover:border-sky-400 hover:bg-sky-50'
               }`}
             >
               {label}
@@ -98,12 +101,12 @@ export default function LiveEvents() {
         </div>
 
         {loading && !filtered.length ? (
-          <div className="rounded border border-slate-200 bg-white px-4 py-8 text-center">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center shadow-sm">
             <RefreshCw className="mx-auto h-5 w-5 animate-spin text-slate-400" />
             <p className="mt-2 text-sm font-semibold text-slate-600">Loading live markets…</p>
           </div>
         ) : showEmpty ? (
-          <div className="rounded border border-slate-200 bg-white px-4 py-8 text-center">
+          <div className="rounded-xl border border-slate-200 bg-white px-4 py-10 text-center shadow-sm">
             <p className="text-sm font-semibold text-slate-700">{EMPTY_MESSAGE}</p>
             <p className="mt-1 text-xs text-slate-500">Please check back in a few minutes</p>
           </div>
@@ -115,7 +118,7 @@ export default function LiveEvents() {
                   key={event.id || event.teams}
                   type="button"
                   onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-                  className="text-left transition-transform hover:scale-[1.01] active:scale-[0.99]"
+                  className="cursor-pointer text-left transition-transform hover:scale-[1.01] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40 focus-visible:ring-offset-2 rounded-xl"
                 >
                   <EventCard
                     sport={event.sport}
@@ -130,7 +133,7 @@ export default function LiveEvents() {
           </div>
         )}
 
-        <p className="mt-4 text-center text-xs text-slate-500">
+        <p className="mt-5 text-center text-sm text-slate-500">
           Tap any event to register and start betting via WhatsApp
         </p>
       </div>

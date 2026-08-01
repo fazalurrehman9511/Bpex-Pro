@@ -79,6 +79,22 @@ function uniqueSlug(base, excludeId = null) {
   }
 }
 
+function resolveCoverImage(body, existing = null) {
+  if (!Object.prototype.hasOwnProperty.call(body, 'coverImage')
+    && !Object.prototype.hasOwnProperty.call(body, 'cover_image')) {
+    return existing?.cover_image || ''
+  }
+  const raw = body.coverImage ?? body.cover_image
+  if (raw == null || raw === '') return ''
+  const value = String(raw).trim()
+  if (!value) return ''
+  if (value.startsWith('data:image/')) {
+    const filename = saveBlogImage(value)
+    return filename ? `/uploads/${filename}` : (existing?.cover_image || '')
+  }
+  return value
+}
+
 function buildPostPayload(body, existing = null) {
   const title = String(body.title || existing?.title || '').trim()
   if (!title) return { error: 'Title is required' }
@@ -93,6 +109,10 @@ function buildPostPayload(body, existing = null) {
   const now = new Date().toISOString()
   const publishedAt = body.date || body.publishedAt || body.published_at || existing?.published_at || now.slice(0, 10)
 
+  const metaTitle = body.metaTitle ?? body.meta_title
+  const metaDescription = body.metaDescription ?? body.meta_description
+  const metaKeywords = body.metaKeywords ?? body.meta_keywords
+
   return {
     slug: body.slug?.trim() ? uniqueSlug(body.slug.trim(), existing?.id) : uniqueSlug(title, existing?.id),
     title,
@@ -105,7 +125,11 @@ function buildPostPayload(body, existing = null) {
     featured: body.featured !== undefined ? (body.featured ? 1 : 0) : (existing?.featured ? 1 : 0),
     gradient: String(body.gradient || existing?.gradient || 'from-green-600/40 to-navy-light').trim(),
     emoji: String(body.emoji || existing?.emoji || '📝').trim(),
+    cover_image: resolveCoverImage(body, existing),
     content: JSON.stringify(content),
+    meta_title: String(metaTitle ?? existing?.meta_title ?? '').trim(),
+    meta_description: String(metaDescription ?? existing?.meta_description ?? '').trim(),
+    meta_keywords: String(metaKeywords ?? existing?.meta_keywords ?? '').trim(),
     published: body.published !== undefined ? (body.published ? 1 : 0) : (existing?.published !== 0 ? 1 : 0),
     updated_at: now,
     created_at: existing?.created_at || now,
@@ -165,9 +189,10 @@ router.post('/admin/posts', requireAdmin, (req, res) => {
     const result = db.prepare(`
       INSERT INTO blog_posts (
         slug, title, excerpt, category, category_label, author,
-        published_at, read_time, featured, gradient, emoji,
-        content, published, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        published_at, read_time, featured, gradient, emoji, cover_image,
+        content, meta_title, meta_description, meta_keywords,
+        published, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       payload.slug,
       payload.title,
@@ -180,7 +205,11 @@ router.post('/admin/posts', requireAdmin, (req, res) => {
       payload.featured,
       payload.gradient,
       payload.emoji,
+      payload.cover_image,
       payload.content,
+      payload.meta_title,
+      payload.meta_description,
+      payload.meta_keywords,
       payload.published,
       payload.created_at,
       payload.updated_at
@@ -210,7 +239,9 @@ router.patch('/admin/posts/:id', requireAdmin, (req, res) => {
       UPDATE blog_posts SET
         slug = ?, title = ?, excerpt = ?, category = ?, category_label = ?,
         author = ?, published_at = ?, read_time = ?, featured = ?,
-        gradient = ?, emoji = ?, content = ?, published = ?, updated_at = ?
+        gradient = ?, emoji = ?, cover_image = ?, content = ?,
+        meta_title = ?, meta_description = ?, meta_keywords = ?,
+        published = ?, updated_at = ?
       WHERE id = ?
     `).run(
       payload.slug,
@@ -224,7 +255,11 @@ router.patch('/admin/posts/:id', requireAdmin, (req, res) => {
       payload.featured,
       payload.gradient,
       payload.emoji,
+      payload.cover_image,
       payload.content,
+      payload.meta_title,
+      payload.meta_description,
+      payload.meta_keywords,
       payload.published,
       payload.updated_at,
       existing.id

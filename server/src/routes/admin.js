@@ -27,6 +27,8 @@ import {
   updateBpexchAgentConfig,
   getSupportContactConfig,
   updateSupportContactConfig,
+  getHomepageContentConfig,
+  updateHomepageContentConfig,
 } from '../db.js'
 import { config } from '../config.js'
 import { requireAdmin } from '../middleware/auth.js'
@@ -539,6 +541,36 @@ router.put('/support-contact', requireAdmin, (req, res) => {
     const status = /required/i.test(msg) ? 400 : 500
     if (status === 500) console.error('Admin update support contact error:', err)
     res.status(status).json({ error: msg })
+  }
+})
+
+router.get('/homepage-content', requireAdmin, (_req, res) => {
+  try {
+    const cfg = getHomepageContentConfig()
+    res.json({
+      content: cfg.content,
+      updatedAt: cfg.updatedAt,
+      source: cfg.source,
+    })
+  } catch (err) {
+    console.error('Admin get homepage content error:', err)
+    res.status(500).json({ error: 'Failed to fetch homepage content' })
+  }
+})
+
+router.put('/homepage-content', requireAdmin, (req, res) => {
+  try {
+    const updated = updateHomepageContentConfig({
+      content: req.body?.content ?? req.body,
+    })
+    res.json({
+      content: updated.content,
+      updatedAt: updated.updatedAt,
+      source: updated.source,
+    })
+  } catch (err) {
+    console.error('Admin update homepage content error:', err)
+    res.status(500).json({ error: err.message || 'Failed to update homepage content' })
   }
 })
 

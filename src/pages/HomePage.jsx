@@ -1,9 +1,10 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { scrollToSection } from '../utils/detectCountry'
+import { useHomepageContent } from '../context/HomepageContentContext'
+import SeoHead from '../components/SeoHead'
 import Hero from '../components/Hero'
 import StatsBar from '../components/StatsBar'
-import Categories from '../components/Categories'
 
 const LiveEvents = lazy(() => import('../components/LiveEvents'))
 const PaymentMethods = lazy(() => import('../components/PaymentMethods'))
@@ -15,11 +16,24 @@ const ContactUs = lazy(() => import('../components/ContactUs'))
 const FLASH_MESSAGE_KEY = 'flowexch_flash_message'
 
 function SectionFallback() {
-  return <div className="min-h-[12rem] bg-navy" aria-hidden="true" />
+  return <div className="min-h-[12rem] bg-slate-50" aria-hidden="true" />
 }
 
 function Deferred({ children }) {
   return <div className="[content-visibility:auto] [contain-intrinsic-size:auto_480px]">{children}</div>
+}
+
+function HomePageSeo() {
+  const { seo } = useHomepageContent()
+
+  return (
+    <SeoHead
+      title={seo.metaTitle}
+      description={seo.metaDescription}
+      keywords={seo.metaKeywords}
+      canonicalPath="/"
+    />
+  )
 }
 
 export default function HomePage() {
@@ -48,21 +62,21 @@ export default function HomePage() {
 
   return (
     <>
+      <HomePageSeo />
       {flashMessage ? (
         <div className="pointer-events-none fixed inset-x-0 top-20 z-[55] flex justify-center px-4">
-          <div className="pointer-events-auto rounded-lg border border-accent/40 bg-accent/10 px-4 py-3 text-sm font-semibold text-accent shadow-lg backdrop-blur">
+          <div className="pointer-events-auto rounded-full border border-emerald-300 bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20">
             {flashMessage}
           </div>
         </div>
       ) : null}
       <Hero />
       <StatsBar />
-      <Categories />
       <Suspense fallback={<SectionFallback />}>
         <Deferred>
+          <HowItWorks />
           <LiveEvents />
           <PaymentMethods />
-          <HowItWorks />
           <Features />
           <Testimonials />
           <FAQ />

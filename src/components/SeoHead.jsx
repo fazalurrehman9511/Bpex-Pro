@@ -38,16 +38,21 @@ function upsertLink(selector, rel, href) {
 export default function SeoHead({
   title,
   description,
+  keywords,
   canonicalPath = '/',
   ogTitle,
   ogDescription,
   twitterTitle,
   twitterDescription,
   ogType = 'website',
+  ogImage,
   jsonLd = null,
 }) {
   const canonicalUrl = new URL(canonicalPath, SITE_URL).toString()
   const jsonLdString = jsonLd ? JSON.stringify(jsonLd) : ''
+  const ogImageUrl = ogImage
+    ? (ogImage.startsWith('http') ? ogImage : new URL(ogImage, SITE_URL).toString())
+    : ''
 
   useEffect(() => {
     const previousTitle = document.title
@@ -66,6 +71,16 @@ export default function SeoHead({
         twitterDescription || ogDescription || description,
       ),
     ]
+
+    if (keywords) {
+      metaUpdates.push(upsertMeta('meta[name="keywords"]', 'name', 'keywords', keywords))
+    }
+
+    if (ogImageUrl) {
+      metaUpdates.push(upsertMeta('meta[property="og:image"]', 'property', 'og:image', ogImageUrl))
+      metaUpdates.push(upsertMeta('meta[name="twitter:image"]', 'name', 'twitter:image', ogImageUrl))
+      metaUpdates.push(upsertMeta('meta[name="twitter:card"]', 'name', 'twitter:card', 'summary_large_image'))
+    }
 
     const canonicalUpdate = upsertLink('link[rel="canonical"]', 'canonical', canonicalUrl)
 
@@ -113,9 +128,11 @@ export default function SeoHead({
     canonicalUrl,
     description,
     jsonLdString,
+    keywords,
     ogDescription,
     ogTitle,
     ogType,
+    ogImageUrl,
     title,
     twitterDescription,
     twitterTitle,

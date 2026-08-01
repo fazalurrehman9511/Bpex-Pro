@@ -1,53 +1,38 @@
 import { Star, Quote } from 'lucide-react'
-
-const reviews = [
-  {
-    name: 'Ahmed K.',
-    country: '🇵🇰 Pakistan',
-    text: 'Best agent in Karachi. JazzCash deposit in 2 minutes, withdrawal same day. Highly recommended!',
-    rating: 5,
-  },
-  {
-    name: 'Rajesh M.',
-    country: '🇮🇳 India',
-    text: 'Cricket odds are always better than others. Agent replies instantly on WhatsApp even at 2 AM.',
-    rating: 5,
-  },
-  {
-    name: 'Omar H.',
-    country: '🇦🇪 UAE',
-    text: 'Professional service. Bank transfer deposit was smooth. Been using BpxPro for 2 years now.',
-    rating: 5,
-  },
-]
+import { useHomepageContent } from '../context/HomepageContentContext'
 
 export default function Testimonials() {
-  return (
-    <section className="hex-pattern px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <h2 className="mb-1 text-base font-bold text-slate-800 sm:text-lg">What Players Say</h2>
-        <p className="mb-5 text-xs text-slate-500">Trusted by thousands across 6 countries</p>
+  const { testimonials } = useHomepageContent()
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {reviews.map(({ name, country, text, rating }) => (
-            <div
-              key={name}
-              className="rounded border border-slate-200 bg-white p-4 shadow-sm"
+  return (
+    <section className="section-tint-emerald px-4 py-14 sm:px-6 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 max-w-2xl">
+          <p className="editorial-section-label">Player stories</p>
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{testimonials.title}</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">{testimonials.subtitle}</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          {testimonials.items.map(({ name, country, text, rating }, index) => (
+            <blockquote
+              key={`${name}-${index}`}
+              className="editorial-card relative p-6"
             >
-              <Quote className="h-4 w-4 text-accent mb-2" />
-              <p className="text-xs leading-relaxed text-slate-600">{text}</p>
-              <div className="mt-3 flex items-center justify-between">
+              <Quote className="mb-3 h-5 w-5 text-emerald-600/70" aria-hidden="true" />
+              <p className="text-sm leading-7 text-slate-700">&ldquo;{text}&rdquo;</p>
+              <footer className="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
                 <div>
-                  <p className="text-xs font-bold text-slate-800">{name}</p>
-                  <p className="text-[10px] text-slate-400">{country}</p>
+                  <p className="text-sm font-bold text-slate-900">{name}</p>
+                  <p className="text-xs text-slate-500">{country}</p>
                 </div>
-                <div className="flex gap-0.5">
+                <div className="flex gap-0.5" aria-label={`${rating} out of 5 stars`}>
                   {Array.from({ length: rating }).map((_, i) => (
-                    <Star key={i} className="h-3 w-3 fill-accent text-accent" />
+                    <Star key={i} className="h-3.5 w-3.5 fill-emerald-500 text-emerald-500" />
                   ))}
                 </div>
-              </div>
-            </div>
+              </footer>
+            </blockquote>
           ))}
         </div>
       </div>

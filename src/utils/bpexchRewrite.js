@@ -1,4 +1,7 @@
+import { BRAND_LOGO_MD, BPEXCH_LOGIN_LOGO } from '../config/brand.js'
+
 export const DEFAULT_EMBED_BRAND_NAME = 'BPEXCH'
+export const EMBED_BRAND_LOGO = BPEXCH_LOGIN_LOGO
 
 export function getEmbedBrandName(override) {
   return override || process.env.VITE_EMBED_BRAND_NAME || DEFAULT_EMBED_BRAND_NAME
@@ -24,18 +27,20 @@ export function applyBrandReplace(content, brandName = getEmbedBrandName()) {
 
 function createInjectScript(brandName, syncSecret = '') {
   const brand = JSON.stringify(brandName)
+  const brandLogo = JSON.stringify(EMBED_BRAND_LOGO)
   const syncSec = JSON.stringify(syncSecret || '')
   return `
 <script id="flowexch-proxy-bridge">
 (function(){
   var P='/bpexch';
   var BRAND=${brand};
+  var BRAND_LOGO=${brandLogo};
   function fix(u){
     if(!u||typeof u!=='string')return u;
     if(u.indexOf(P+'/')===0||u===P)return u;
     if(u.indexOf('data:')===0||u.indexOf('blob:')===0||u.indexOf('mailto:')===0)return u;
     /* FlowExch backend routes — must NOT go through BPEXCH proxy */
-    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/withdraw-methods')===0||u.indexOf('/api/support-contact')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
+    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/payment-accounts')===0||u.indexOf('/api/withdraw-methods')===0||u.indexOf('/api/homepage-content')===0||u.indexOf('/api/support-contact')===0||u.indexOf('/api/contact')===0||u.indexOf('/api/register')===0||u.indexOf('/api/whatsapp-agents')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
     if(/^https?:\\/\\//i.test(u)||u.indexOf('//')===0){
       return u.replace(/^https?:\\/\\/[^/]*bpexch[^/]*/i,location.origin+P);
     }
@@ -474,8 +479,20 @@ function createInjectScript(brandName, syncSecret = '') {
     }
     if(document.title)document.title=document.title.replace(/\\bBPEXCH\\b/g,BRAND);
   }
+  function replaceBrandLogo(root){
+    if(!root||!BRAND_LOGO)return;
+    var logoSel='.sidebar-brand img,.navbar-brand img,.header-brand img,.green-logo-text img,.app-header .navbar-brand img,.wrap-login100 img,.container-login100 img';
+    root.querySelectorAll(logoSel).forEach(function(img){
+      if(img.getAttribute('data-flowexch-logo')==='1')return;
+      img.src=BRAND_LOGO;
+      img.alt=BRAND||'BpxPro';
+      img.setAttribute('data-flowexch-logo','1');
+      img.style.objectFit='contain';
+    });
+  }
   function runBrandReplace(){
     replaceBrandText(document.documentElement);
+    replaceBrandLogo(document.documentElement);
   }
   runBrandReplace();
   document.addEventListener('DOMContentLoaded',runBrandReplace);
@@ -615,12 +632,15 @@ function createInjectScript(brandName, syncSecret = '') {
     return false;
   }
   function shouldShowActionBar(){
-    if(isLoginScreen())return false;
-    /* Only bettor dashboards with real Credit/Balance row — not Admin / Sport Highlights */
-    if(!findInfoBarEl())return false;
+    if(isLoginScreen())return true;
     var hdr=findHeaderEl();
     if(hdr&&/\\(\\s*Admin\\s*\\)/i.test(hdr.innerText||''))return false;
-    return true;
+    if(findInfoBarEl())return true;
+    if(document.querySelector('.wallet-balance,.dropdown-toggle,.nav-link.dropdown-toggle'))return true;
+    return false;
+  }
+  function actionBarMode(){
+    return isLoginScreen()?'login':'dashboard';
   }
   function postNavigate(path){
     var payload={source:'flowexch-embed',action:'navigate',path:path};
@@ -689,6 +709,12 @@ function createInjectScript(brandName, syncSecret = '') {
     var info=findInfoBarEl();
     var header=findHeaderEl();
     var el=info||header;
+    if(!el&&isLoginScreen()){
+      el=document.querySelector('.wrap-login100,.container-login100,.login100-form,form[action*="Login"]');
+    }
+    if(!el){
+      el=document.querySelector('.wallet-balance,.dropdown-toggle,.nav-link.dropdown-toggle');
+    }
     if(!el){
       try{window.parent.postMessage({source:'flowexch-embed',action:'actionbar-anchor',visible:false},location.origin);}catch(e){}
       return;
@@ -702,7 +728,8 @@ function createInjectScript(brandName, syncSecret = '') {
         visible:visible,
         top:r.top,
         height:Math.max(r.height,28),
-        bottom:r.bottom
+        bottom:r.bottom,
+        mode:actionBarMode()
       },location.origin);
     }catch(e){}
   }
@@ -1544,7 +1571,7 @@ function injectAfterJquery(html) {
     if(!u||typeof u!=='string')return u;
     if(u.indexOf(P+'/')===0||u===P)return u;
     if(u.indexOf('data:')===0||u.indexOf('blob:')===0||u.indexOf('mailto:')===0)return u;
-    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/withdraw-methods')===0||u.indexOf('/api/support-contact')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
+    if(u.indexOf('/api/bpexch/')===0||u.indexOf('/api/transactions')===0||u.indexOf('/api/admin')===0||u.indexOf('/api/blog')===0||u.indexOf('/api/live-events')===0||u.indexOf('/api/payment-accounts')===0||u.indexOf('/api/withdraw-methods')===0||u.indexOf('/api/homepage-content')===0||u.indexOf('/api/support-contact')===0||u.indexOf('/api/contact')===0||u.indexOf('/api/register')===0||u.indexOf('/api/whatsapp-agents')===0||u.indexOf('/api/health')===0||u.indexOf('/uploads/')===0)return u;
     if(/^https?:\\/\\//i.test(u)||u.indexOf('//')===0){
       return u.replace(/^https?:\\/\\/[^/]*bpexch[^/]*/i,location.origin+P);
     }

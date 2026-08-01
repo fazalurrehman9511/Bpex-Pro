@@ -1,49 +1,46 @@
 import { MessageCircle, Wallet, Trophy } from 'lucide-react'
+import { useHomepageContent } from '../context/HomepageContentContext'
 
-const steps = [
-  {
-    icon: MessageCircle,
-    step: '01',
-    title: 'Register on WhatsApp',
-    desc: 'Select your country, enter name & phone — connected to your local agent instantly.',
-  },
-  {
-    icon: Wallet,
-    step: '02',
-    title: 'Add Balance',
-    desc: 'Deposit via JazzCash, EasyPaisa, Bank Transfer or Crypto. Funds added in minutes.',
-  },
-  {
-    icon: Trophy,
-    step: '03',
-    title: 'Start Betting',
-    desc: 'Place bets on cricket, football, tennis, casino & more through your agent.',
-  },
+const stepIcons = [MessageCircle, Wallet, Trophy]
+const stepThemes = [
+  { border: 'border-emerald-300', icon: 'bg-gradient-to-br from-emerald-500 to-teal-500', num: 'text-emerald-200' },
+  { border: 'border-sky-300', icon: 'bg-gradient-to-br from-sky-500 to-cyan-500', num: 'text-sky-200' },
+  { border: 'border-amber-300', icon: 'bg-gradient-to-br from-amber-500 to-orange-500', num: 'text-amber-200' },
 ]
 
 export default function HowItWorks() {
-  return (
-    <section id="how-it-works" className="bg-navy px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <h2 className="mb-1 text-base font-bold text-text sm:text-lg">How It Works</h2>
-        <p className="mb-6 text-xs text-muted">Get started in 3 simple steps</p>
+  const { howItWorks } = useHomepageContent()
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          {steps.map(({ icon: Icon, step, title, desc }) => (
-            <div
-              key={step}
-              className="relative rounded border border-border bg-navy-light p-4 pt-5"
-            >
-              <span className="absolute -top-2.5 left-4 rounded bg-accent px-2 py-0.5 text-[10px] font-bold text-navy-dark">
-                STEP {step}
-              </span>
-              <div className="mb-3 flex h-10 w-10 items-center justify-center rounded bg-accent/10">
-                <Icon className="h-5 w-5 text-accent" />
+  return (
+    <section id="how-it-works" className="section-tint-emerald px-4 py-14 sm:px-6 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 max-w-2xl">
+          <p className="editorial-section-label">Simple by design</p>
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{howItWorks.title}</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-700 sm:text-base">{howItWorks.subtitle}</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+          {howItWorks.steps.map(({ title, desc }, index) => {
+            const Icon = stepIcons[index % stepIcons.length]
+            const theme = stepThemes[index % stepThemes.length]
+            const step = String(index + 1).padStart(2, '0')
+            return (
+              <div
+                key={`${title}-${index}`}
+                className={`group relative rounded-2xl border-2 ${theme.border} bg-white/90 p-6 shadow-lg shadow-emerald-900/5 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl`}
+              >
+                <div className="mb-7 flex items-center justify-between">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow-md ${theme.icon}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <span className={`text-3xl font-black tracking-tight ${theme.num}`}>{step}</span>
+                </div>
+                <h3 className="text-base font-bold text-slate-900">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{desc}</p>
               </div>
-              <h3 className="text-sm font-bold text-text">{title}</h3>
-              <p className="mt-1.5 text-xs leading-relaxed text-muted">{desc}</p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </section>

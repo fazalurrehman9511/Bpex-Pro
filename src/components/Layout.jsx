@@ -1,6 +1,7 @@
-import { Outlet, useLocation } from 'react-router-dom'
 import { Suspense, lazy, useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import { HeaderBar } from '../components/Header'
+import { HomepageContentProvider } from '../context/HomepageContentContext'
 import { isPlatformEmbedRoute } from '../utils/platformPaths'
 import {
   getBpexchAuthToken,
@@ -49,26 +50,28 @@ export default function Layout() {
   }
 
   return (
-    <div className={`flex min-h-screen flex-col bg-navy ${isBlogPost ? '' : 'pb-[4.5rem] sm:pb-0'}`}>
-      <a href="#main-content" className="skip-to-content">
-        Skip to main content
-      </a>
-      <HeaderBar />
-      {location.pathname === '/' && (
+    <HomepageContentProvider>
+      <div className={`editorial-theme flex min-h-screen flex-col ${isBlogPost ? '' : 'pb-[4.5rem] sm:pb-0'}`}>
+        <a href="#main-content" className="skip-to-content">
+          Skip to main content
+        </a>
+        <HeaderBar />
+        {location.pathname === '/' && (
+          <Suspense fallback={null}>
+            <MarqueeTicker />
+          </Suspense>
+        )}
+        <main id="main-content" className="flex min-h-0 flex-1 flex-col">
+          <Outlet />
+        </main>
         <Suspense fallback={null}>
-          <MarqueeTicker />
+          {!isBlogPost && <Footer />}
+          {!isBlogPost && <BottomNav />}
+          {!isBlogPost && <InstallPrompt />}
+          <FloatingWhatsApp />
+          <RegistrationModal />
         </Suspense>
-      )}
-      <main id="main-content" className="flex min-h-0 flex-1 flex-col">
-        <Outlet />
-      </main>
-      <Suspense fallback={null}>
-        {!isBlogPost && <Footer />}
-        {!isBlogPost && <BottomNav />}
-        {!isBlogPost && <InstallPrompt />}
-        <FloatingWhatsApp />
-        <RegistrationModal />
-      </Suspense>
-    </div>
+      </div>
+    </HomepageContentProvider>
   )
 }

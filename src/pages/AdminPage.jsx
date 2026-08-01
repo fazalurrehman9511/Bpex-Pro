@@ -20,6 +20,7 @@ import {
   Menu,
   Users,
   FileText,
+  Home,
   Plus,
   Pencil,
   Trash2,
@@ -44,6 +45,7 @@ import {
   createBlogPost,
   updateBlogPost,
   deleteBlogPost,
+  uploadBlogImage,
   screenshotUrl,
   fetchAdminPaymentAccounts,
   updateAdminPaymentAccount,
@@ -66,11 +68,15 @@ import {
   fetchAdminProfitLoss,
   fetchAdminBpexchAgent,
   updateAdminBpexchAgent,
+  fetchAdminHomepageContent,
+  updateAdminHomepageContent,
 } from '../utils/api'
 import { blogCategories, formatDate } from '../data/blogPosts'
+import { DEFAULT_HOMEPAGE_CONTENT, normalizeHomepageContent } from '../data/homepageContent'
 import { countryCatalog, getCatalogCountry } from '../data/countryCatalog'
 import { contentToHtml } from '../utils/blogContent'
 import BlogRichEditor from '../components/blog/BlogRichEditor'
+import HomepageContentPanel from '../components/admin/HomepageContentPanel'
 import {
   isAdminAuthenticated,
   loginAdmin,
@@ -427,6 +433,7 @@ const SIDEBAR_TABS = [
   { id: 'accounts', label: 'Payment Accounts', icon: CreditCard, section: 'settings' },
   { id: 'withdrawMethods', label: 'Withdraw Methods', icon: Wallet, section: 'settings' },
   { id: 'whatsapp', label: 'WhatsApp Agents', icon: MessageCircle, section: 'settings' },
+  { id: 'homepage', label: 'Homepage', icon: Home, section: 'blog' },
   { id: 'blog', label: 'Blog Posts', icon: FileText, section: 'blog' },
 ]
 
@@ -462,10 +469,14 @@ const EMPTY_BLOG_FORM = {
   category: 'guides',
   author: 'BpxPro Team',
   emoji: '📝',
+  coverImage: '',
   gradient: 'from-green-600/40 to-navy-light',
   date: new Date().toISOString().slice(0, 10),
   featured: false,
   published: true,
+  metaTitle: '',
+  metaDescription: '',
+  metaKeywords: '',
   htmlContent: '',
 }
 
@@ -1269,6 +1280,44 @@ function BlogPostForm({ form, onChange, onSubmit, onCancel, saving, editing, edi
             className="w-full rounded border border-border bg-navy px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
         </div>
+        <div className="sm:col-span-2 rounded border border-border/70 bg-navy/40 p-3 sm:p-4">
+          <p className="mb-3 text-xs font-bold uppercase tracking-wide text-accent">SEO / Meta</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-text">Meta Title</label>
+              <input
+                value={form.metaTitle}
+                onChange={(e) => onChange({ ...form, metaTitle: e.target.value })}
+                placeholder="Leave blank to use post title"
+                maxLength={70}
+                className="w-full rounded border border-border bg-navy px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+              />
+              <p className="mt-1 text-[10px] text-muted">{(form.metaTitle || '').length}/70 characters</p>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-text">Meta Description</label>
+              <textarea
+                value={form.metaDescription}
+                onChange={(e) => onChange({ ...form, metaDescription: e.target.value })}
+                placeholder="Leave blank to use excerpt"
+                rows={2}
+                maxLength={160}
+                className="w-full rounded border border-border bg-navy px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+              />
+              <p className="mt-1 text-[10px] text-muted">{(form.metaDescription || '').length}/160 characters</p>
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs font-semibold text-text">Meta Keywords</label>
+              <input
+                value={form.metaKeywords}
+                onChange={(e) => onChange({ ...form, metaKeywords: e.target.value })}
+                placeholder="cricket betting, bpxpro, jazzcash"
+                className="w-full rounded border border-border bg-navy px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
+              />
+              <p className="mt-1 text-[10px] text-muted">Comma-separated keywords</p>
+            </div>
+          </div>
+        </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-text">Category</label>
           <select
@@ -1290,12 +1339,60 @@ function BlogPostForm({ form, onChange, onSubmit, onCancel, saving, editing, edi
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-semibold text-text">Emoji</label>
+          <label className="mb-1 block text-xs font-semibold text-text">Emoji fallback</label>
           <input
             value={form.emoji}
             onChange={(e) => onChange({ ...form, emoji: e.target.value })}
+            placeholder="Used when no cover image"
             className="w-full rounded border border-border bg-navy px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
           />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="mb-1 block text-xs font-semibold text-text">Cover image</label>
+          <p className="mb-2 text-[10px] text-muted">
+            Shown on blog cards and article header instead of emoji when uploaded.
+          </p>
+          {form.coverImage ? (
+            <div className="mb-3 overflow-hidden rounded-lg border border-border bg-navy">
+              <img
+                src={form.coverImage}
+                alt="Cover preview"
+                className="max-h-48 w-full object-cover"
+              />
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            <label className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-border px-3 py-2 text-xs font-semibold text-text hover:border-accent/40">
+              <ImageIcon className="h-3.5 w-3.5" />
+              Upload cover
+              <input
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  try {
+                    const dataUrl = await readScreenshotFile(file)
+                    const { url } = await uploadBlogImage(dataUrl)
+                    onChange({ ...form, coverImage: url })
+                  } catch (err) {
+                    alert(err.message || 'Cover upload failed')
+                  }
+                  e.target.value = ''
+                }}
+              />
+            </label>
+            {form.coverImage ? (
+              <button
+                type="button"
+                onClick={() => onChange({ ...form, coverImage: '' })}
+                className="rounded border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-300"
+              >
+                Remove cover
+              </button>
+            ) : null}
+          </div>
         </div>
         <div>
           <label className="mb-1 block text-xs font-semibold text-text">Date</label>
@@ -2816,19 +2913,26 @@ function AdminDashboard({ onLogout }) {
   const [creatingExpense, setCreatingExpense] = useState(false)
   const [savingExpenseId, setSavingExpenseId] = useState('')
   const [deletingExpenseId, setDeletingExpenseId] = useState('')
+  const [homepageForm, setHomepageForm] = useState(() =>
+    normalizeHomepageContent(DEFAULT_HOMEPAGE_CONTENT),
+  )
+  const [homepageUpdatedAt, setHomepageUpdatedAt] = useState(null)
+  const [homepageSaving, setHomepageSaving] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
 
   const isUsersTab = activeTab === 'users'
   const isBlogTab = activeTab === 'blog'
+  const isHomepageTab = activeTab === 'homepage'
   const isAccountsTab = activeTab === 'accounts'
   const isWithdrawMethodsTab = activeTab === 'withdrawMethods'
   const isWhatsappTab = activeTab === 'whatsapp'
   const isPnlTab = activeTab === 'pnl'
   const isExpensesTab = activeTab === 'expenses'
   const isFinanceTab = isPnlTab || isExpensesTab
-  const isSettingsPanel = isAccountsTab || isWithdrawMethodsTab || isWhatsappTab || isFinanceTab
+  const isSettingsPanel = isAccountsTab || isWithdrawMethodsTab || isWhatsappTab || isFinanceTab || isHomepageTab
 
-  const loadTransactions = async ({ silent = false } = {}) => {
-    if (isUsersTab || isBlogTab || isSettingsPanel) return
+  const loadTransactions = async ({ silent = false, force = false } = {}) => {
+    if (!force && (isUsersTab || isBlogTab || isSettingsPanel)) return
     if (!silent) {
       setLoading(true)
       setLoadError('')
@@ -2844,8 +2948,8 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const loadUsers = async ({ silent = false } = {}) => {
-    if (!isUsersTab) return
+  const loadUsers = async ({ silent = false, force = false } = {}) => {
+    if (!force && !isUsersTab) return
     if (!silent) {
       setLoading(true)
       setLoadError('')
@@ -2933,8 +3037,8 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const loadBlogPosts = async () => {
-    if (!isBlogTab) return
+  const loadBlogPosts = async ({ force = false } = {}) => {
+    if (!force && !isBlogTab) return
     setLoading(true)
     setLoadError('')
     try {
@@ -2947,8 +3051,23 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const loadPaymentAccountsAdmin = async () => {
-    if (!isAccountsTab) return
+  const loadHomepageContentAdmin = async ({ force = false } = {}) => {
+    if (!force && !isHomepageTab) return
+    setLoading(true)
+    setLoadError('')
+    try {
+      const data = await fetchAdminHomepageContent()
+      setHomepageForm(normalizeHomepageContent(data?.content || DEFAULT_HOMEPAGE_CONTENT))
+      setHomepageUpdatedAt(data?.updatedAt || null)
+    } catch (err) {
+      setLoadError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadPaymentAccountsAdmin = async ({ force = false } = {}) => {
+    if (!force && !isAccountsTab) return
     setLoading(true)
     setLoadError('')
     try {
@@ -2961,8 +3080,8 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const loadWhatsappAgentsAdmin = async () => {
-    if (!isWhatsappTab) return
+  const loadWhatsappAgentsAdmin = async ({ force = false } = {}) => {
+    if (!force && !isWhatsappTab) return
     setLoading(true)
     setLoadError('')
     try {
@@ -2982,8 +3101,8 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const loadWithdrawMethodsAdmin = async () => {
-    if (!isWithdrawMethodsTab) return
+  const loadWithdrawMethodsAdmin = async ({ force = false } = {}) => {
+    if (!force && !isWithdrawMethodsTab) return
     setLoading(true)
     setLoadError('')
     try {
@@ -2996,8 +3115,8 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const loadExpensesAdmin = async () => {
-    if (!isExpensesTab) return
+  const loadExpensesAdmin = async ({ force = false } = {}) => {
+    if (!force && !isExpensesTab) return
     setLoading(true)
     setLoadError('')
     try {
@@ -3013,8 +3132,8 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const loadProfitLossAdmin = async () => {
-    if (!isPnlTab) return
+  const loadProfitLossAdmin = async ({ force = false } = {}) => {
+    if (!force && !isPnlTab) return
     setLoading(true)
     setLoadError('')
     try {
@@ -3030,15 +3149,46 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
-  const refresh = () => {
-    if (isUsersTab) return loadUsers()
-    if (isBlogTab) return loadBlogPosts()
-    if (isAccountsTab) return loadPaymentAccountsAdmin()
-    if (isWithdrawMethodsTab) return loadWithdrawMethodsAdmin()
-    if (isWhatsappTab) return loadWhatsappAgentsAdmin()
-    if (isExpensesTab) return loadExpensesAdmin()
-    if (isPnlTab) return loadProfitLossAdmin()
-    return loadTransactions()
+  const handleRefresh = async () => {
+    if (refreshing) return
+    setRefreshing(true)
+    setLoadError('')
+    try {
+      switch (activeTab) {
+        case 'users':
+          await loadUsers({ silent: false, force: true })
+          break
+        case 'blog':
+          await loadBlogPosts({ force: true })
+          break
+        case 'homepage':
+          await loadHomepageContentAdmin({ force: true })
+          break
+        case 'accounts':
+          await loadPaymentAccountsAdmin({ force: true })
+          break
+        case 'withdrawMethods':
+          await loadWithdrawMethodsAdmin({ force: true })
+          break
+        case 'whatsapp':
+          await loadWhatsappAgentsAdmin({ force: true })
+          break
+        case 'expenses':
+          await loadExpensesAdmin({ force: true })
+          break
+        case 'pnl':
+          await loadProfitLossAdmin({ force: true })
+          break
+        case 'deposit':
+        case 'withdraw':
+          await loadTransactions({ silent: false, force: true })
+          break
+        default:
+          break
+      }
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   useEffect(() => {
@@ -3051,6 +3201,10 @@ function AdminDashboard({ onLogout }) {
     }
     if (isBlogTab) {
       loadBlogPosts()
+      return undefined
+    }
+    if (isHomepageTab) {
+      loadHomepageContentAdmin()
       return undefined
     }
     if (isAccountsTab) {
@@ -3414,10 +3568,14 @@ function AdminDashboard({ onLogout }) {
       category: post.category,
       author: post.author,
       emoji: post.emoji,
+      coverImage: post.coverImage || '',
       gradient: post.gradient,
       date: post.date,
       featured: post.featured,
       published: post.published,
+      metaTitle: post.metaTitle || '',
+      metaDescription: post.metaDescription || '',
+      metaKeywords: post.metaKeywords || '',
       htmlContent: contentToHtml(post.content),
     })
     setEditingBlogId(post.id)
@@ -3477,10 +3635,14 @@ function AdminDashboard({ onLogout }) {
         category: blogForm.category,
         author: blogForm.author,
         emoji: blogForm.emoji,
+        coverImage: blogForm.coverImage,
         gradient: blogForm.gradient,
         date: blogForm.date,
         featured: blogForm.featured,
         published: blogForm.published,
+        metaTitle: blogForm.metaTitle,
+        metaDescription: blogForm.metaDescription,
+        metaKeywords: blogForm.metaKeywords,
         htmlContent: blogForm.htmlContent,
       }
       const saved = editingBlogId
@@ -3497,6 +3659,21 @@ function AdminDashboard({ onLogout }) {
       alert(err.message)
     } finally {
       setBlogSaving(false)
+    }
+  }
+
+  const handleSaveHomepageContent = async () => {
+    setHomepageSaving(true)
+    setLoadError('')
+    try {
+      const saved = await updateAdminHomepageContent(homepageForm)
+      setHomepageForm(normalizeHomepageContent(saved?.content || homepageForm))
+      setHomepageUpdatedAt(saved?.updatedAt || null)
+    } catch (err) {
+      setLoadError(err.message)
+      alert(err.message)
+    } finally {
+      setHomepageSaving(false)
     }
   }
 
@@ -3546,6 +3723,8 @@ function AdminDashboard({ onLogout }) {
                       ? 'All withdraw requests from users'
                       : activeTab === 'blog'
                         ? 'Create and manage blog articles'
+                        : activeTab === 'homepage'
+                          ? 'Edit public homepage marketing content'
                         : activeTab === 'accounts'
                           ? 'JazzCash / EasyPaisa / Bank details for the app'
                           : activeTab === 'withdrawMethods'
@@ -3563,11 +3742,12 @@ function AdminDashboard({ onLogout }) {
             </div>
             <button
               type="button"
-              onClick={refresh}
-              className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-xs font-semibold text-muted hover:border-accent/40 hover:text-accent transition-colors"
+              onClick={() => void handleRefresh()}
+              disabled={refreshing}
+              className="inline-flex items-center gap-1.5 rounded border border-border px-3 py-1.5 text-xs font-semibold text-muted hover:border-accent/40 hover:text-accent transition-colors disabled:cursor-not-allowed disabled:opacity-60"
             >
-              <RefreshCw className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Refresh</span>
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{refreshing ? 'Refreshing…' : 'Refresh'}</span>
             </button>
           </div>
         </header>
@@ -3760,6 +3940,7 @@ function AdminDashboard({ onLogout }) {
         {loading && (
           (isUsersTab && bpexchUsers.length === 0) ||
           (isBlogTab && blogPosts.length === 0) ||
+          (isHomepageTab && !homepageUpdatedAt) ||
           (isAccountsTab && paymentAccounts.length === 0) ||
           (isWithdrawMethodsTab && withdrawMethods.length === 0) ||
           (isWhatsappTab && whatsappAgents.length === 0) ||
@@ -3774,6 +3955,8 @@ function AdminDashboard({ onLogout }) {
                 ? 'users'
                 : isBlogTab
                   ? 'blog posts'
+                  : isHomepageTab
+                    ? 'homepage content'
                   : isAccountsTab
                     ? 'payment accounts'
                     : isWithdrawMethodsTab
@@ -3853,6 +4036,14 @@ function AdminDashboard({ onLogout }) {
             savingId={savingWithdrawMethodId}
             creating={creatingWithdrawMethod}
             deletingId={deletingWithdrawMethodId}
+          />
+        ) : isHomepageTab ? (
+          <HomepageContentPanel
+            form={homepageForm}
+            setForm={setHomepageForm}
+            onSave={handleSaveHomepageContent}
+            saving={homepageSaving}
+            updatedAt={homepageUpdatedAt}
           />
         ) : isBlogTab ? (
           <BlogPostsPanel

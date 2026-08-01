@@ -302,15 +302,30 @@ export async function submitContact(payload) {
 }
 
 export async function fetchPaymentAccounts() {
-  return apiFetch('/api/payment-accounts')
+  return asArray(await apiFetch('/api/payment-accounts'), 'payment accounts')
 }
 
 export async function fetchWithdrawMethods() {
-  return apiFetch('/api/withdraw-methods')
+  return asArray(await apiFetch('/api/withdraw-methods'), 'withdraw methods')
 }
 
 export async function fetchSupportContact() {
   return apiFetch('/api/support-contact')
+}
+
+export async function fetchHomepageContent() {
+  return apiFetch('/api/homepage-content')
+}
+
+export async function fetchAdminHomepageContent() {
+  return apiFetch('/api/admin/homepage-content')
+}
+
+export async function updateAdminHomepageContent(content) {
+  return apiFetch('/api/admin/homepage-content', {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  })
 }
 
 export async function fetchAdminPaymentAccounts() {

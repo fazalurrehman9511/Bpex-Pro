@@ -7,6 +7,8 @@ export const BRAND_ALIAS_TEXT = 'BPX, BPEXCH, BPXPRO, BettPro and Bett Pro'
 export const BRAND_LOGO = '/icon-72x72.png'
 export const BRAND_LOGO_MD = '/icon-192x192.png'
 export const BRAND_LOGO_LG = '/icon-512x512.png'
+/** Same mark as bpexch.xyz /Users/Login */
+export const BPEXCH_LOGIN_LOGO = '/bpexch-login-logo.jpg'
 export const BRAND_TAGLINE = "Asia's trusted betting exchange"
 
 /** Public site domain (production) — prefer www to match live canonical */

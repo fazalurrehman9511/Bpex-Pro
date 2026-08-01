@@ -27,7 +27,7 @@ const DASHBOARD_PATHS = [
   '/bpexch/',
 ]
 
-function EmbedActionBar({ top, height, narrow, onNavigate }) {
+const EmbedActionBar = ({ top, height, narrow, loginOnly = false, onNavigate }) => {
   return (
     <div
       className={`flowexch-embed-actions${narrow ? ' flowexch-embed-actions-narrow' : ''}`}
@@ -41,20 +41,24 @@ function EmbedActionBar({ top, height, narrow, onNavigate }) {
       >
         Home
       </button>
-      <button
-        type="button"
-        className="flowexch-embed-btn flowexch-embed-btn-deposit"
-        onClick={() => onNavigate('/deposit')}
-      >
-        Deposit
-      </button>
-      <button
-        type="button"
-        className="flowexch-embed-btn flowexch-embed-btn-withdraw"
-        onClick={() => onNavigate('/withdraw')}
-      >
-        Withdraw
-      </button>
+      {!loginOnly ? (
+        <>
+          <button
+            type="button"
+            className="flowexch-embed-btn flowexch-embed-btn-deposit"
+            onClick={() => onNavigate('/deposit')}
+          >
+            Deposit
+          </button>
+          <button
+            type="button"
+            className="flowexch-embed-btn flowexch-embed-btn-withdraw"
+            onClick={() => onNavigate('/withdraw')}
+          >
+            Withdraw
+          </button>
+        </>
+      ) : null}
     </div>
   )
 }
@@ -393,13 +397,14 @@ export default function EmbedFrame({
 
       if (action === 'actionbar-anchor' && listenForActions) {
         if (!data.visible) {
-          setActionAnchor((prev) => (prev?.visible ? { ...prev, visible: false } : prev))
+          setActionAnchor(null)
           return
         }
         const next = {
           top: data.top,
           height: data.height || 28,
           visible: true,
+          loginOnly: data.mode === 'login',
         }
         setActionAnchor((prev) => {
           if (
@@ -571,6 +576,7 @@ export default function EmbedFrame({
           top={actionAnchor.top}
           height={actionAnchor.height}
           narrow={narrow}
+          loginOnly={Boolean(actionAnchor.loginOnly)}
           onNavigate={handleEmbedNavigate}
         />
       )}

@@ -76,7 +76,7 @@ export default function BottomNav() {
       ]
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-navy-dark/95 backdrop-blur-md sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t-2 border-emerald-500/30 bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-800 sm:hidden">
       <div className="flex items-stretch">
         {navItems.map(({ icon: Icon, label, active, action, accent }) => (
           <button
@@ -84,12 +84,13 @@ export default function BottomNav() {
             type="button"
             onClick={action}
             aria-label={label}
-            className={`flex min-h-14 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 py-2.5 transition-colors ${
+            aria-current={active ? 'page' : undefined}
+            className={`flex min-h-14 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5 py-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#25D366]/50 ${
               accent
-                ? 'text-accent'
+                ? 'text-[#25D366]'
                 : active
-                  ? 'text-accent'
-                  : 'text-muted hover:text-text'
+                  ? 'text-white'
+                  : 'text-emerald-200/80 hover:text-white'
             }`}
           >
             <Icon className="h-5 w-5" aria-hidden="true" />

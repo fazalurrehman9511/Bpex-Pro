@@ -1,37 +1,11 @@
 import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
-import { BRAND_ALIAS_TEXT } from '../config/brand'
+import { useHomepageContent } from '../context/HomepageContentContext'
 import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import { openSupportWhatsApp } from '../utils/whatsapp'
 
-const faqs = [
-  {
-    q: 'How do I register?',
-    a: 'Two ways: (1) Create Myself — pick username/password on the site and your BPEXCH account is created instantly. (2) WhatsApp Agent — message your local agent and they set up your account.',
-  },
-  {
-    q: 'How can I add balance?',
-    a: 'Choose JazzCash, EasyPaisa, Bank Transfer or Crypto from the Add Balance section. Your country agent will share account details and confirm your deposit on WhatsApp.',
-  },
-  {
-    q: 'Which countries are supported?',
-    a: 'We have dedicated agents across Asia, plus support for users in the UAE, Saudi Arabia and the United Kingdom. Select your country during registration to connect with the right agent.',
-  },
-  {
-    q: 'Is BpxPro the same as BPX, BPEXCH or BettPro?',
-    a: `Yes. BpxPro is also searched as ${BRAND_ALIAS_TEXT}. They all refer to the same betting exchange platform and WhatsApp agent service.`,
-  },
-  {
-    q: 'How fast are withdrawals?',
-    a: 'Most withdrawals are processed within 5–15 minutes via JazzCash, EasyPaisa or bank transfer. Crypto withdrawals may take up to 30 minutes.',
-  },
-  {
-    q: 'Is my money safe?',
-    a: 'BpxPro has been operating since 2018 with 15,000+ active users. Every transaction is handled personally by your assigned agent with full WhatsApp confirmation.',
-  },
-]
-
 export default function FAQ() {
+  const { faq } = useHomepageContent()
   const [open, setOpen] = useState(0)
 
   useEffect(() => {
@@ -39,49 +13,55 @@ export default function FAQ() {
   }, [])
 
   return (
-    <section id="faq" className="bg-navy-dark px-4 py-8 sm:px-6">
-      <div className="mx-auto max-w-5xl">
-        <h2 className="mb-1 text-base font-bold text-text sm:text-lg">FAQ</h2>
-        <p className="mb-5 text-xs text-muted">Common questions answered</p>
+    <section id="faq" className="section-tint-violet px-4 py-14 sm:px-6 sm:py-20">
+      <div className="mx-auto max-w-3xl">
+        <div className="mb-10 text-center">
+          <p className="editorial-section-label">Support</p>
+          <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">{faq.title}</h2>
+          <p className="mt-3 text-sm leading-6 text-slate-600 sm:text-base">{faq.subtitle}</p>
+        </div>
 
-        <div className="space-y-2">
-          {faqs.map(({ q, a }, i) => (
+        <div className="space-y-3">
+          {faq.items.map(({ q, a }, i) => (
             <div
-              key={q}
-              className="overflow-hidden rounded border border-border bg-navy-light"
+              key={`${q}-${i}`}
+              className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
             >
               <button
+                type="button"
                 onClick={() => setOpen(open === i ? -1 : i)}
-                className="flex w-full items-center justify-between px-4 py-3.5 text-left"
+                aria-expanded={open === i}
+                className="flex w-full min-h-11 cursor-pointer items-center justify-between px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-600/40"
               >
-                <span className="text-sm font-semibold text-text pr-4">{q}</span>
+                <span className="pr-4 text-sm font-semibold text-slate-900 sm:text-base">{q}</span>
                 <ChevronDown
-                  className={`h-4 w-4 shrink-0 text-accent transition-transform duration-200 ${
+                  className={`h-4 w-4 shrink-0 text-emerald-600 transition-transform duration-200 ${
                     open === i ? 'rotate-180' : ''
                   }`}
                 />
               </button>
               {open === i && (
-                <div className="border-t border-border px-4 pb-3.5 pt-1">
-                  <p className="text-xs leading-relaxed text-muted">{a}</p>
+                <div className="border-t border-slate-100 px-5 pb-4 pt-1">
+                  <p className="text-sm leading-relaxed text-slate-600">{a}</p>
                 </div>
               )}
             </div>
           ))}
         </div>
 
-        <div className="mt-6 rounded border border-accent/20 bg-accent/5 p-4 text-center">
-          <p className="text-sm font-semibold text-text">Still have questions?</p>
-          <p className="mt-1 text-xs text-muted">Chat with BpxPro Support on WhatsApp</p>
+        <div className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 text-center">
+          <p className="text-base font-bold text-slate-900">{faq.supportTitle}</p>
+          <p className="mt-2 text-sm text-slate-600">{faq.supportText}</p>
           <button
+            type="button"
             onClick={() =>
               openSupportWhatsApp(
                 'Hi BpxPro Support! 👋\n\nI have a few questions before getting started.\nPlease assist me.',
               )
             }
-            className="mt-3 rounded bg-accent px-6 py-2 text-xs font-bold text-navy-dark hover:bg-accent-hover transition-colors"
+            className="mt-4 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/20 transition-colors hover:from-violet-700 hover:to-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2"
           >
-            Contact Support
+            {faq.supportCta}
           </button>
         </div>
       </div>

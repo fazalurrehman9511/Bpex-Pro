@@ -18,6 +18,8 @@ import withdrawMethodsRouter from './routes/withdrawMethods.js'
 import supportContactRouter from './routes/supportContact.js'
 import whatsappAgentsRouter from './routes/whatsappAgents.js'
 import bpexchBalanceRouter from './routes/bpexchBalance.js'
+import sitemapRouter from './routes/sitemap.js'
+import homepageContentRouter from './routes/homepageContent.js'
 import { startLiveEventsPoller } from './services/bpexchLive.js'
 import {
   bpexchHttpFetch,
@@ -136,6 +138,7 @@ app.get('/api/health', (_req, res) => {
   })
 })
 
+app.use(sitemapRouter)
 app.use('/api/transactions', transactionsRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/bpexch/users', bpexchUsersRouter)
@@ -148,6 +151,7 @@ app.use('/api/payment-accounts', paymentAccountsRouter)
 app.use('/api/withdraw-methods', withdrawMethodsRouter)
 app.use('/api/support-contact', supportContactRouter)
 app.use('/api/whatsapp-agents', whatsappAgentsRouter)
+app.use('/api/homepage-content', homepageContentRouter)
 app.use('/api', (req, res) => {
   res.status(404).json({
     error: `API route not found: ${req.method} ${req.originalUrl || req.url}`,

@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import Database from 'better-sqlite3'
 import { config } from './config.js'
+import { DEFAULT_HOMEPAGE_CONTENT, normalizeHomepageContent } from './homepageContent.js'
 import { normalizeUserType } from './utils/bpexchUser.js'
 
 const dataDir = path.dirname(config.databasePath)
@@ -87,6 +88,9 @@ db.exec(`
     gradient TEXT NOT NULL DEFAULT 'from-green-600/40 to-navy-light',
     emoji TEXT NOT NULL DEFAULT '📝',
     content TEXT NOT NULL DEFAULT '[]',
+    meta_title TEXT NOT NULL DEFAULT '',
+    meta_description TEXT NOT NULL DEFAULT '',
+    meta_keywords TEXT NOT NULL DEFAULT '',
     published INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -156,6 +160,10 @@ ensureColumn('bpexch_users', 'max_withdraw', 'REAL')
 ensureColumn('bpexch_users', 'balance_updated_at', 'TEXT')
 ensureColumn('bpexch_users', 'agent_username', "TEXT DEFAULT ''")
 ensureColumn('payment_accounts', 'qr_code_image', "TEXT NOT NULL DEFAULT ''")
+ensureColumn('blog_posts', 'meta_title', "TEXT NOT NULL DEFAULT ''")
+ensureColumn('blog_posts', 'meta_description', "TEXT NOT NULL DEFAULT ''")
+ensureColumn('blog_posts', 'meta_keywords', "TEXT NOT NULL DEFAULT ''")
+ensureColumn('blog_posts', 'cover_image', "TEXT NOT NULL DEFAULT ''")
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS bpexch_agent_config (
@@ -169,6 +177,12 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS support_contact_config (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     whatsapp TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS homepage_content_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    content TEXT NOT NULL DEFAULT '{}',
     updated_at TEXT NOT NULL
   );
 `)
@@ -215,6 +229,14 @@ db.exec(`
       INSERT INTO support_contact_config (id, whatsapp, updated_at)
       VALUES (1, ?, ?)
     `).run(supportWhatsApp, new Date().toISOString())
+  }
+
+  const homepageRow = db.prepare('SELECT id FROM homepage_content_config WHERE id = 1').get()
+  if (!homepageRow) {
+    db.prepare(`
+      INSERT INTO homepage_content_config (id, content, updated_at)
+      VALUES (1, ?, ?)
+    `).run(JSON.stringify(DEFAULT_HOMEPAGE_CONTENT), new Date().toISOString())
   }
 })()
 
@@ -938,6 +960,36 @@ export function updateSupportContactConfig(patch = {}) {
   return getSupportContactConfig()
 }
 
+export function getHomepageContentConfig() {
+  const row = db.prepare('SELECT * FROM homepage_content_config WHERE id = 1').get()
+  let parsed = DEFAULT_HOMEPAGE_CONTENT
+  if (row?.content) {
+    try {
+      parsed = JSON.parse(row.content)
+    } catch {
+      parsed = DEFAULT_HOMEPAGE_CONTENT
+    }
+  }
+  return {
+    content: normalizeHomepageContent(parsed),
+    updatedAt: row?.updated_at || null,
+    source: row?.content ? 'db' : 'default',
+  }
+}
+
+export function updateHomepageContentConfig(patch = {}) {
+  const next = normalizeHomepageContent(patch?.content ?? patch)
+  const updatedAt = new Date().toISOString()
+  db.prepare(`
+    INSERT INTO homepage_content_config (id, content, updated_at)
+    VALUES (1, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      content = excluded.content,
+      updated_at = excluded.updated_at
+  `).run(JSON.stringify(next), updatedAt)
+  return getHomepageContentConfig()
+}
+
 /**
  * Verify user may log in via app/web.
  * Returns { ok, user?, error?, code? }
@@ -1002,7 +1054,11 @@ export function rowToBlogPost(row) {
     featured: Boolean(row.featured),
     gradient: row.gradient,
     emoji: row.emoji,
+    coverImage: row.cover_image || '',
     content,
+    metaTitle: row.meta_title || '',
+    metaDescription: row.meta_description || '',
+    metaKeywords: row.meta_keywords || '',
     published: Boolean(row.published),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
