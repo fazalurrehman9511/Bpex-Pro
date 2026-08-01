@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { bpexchProxyPlugin } from './vite-plugin-bpexch-proxy.js'
+import { appVersionPlugin } from './vite-plugin-app-version.js'
 
 /** Serve .apk with Android package MIME so phones install instead of treating as unknown file. */
 function apkMimePlugin() {
@@ -32,6 +33,7 @@ export default defineConfig(({ mode }) => {
       react(),
       tailwindcss(),
       apkMimePlugin(),
+      appVersionPlugin(),
       bpexchProxyPlugin({
         brandName: env.VITE_EMBED_BRAND_NAME || 'BPEXCH',
         syncSecret: env.BPEXCH_SYNC_SECRET || env.VITE_BPEXCH_SYNC_SECRET || '',
@@ -80,6 +82,9 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
           globPatterns: ['**/*.{js,css,html,ico,svg,woff2}'],
           navigateFallbackDenylist: [
             /^\/bpexch/,
