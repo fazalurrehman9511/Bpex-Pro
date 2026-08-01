@@ -72,6 +72,11 @@ function formatPkr(n) {
   return Number(n || 0).toLocaleString('en-PK')
 }
 
+function withdrawAllowed(balance, min = 500) {
+  const value = Number(balance)
+  return Number.isFinite(value) && value >= min
+}
+
 function todayLabel(iso) {
   const d = iso ? new Date(iso) : new Date()
   if (Number.isNaN(d.getTime())) {
@@ -140,7 +145,11 @@ export default function NativeWalletApp() {
     Boolean(existing?.username && balanceCache?.username === existing.username && balanceCache?.balance != null),
   )
   const [loggingIn, setLoggingIn] = useState(false)
-  const [canWithdraw, setCanWithdraw] = useState(false)
+  const [canWithdraw, setCanWithdraw] = useState(() =>
+    withdrawAllowed(
+      existing?.username && balanceCache?.username === existing.username ? balanceCache.balance : null,
+    ),
+  )
   const [minBalanceForWithdraw, setMinBalanceForWithdraw] = useState(500)
   const [regPassword, setRegPassword] = useState('')
   const [regConfirm, setRegConfirm] = useState('')
@@ -282,6 +291,8 @@ export default function NativeWalletApp() {
     try {
       const data = await fetchBpexchBalance(u, { timeoutMs: 12000 })
       const nextBalance = data.balance == null ? null : Number(data.balance)
+      const minWithdraw =
+        data.minBalanceForWithdraw != null ? Number(data.minBalanceForWithdraw) : minBalanceForWithdraw
       setBalance(nextBalance)
       setBalanceCached(Boolean(data.cached))
       saveJson(BALANCE_CACHE_KEY, {
@@ -289,17 +300,18 @@ export default function NativeWalletApp() {
         balance: nextBalance,
         updatedAt: data.updatedAt || new Date().toISOString(),
       })
-      setCanWithdraw(Boolean(data.canWithdraw))
       if (data.minBalanceForWithdraw != null) {
-        setMinBalanceForWithdraw(Number(data.minBalanceForWithdraw))
+        setMinBalanceForWithdraw(minWithdraw)
       }
+      setCanWithdraw(withdrawAllowed(nextBalance, minWithdraw))
       return data
     } catch (err) {
       const cached = loadJson(BALANCE_CACHE_KEY, {})
       const hasCached = cached?.username === u && Number.isFinite(Number(cached?.balance))
-      setBalance(hasCached ? Number(cached.balance) : null)
+      const cachedBalance = hasCached ? Number(cached.balance) : null
+      setBalance(cachedBalance)
       setBalanceCached(hasCached)
-      setCanWithdraw(false)
+      setCanWithdraw(withdrawAllowed(cachedBalance, minBalanceForWithdraw))
       if (!quiet) flash(err.message || 'Unable to load balance')
       return null
     } finally {

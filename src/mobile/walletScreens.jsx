@@ -1047,7 +1047,8 @@ export function ScreenWithdraw({
 }) {
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
   const waitingForInitialBalance = balanceLoading && balance == null
-  const blocked = balance != null && !canWithdraw
+  const blocked =
+    balance != null && Number(balance) < minBalanceForWithdraw
   const amtNum = Number(amount || 0)
   const amountValue = String(amount || '').trim()
   const holderValue = String(holder || '').trim()
