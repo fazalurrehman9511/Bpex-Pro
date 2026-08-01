@@ -201,11 +201,11 @@ export default function ContactUs() {
             </p>
             <button
               type="button"
-              onClick={() =>
-                openSupportWhatsApp(
+              onClick={() => {
+                void openSupportWhatsApp(
                   'Hi BpxPro Support! 👋\n\nI need help with deposits, withdrawals, or my account.\nPlease assist me.',
-                )
-              }
+                ).catch(() => {})
+              }}
               className="mt-4 flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-bold text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600/40"
             >
               <MessageCircle className="h-4 w-4" fill="currentColor" strokeWidth={0} />

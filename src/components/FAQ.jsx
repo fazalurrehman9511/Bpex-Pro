@@ -54,11 +54,11 @@ export default function FAQ() {
           <p className="mt-2 text-sm text-slate-600">{faq.supportText}</p>
           <button
             type="button"
-            onClick={() =>
-              openSupportWhatsApp(
+            onClick={() => {
+              void openSupportWhatsApp(
                 'Hi BpxPro Support! 👋\n\nI have a few questions before getting started.\nPlease assist me.',
-              )
-            }
+              ).catch(() => {})
+            }}
             className="mt-4 inline-flex min-h-11 cursor-pointer items-center justify-center rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/20 transition-colors hover:from-violet-700 hover:to-purple-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600 focus-visible:ring-offset-2"
           >
             {faq.supportCta}

@@ -15,6 +15,7 @@ import {
   verifyBpexchUser,
 } from '../utils/api'
 import { readScreenshotFile, getRemainingMs, formatRemaining, WITHDRAW_PENDING_MINUTES } from '../utils/transactions'
+import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import {
   ScreenLogin,
   ScreenRegister,
@@ -167,6 +168,19 @@ export default function NativeWalletApp() {
     setToast(msg)
     window.setTimeout(() => setToast(''), 2200)
   }
+
+  useEffect(() => {
+    loadSupportWhatsAppNumber().catch(() => {})
+    const refreshSupport = () => {
+      loadSupportWhatsAppNumber().catch(() => {})
+    }
+    window.addEventListener('focus', refreshSupport)
+    const interval = window.setInterval(refreshSupport, 5 * 60 * 1000)
+    return () => {
+      window.removeEventListener('focus', refreshSupport)
+      window.clearInterval(interval)
+    }
+  }, [])
 
   useEffect(() => {
     setWithdrawFormError('')

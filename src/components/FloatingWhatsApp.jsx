@@ -35,7 +35,7 @@ export default function FloatingWhatsApp() {
   }, [open])
 
   const openWhatsApp = (text) => {
-    openSupportWhatsApp(text)
+    void openSupportWhatsApp(text).catch(() => {})
     setOpen(false)
   }
 

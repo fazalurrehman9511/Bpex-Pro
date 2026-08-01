@@ -69,15 +69,17 @@ export function WhatsAppFab({ username = '', className = '' }) {
     loadSupportWhatsAppNumber().catch(() => {})
   }, [])
 
+  const handleOpen = () => {
+    const id = username && username !== 'your_id' ? username : ''
+    void openSupportWhatsApp(
+      `Hi BpExch Support! 👋\n\nI need help${id ? ` (ID: ${id})` : ''}.\nPlease assist me.`,
+    ).catch(() => {})
+  }
+
   return (
     <button
       type="button"
-      onClick={() => {
-        const id = username && username !== 'your_id' ? username : ''
-        openSupportWhatsApp(
-          `Hi BpExch Support! 👋\n\nI need help${id ? ` (ID: ${id})` : ''}.\nPlease assist me.`,
-        )
-      }}
+      onClick={handleOpen}
       className={`fixed bottom-[calc(4.25rem+env(safe-area-inset-bottom))] right-4 z-[120] flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/40 active:scale-95 ${className}`}
       aria-label="WhatsApp Support"
     >
@@ -88,7 +90,7 @@ export function WhatsAppFab({ username = '', className = '' }) {
 
 function openWalletSupport(username = '') {
   const id = username && username !== 'your_id' ? username : ''
-  openSupportWhatsApp(
+  return openSupportWhatsApp(
     `Hi BpExch Support! 👋\n\nI need help${id ? ` (ID: ${id})` : ''}.\nPlease assist me.`,
   )
 }
@@ -101,6 +103,9 @@ export function WalletBottomNav({
   onHistory,
   homeOnly = false,
 }) {
+  useEffect(() => {
+    loadSupportWhatsAppNumber().catch(() => {})
+  }, [])
   const item = (id, label, Icon, onClick) => {
     const selected = active === id
     return (
@@ -125,7 +130,9 @@ export function WalletBottomNav({
         {!homeOnly ? (
           <button
             type="button"
-            onClick={() => openWalletSupport(username)}
+            onClick={() => {
+              void openWalletSupport(username).catch(() => {})
+            }}
             className="flex flex-1 flex-col items-center gap-0.5 py-2 text-white/55 active:opacity-80"
           >
             <WhatsAppIcon className="h-5 w-5" />

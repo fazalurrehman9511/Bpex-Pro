@@ -96,6 +96,11 @@ export function openCustomWhatsApp(text) {
   window.open(buildCustomWhatsAppUrl(text), '_blank', 'noopener,noreferrer')
 }
 
-export function openSupportWhatsApp(text) {
+export async function openSupportWhatsApp(text) {
+  await loadSupportWhatsAppNumber()
+  const number = getSupportWhatsAppNumber()
+  if (!number) {
+    throw new Error('Support WhatsApp number is not configured')
+  }
   window.open(buildSupportWhatsAppUrl(text), '_blank', 'noopener,noreferrer')
 }
