@@ -11,10 +11,12 @@ export const BRAND_LOGO_LG = '/icon-512x512.png'
 export const BPEXCH_LOGIN_LOGO = '/bpexch-login-logo.jpg'
 export const BRAND_TAGLINE = "Asia's trusted betting exchange"
 
+const viteEnv = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}
+
 /** Public site domain (production) — prefer www to match live canonical */
-export const SITE_DOMAIN = (import.meta.env.VITE_SITE_DOMAIN || 'www.bpexpro.com').trim()
+export const SITE_DOMAIN = (viteEnv.VITE_SITE_DOMAIN || 'www.bpexpro.com').trim()
 export const SITE_URL = (
-  import.meta.env.VITE_SITE_URL || `https://${SITE_DOMAIN}`
+  viteEnv.VITE_SITE_URL || `https://${SITE_DOMAIN}`
 )
   .trim()
   .replace(/\/$/, '')
