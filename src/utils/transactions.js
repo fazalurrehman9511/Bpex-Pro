@@ -1,5 +1,10 @@
 const STORAGE_KEY = 'flowexch_transactions'
-export const REQUEST_TTL_MS = 30 * 60 * 1000
+export const DEPOSIT_PENDING_MINUTES = 30
+export const WITHDRAW_PENDING_MINUTES = 10
+export const DEPOSIT_REQUEST_TTL_MS = DEPOSIT_PENDING_MINUTES * 60 * 1000
+export const WITHDRAW_REQUEST_TTL_MS = WITHDRAW_PENDING_MINUTES * 60 * 1000
+/** @deprecated use DEPOSIT_REQUEST_TTL_MS or WITHDRAW_REQUEST_TTL_MS */
+export const REQUEST_TTL_MS = DEPOSIT_REQUEST_TTL_MS
 
 export function parseBalanceAmount(value) {
   if (value == null || value === '') return null
@@ -70,7 +75,8 @@ export function createTransaction({
   availableBalance,
 }) {
   const createdAt = nowIso()
-  const expiresAt = new Date(Date.now() + REQUEST_TTL_MS).toISOString()
+  const ttlMs = type === 'withdraw' ? WITHDRAW_REQUEST_TTL_MS : DEPOSIT_REQUEST_TTL_MS
+  const expiresAt = new Date(Date.now() + ttlMs).toISOString()
 
   return {
     id: createTransactionId(),

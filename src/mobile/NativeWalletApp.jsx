@@ -14,7 +14,7 @@ import {
   selfRegister,
   verifyBpexchUser,
 } from '../utils/api'
-import { readScreenshotFile } from '../utils/transactions'
+import { readScreenshotFile, getRemainingMs, formatRemaining, WITHDRAW_PENDING_MINUTES } from '../utils/transactions'
 import {
   ScreenLogin,
   ScreenRegister,
@@ -94,6 +94,7 @@ function mapServerTx(tx) {
     meta: `${todayLabel(tx.createdAt)} · ${tx.paymentMethodLabel || ''}`,
     amountLabel: `${isDeposit ? '+' : '-'}${formatPkr(tx.amount)}`,
     status: String(tx.status || 'pending').toUpperCase(),
+    expiresAt: tx.expiresAt || null,
   }
 }
 
@@ -132,7 +133,7 @@ export default function NativeWalletApp() {
   const [mobile, setMobile] = useState('')
   const [screenshotPreview, setScreenshotPreview] = useState('')
   const [screenshotData, setScreenshotData] = useState('')
-  const [submitting, setSubmitting] = useState(false)
+  const [withdrawFormError, setWithdrawFormError] = useState('')
   const [transactions, setTransactions] = useState(() => loadJson(TX_KEY, []))
   const [notifications, setNotifications] = useState(() => loadActiveNotices())
   const [toast, setToast] = useState('')
@@ -166,6 +167,10 @@ export default function NativeWalletApp() {
     setToast(msg)
     window.setTimeout(() => setToast(''), 2200)
   }
+
+  useEffect(() => {
+    setWithdrawFormError('')
+  }, [withdrawAmount, holder, mobile, screen])
 
   useEffect(() => {
     const reloadAccounts = () => {
@@ -546,30 +551,35 @@ export default function NativeWalletApp() {
   const submitWithdraw = async () => {
     const amt = Number(withdrawAmount)
     if (balance == null) {
-      flash('Unable to load balance — please try again')
+      setWithdrawFormError('Unable to load balance. Please try again.')
       await refreshBalance()
       return
     }
     if (balance < minBalanceForWithdraw) {
-      flash(`Withdrawal requires at least PKR ${minBalanceForWithdraw} available balance`)
+      setWithdrawFormError(
+        `Your balance is below PKR ${minBalanceForWithdraw}. Withdrawals are not available.`,
+      )
       return
     }
     if (!Number.isFinite(amt) || amt < 500) {
-      flash('Minimum withdrawal is PKR 500')
+      setWithdrawFormError('Minimum withdrawal amount is PKR 500.')
       return
     }
     if (amt > balance) {
-      flash(`Withdrawal amount cannot exceed available balance (balance: PKR ${formatPkr(balance)})`)
+      setWithdrawFormError(
+        `Amount cannot exceed your available balance (PKR ${formatPkr(balance)}).`,
+      )
       return
     }
     if (!holder.trim()) {
-      flash('Enter the account holder name')
+      setWithdrawFormError('Please enter the account holder name.')
       return
     }
     if (!mobile.trim() || mobile.trim().length < 10) {
-      flash('Enter the mobile / account number')
+      setWithdrawFormError('Please enter the wallet or account number.')
       return
     }
+    setWithdrawFormError('')
     setSubmitting(true)
     try {
       const tx = await createTransaction({
@@ -586,12 +596,12 @@ export default function NativeWalletApp() {
       statusMapRef.current[mapped.id] = mapped.status
       pushTx(mapped)
       pushNotice(`${username} [PENDING] Withdraw PKR ${formatPkr(withdrawAmount)}`)
-      flash('Withdrawal request sent successfully')
+      flash(`Withdrawal request sent — pending up to ${WITHDRAW_PENDING_MINUTES} minutes`)
       setWithdrawAmount('')
       setScreen('wallet')
       refreshBalance(username, { quiet: true })
     } catch (err) {
-      flash(err.message || 'Withdrawal failed — please check the API')
+      setWithdrawFormError(err.message || 'Withdrawal failed. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -673,9 +683,13 @@ export default function NativeWalletApp() {
           onDeposit={() => setScreen('deposit')}
           onWithdraw={() => {
             if (balance != null && balance < minBalanceForWithdraw) {
-              flash(`Withdrawal requires at least PKR ${minBalanceForWithdraw} available balance`)
+              setWithdrawFormError(
+                `Your balance is below PKR ${minBalanceForWithdraw}. Withdrawals are not available.`,
+              )
+              setScreen('withdraw')
               return
             }
+            setWithdrawFormError('')
             setScreen('withdraw')
           }}
         onOpenBetting={() => setScreen('betting')}
@@ -711,10 +725,7 @@ export default function NativeWalletApp() {
           onAmountChange={setAmount}
           onBack={() => setScreen('wallet')}
           onNext={() => {
-            if (Number(amount) < 1000) {
-              flash('Minimum PKR 1,000')
-              return
-            }
+            if (Number(amount) < 1000) return
             setMethodOpen(true)
             setScreen('method')
           }}
@@ -812,6 +823,7 @@ export default function NativeWalletApp() {
           onMobile={setMobile}
           onBack={() => setScreen('wallet')}
           submitting={submitting}
+          error={withdrawFormError}
           onSubmit={submitWithdraw}
         />
         {chrome}
@@ -840,9 +852,13 @@ export default function NativeWalletApp() {
         onDeposit={() => setScreen('deposit')}
         onWithdraw={() => {
           if (balance != null && balance < minBalanceForWithdraw) {
-            flash(`Withdrawal requires at least PKR ${minBalanceForWithdraw} available balance`)
+            setWithdrawFormError(
+              `Your balance is below PKR ${minBalanceForWithdraw}. Withdrawals are not available.`,
+            )
+            setScreen('withdraw')
             return
           }
+          setWithdrawFormError('')
           setScreen('withdraw')
         }}
         onOpenBetting={() => setScreen('betting')}

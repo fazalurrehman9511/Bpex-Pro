@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import { db, expirePendingTransactions, rowToTransaction } from '../db.js'
+import { processWithdrawAutoApprovals } from '../services/withdrawAutoApprove.js'
 import { config } from '../config.js'
 import { createTransactionId } from '../utils/id.js'
 import { saveScreenshot } from '../utils/screenshot.js'
@@ -82,7 +83,9 @@ router.post('/', async (req, res) => {
 
     const id = createTransactionId()
     const createdAt = new Date().toISOString()
-    const expiresAt = new Date(Date.now() + config.requestTtlMs).toISOString()
+    const ttlMs =
+      type === 'withdraw' ? config.withdrawAutoApproveMs : config.requestTtlMs
+    const expiresAt = new Date(Date.now() + ttlMs).toISOString()
     const screenshotPath = type === 'deposit' ? saveScreenshot(screenshot, id) : null
 
     db.prepare(`
@@ -130,9 +133,10 @@ router.post('/', async (req, res) => {
   }
 })
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     expirePendingTransactions()
+    await processWithdrawAutoApprovals()
 
     const name = String(req.query.name || req.query.username || '').trim()
     if (!name) {

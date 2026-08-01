@@ -24,9 +24,31 @@ import { openSupportWhatsApp } from '../utils/whatsapp'
 import { PaymentMethodLogo } from './PaymentLogos'
 import BrandLogo from '../components/BrandLogo'
 import { BPEXCH_LOGIN_LOGO, BRAND_NAME } from '../config/brand'
+import {
+  DEPOSIT_PENDING_MINUTES,
+  WITHDRAW_PENDING_MINUTES,
+  getRemainingMs,
+  formatRemaining,
+} from '../utils/transactions'
 
 function formatPkr(n) {
   return Number(n || 0).toLocaleString('en-PK')
+}
+
+function TxCountdown({ expiresAt }) {
+  const [left, setLeft] = useState(() => getRemainingMs(expiresAt))
+
+  useEffect(() => {
+    const timer = setInterval(() => setLeft(getRemainingMs(expiresAt)), 1000)
+    return () => clearInterval(timer)
+  }, [expiresAt])
+
+  if (left <= 0) return <span className="text-[7px] font-semibold text-amber-700">Processing…</span>
+  return (
+    <span className="text-[7px] font-semibold text-amber-700">
+      {formatRemaining(left)} left
+    </span>
+  )
 }
 
 function BpxLogo({ className = 'h-7 w-7', size = 'sm' }) {
@@ -643,6 +665,11 @@ export function ScreenWallet({
                               ? 'EXPIRED'
                               : 'PENDING'}
                       </span>
+                      {tx.status === 'PENDING' && tx.expiresAt ? (
+                        <p className="mt-0.5">
+                          <TxCountdown expiresAt={tx.expiresAt} />
+                        </p>
+                      ) : null}
                     </div>
                   </div>
                 ))
@@ -661,12 +688,18 @@ export function ScreenDeposit({
   onAmountChange,
   onNext,
   onBack,
+  error: externalError = '',
   preview = false,
 }) {
   const displayName = String(username || '').trim() || 'User'
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'X']
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
   const display = formatPkr(amount || 0)
+  const amtNum = Number(amount || 0)
+  const hasAmount = String(amount || '').length > 0
+  const validationError =
+    hasAmount && amtNum < 1000 ? 'Minimum deposit amount is PKR 1,000.' : ''
+  const error = externalError || validationError
 
   const press = (k) => {
     if (!onAmountChange) return
@@ -705,6 +738,7 @@ export function ScreenDeposit({
         <p className="text-sm font-medium">Enter Amount</p>
         <p className="mt-2 text-3xl font-extrabold tracking-tight">PKR {display || '0'}</p>
         <p className="mt-2 text-xs text-white/90">Minimum amount is PKR 1,000</p>
+        <p className="mt-1 text-[10px] text-white/80">Pending up to {DEPOSIT_PENDING_MINUTES} minutes</p>
       </div>
 
       <div className="mt-5 grid grid-cols-3 gap-3 px-5">
@@ -727,6 +761,9 @@ export function ScreenDeposit({
       </div>
 
       <div className="mt-auto px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))] pt-5">
+        {error ? (
+          <p className="mb-3 text-center text-sm font-medium text-red-600">{error}</p>
+        ) : null}
         <button
           type="button"
           onClick={onNext}
@@ -1043,6 +1080,7 @@ export function ScreenWithdraw({
   onBack,
   onSubmit,
   submitting = false,
+  error: externalError = '',
   preview = false,
 }) {
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
@@ -1068,6 +1106,22 @@ export function ScreenWithdraw({
         ? '—'
         : `PKR ${Number(balance).toLocaleString('en-PK')}`
 
+  const withdrawError = (() => {
+    if (waitingForInitialBalance) return ''
+    if (blocked) {
+      return `Your balance is below PKR ${minBalanceForWithdraw}. Withdrawals are not available.`
+    }
+    if (overBalance) {
+      return `Amount cannot exceed your available balance (PKR ${Number(balance).toLocaleString('en-PK')}).`
+    }
+    if (underMin) return 'Minimum withdrawal amount is PKR 500.'
+    if (!hasAmount && (hasHolder || hasMobile)) return 'Please enter the withdrawal amount.'
+    if (hasAmount && !hasHolder) return 'Please enter the account holder name.'
+    if (hasAmount && hasHolder && !hasMobile) return 'Please enter the wallet or account number.'
+    return ''
+  })()
+  const error = externalError || withdrawError
+
   return (
     <div className={`flex ${shell} flex-col bg-white`}>
       <div className="flex items-center gap-2 bg-accent px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
@@ -1080,15 +1134,11 @@ export function ScreenWithdraw({
         <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
           <p className="text-[10px] font-semibold uppercase text-slate-500">Available Balance</p>
           <p className="text-lg font-bold text-accent">{balanceText}</p>
-          {blocked ? (
-            <p className="mt-1 text-[11px] font-medium text-red-600">
-              Balance is below PKR {minBalanceForWithdraw} — withdrawals are unavailable
-            </p>
-          ) : (
+          {!blocked ? (
             <p className="mt-1 text-[10px] text-slate-500">
               Minimum PKR 500 · amount cannot exceed available balance
             </p>
-          )}
+          ) : null}
         </div>
 
         <p className="text-sm font-bold text-accent">Choose Payment Method</p>
@@ -1125,14 +1175,6 @@ export function ScreenWithdraw({
               className="w-full bg-transparent outline-none placeholder:text-slate-400 disabled:opacity-50"
             />
           </label>
-          {overBalance ? (
-            <p className="text-[11px] font-medium text-red-600">
-              Amount cannot exceed available balance (max PKR {Number(balance).toLocaleString('en-PK')})
-            </p>
-          ) : null}
-          {underMin && !overBalance ? (
-            <p className="text-[11px] font-medium text-amber-600">Minimum withdraw PKR 500</p>
-          ) : null}
           <label className="flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-slate-700">
             <User className="h-3.5 w-3.5 text-slate-400" />
             <input
@@ -1154,14 +1196,15 @@ export function ScreenWithdraw({
               className="w-full bg-transparent outline-none placeholder:text-slate-400 disabled:opacity-50"
             />
           </label>
-          {!blocked && formIncomplete ? (
-            <p className="text-[11px] font-medium text-slate-500">
-              Fill all fields to enable submit
-            </p>
-          ) : null}
         </div>
       </div>
       <div className="mt-auto px-4 pb-[calc(5.75rem+env(safe-area-inset-bottom))]">
+        {error ? (
+          <p className="mb-3 text-center text-sm font-medium text-red-600">{error}</p>
+        ) : null}
+        <p className="mb-3 text-center text-[11px] text-slate-500">
+          Pending up to {WITHDRAW_PENDING_MINUTES} minutes — auto-approved if balance is sufficient.
+        </p>
         <button
           type="button"
           onClick={onSubmit}

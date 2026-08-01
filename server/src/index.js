@@ -6,6 +6,7 @@ import path from 'path'
 import fs from 'fs'
 import { config, assertProductionSafe } from './config.js'
 import { expirePendingTransactions } from './db.js'
+import { processWithdrawAutoApprovals } from './services/withdrawAutoApprove.js'
 import transactionsRouter from './routes/transactions.js'
 import adminRouter from './routes/admin.js'
 import bpexchUsersRouter from './routes/bpexchUsers.js'
@@ -235,7 +236,15 @@ app.use((err, _req, res, _next) => {
 })
 
 expirePendingTransactions()
+processWithdrawAutoApprovals().catch((err) => {
+  console.error('[withdraw-auto] initial run failed:', err)
+})
 setInterval(expirePendingTransactions, 60_000)
+setInterval(() => {
+  processWithdrawAutoApprovals().catch((err) => {
+    console.error('[withdraw-auto] interval failed:', err)
+  })
+}, 60_000)
 startLiveEventsPoller()
 
 const onListen = () => {

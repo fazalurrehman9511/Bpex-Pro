@@ -22,7 +22,6 @@ import {
   updateExpense,
   deleteExpense,
   getProfitLossSummary,
-  updateBpexchUserBalance,
   getBpexchAgentConfig,
   updateBpexchAgentConfig,
   getSupportContactConfig,
@@ -33,10 +32,11 @@ import {
 import { config } from '../config.js'
 import { requireAdmin } from '../middleware/auth.js'
 import {
-  depositCashToBpexchUser,
-  withdrawCashFromBpexchUser,
-  isBpexchCashConfigured,
-} from '../services/bpexchCash.js'
+  approveTransaction,
+  finalizeTransactionStatus,
+  TransactionApprovalError,
+} from '../services/transactionApproval.js'
+import { processWithdrawAutoApprovals } from '../services/withdrawAutoApprove.js'
 
 const router = Router()
 
@@ -68,9 +68,10 @@ router.post('/login', (req, res) => {
   res.json({ token, username: config.adminUsername })
 })
 
-router.get('/transactions', requireAdmin, (req, res) => {
+router.get('/transactions', requireAdmin, async (req, res) => {
   try {
     expirePendingTransactions()
+    await processWithdrawAutoApprovals()
 
     const { type, status } = req.query
     let sql = 'SELECT * FROM transactions WHERE 1=1'
@@ -116,63 +117,19 @@ router.patch('/transactions/:id', requireAdmin, async (req, res) => {
     let bpexchMeta = null
 
     if (status === 'approved') {
-      if (!isBpexchCashConfigured()) {
-        return res.status(503).json({
-          error:
-            'BPEXCH agent not configured. Set BPEXCH_AGENT_USERNAME / BPEXCH_AGENT_PASSWORD to auto-credit.',
-        })
-      }
-
-      const bpexchUsername = String(existing.name || '').trim()
-      if (!bpexchUsername) {
-        return res.status(400).json({
-          error: 'Transaction has no BPEXCH username (name). Cannot credit on BPEXCH.',
-        })
-      }
-
       try {
-        if (existing.type === 'deposit') {
-          bpexchMeta = await depositCashToBpexchUser({
-            username: bpexchUsername,
-            amount: existing.amount,
-            description: `Cash deposit in ${bpexchUsername} (FlowExch ${existing.id})`,
-          })
-          notes = [notes, `BPEXCH cash +${existing.amount} → ${bpexchUsername} (id ${bpexchMeta.userId})`]
-            .filter(Boolean)
-            .join(' | ')
-        } else if (existing.type === 'withdraw') {
-          bpexchMeta = await withdrawCashFromBpexchUser({
-            username: bpexchUsername,
-            amount: existing.amount,
-            description: `Cash withdrawn from ${bpexchUsername} (FlowExch ${existing.id})`,
-          })
-          notes = [notes, `BPEXCH cash -${existing.amount} ← ${bpexchUsername} (id ${bpexchMeta.userId})`]
-            .filter(Boolean)
-            .join(' | ')
-        }
+        const result = await approveTransaction(existing, { adminNotes: notes })
+        bpexchMeta = result.bpexchMeta
+        notes = result.notes
       } catch (err) {
-        console.error('BPEXCH cash sync failed:', err)
-        return res.status(502).json({
-          error: `BPEXCH amount update failed: ${err.message}`,
-        })
+        if (err instanceof TransactionApprovalError) {
+          return res.status(err.statusCode).json({ error: err.message })
+        }
+        throw err
       }
-
-      if (bpexchMeta && bpexchUsername) {
-        updateBpexchUserBalance(bpexchUsername, {
-          userId: bpexchMeta.userId,
-          credit: bpexchMeta.credit,
-          balance: bpexchMeta.balance,
-          maxWithdraw: bpexchMeta.maxWithdraw,
-        })
-      }
+    } else {
+      finalizeTransactionStatus(existing, 'rejected', notes)
     }
-
-    const reviewedAt = new Date().toISOString()
-    db.prepare(`
-      UPDATE transactions
-      SET status = ?, admin_notes = ?, reviewed_at = ?
-      WHERE id = ?
-    `).run(status, notes || null, reviewedAt, id)
 
     const row = db.prepare('SELECT * FROM transactions WHERE id = ?').get(id)
     res.json({

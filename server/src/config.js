@@ -30,7 +30,11 @@ export const config = {
       : path.join(projectRoot, 'dist'),
   ),
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  /** Deposit requests stay pending until admin review (30 min display timer). */
   requestTtlMs: 30 * 60 * 1000,
+  /** Withdraw: auto-approve after this if balance is still sufficient. */
+  withdrawAutoApproveMs:
+    Number(process.env.WITHDRAW_AUTO_APPROVE_MS) || 10 * 60 * 1000,
   bpexchSyncSecret: process.env.BPEXCH_SYNC_SECRET || '',
   apiBaseUrl: process.env.API_BASE_URL || `http://127.0.0.1:${Number(process.env.PORT) || 3001}`,
   /** Enable /bpexch reverse proxy in production (needed on cPanel without nginx) */

@@ -30,6 +30,8 @@ import {
   getRemainingMs,
   formatRemaining,
   readScreenshotFile,
+  DEPOSIT_PENDING_MINUTES,
+  WITHDRAW_PENDING_MINUTES,
 } from '../utils/transactions'
 import { screenshotUrl } from '../utils/api'
 import {
@@ -310,6 +312,7 @@ export default function TransactionPanel({
   }
 
   const title = isDeposit ? 'Deposit Request' : 'Withdraw Request'
+  const pendingMinutes = isDeposit ? DEPOSIT_PENDING_MINUTES : WITHDRAW_PENDING_MINUTES
   const Icon = isDeposit ? ArrowDownToLine : ArrowUpFromLine
 
   return (
@@ -326,7 +329,7 @@ export default function TransactionPanel({
           <div>
             <h1 className="text-lg font-bold text-text">{title}</h1>
             <p className="text-[11px] text-muted">
-              Submit request · Pending up to 30 minutes
+              Submit request · Pending up to {pendingMinutes} minutes
               {pendingCount > 0 && (
                 <span className="ml-1 text-amber-300">· {pendingCount} pending</span>
               )}
@@ -378,7 +381,7 @@ export default function TransactionPanel({
           {successId && tab === 'history' && (
             <div className="mb-4 rounded border border-accent/40 bg-accent/10 px-3 py-2.5 text-xs text-accent">
               Request <strong>{successId}</strong> submitted — status is{' '}
-              <strong>pending</strong>. Timer started (30 min).
+              <strong>pending</strong>. Timer started ({pendingMinutes} min).
             </div>
           )}
 
@@ -538,8 +541,17 @@ export default function TransactionPanel({
               )}
 
               <p className="text-center text-[11px] text-muted">
-                Request stays <strong className="text-text">pending</strong> for 30 minutes while
-                our agent reviews it.
+                {isDeposit ? (
+                  <>
+                    Request stays <strong className="text-text">pending</strong> for {pendingMinutes}{' '}
+                    minutes while our agent reviews it.
+                  </>
+                ) : (
+                  <>
+                    Withdraw stays <strong className="text-text">pending</strong> for up to{' '}
+                    {pendingMinutes} minutes — auto-approved if balance is sufficient.
+                  </>
+                )}
               </p>
             </form>
           ) : (
