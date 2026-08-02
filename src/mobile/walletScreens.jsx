@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Capacitor } from '@capacitor/core'
 import {
   Copy,
@@ -811,7 +811,6 @@ export function ScreenMethod({
     }),
   )
   const selected = methods.find((m) => m.id === method) || methods[0]
-  const bonus = Math.floor(Number(amount || 0) * 0.1)
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
 
   return (
@@ -820,9 +819,6 @@ export function ScreenMethod({
         <span className="text-sm font-semibold text-slate-700">Amount to Deposit:</span>
         <span className="text-base font-extrabold text-accent">PKR {formatPkr(amount)}</span>
       </div>
-      <p className="mt-3 text-center text-sm font-semibold text-accent">
-        You will receive bonus: PKR {formatPkr(bonus)}
-      </p>
 
       <button
         type="button"
@@ -958,14 +954,23 @@ export function ScreenProof({
   screenshotPreview,
   onScreenshotChange,
   submitting = false,
+  error: externalError = '',
   onPrevious,
   onSubmit,
   onCopyName,
   onCopyNumber,
   preview = false,
 }) {
-  const bonus = Math.floor(Number(amount || 0) * 0.1)
+  const fileInputRef = useRef(null)
   const shell = preview ? 'min-h-[520px]' : 'min-h-dvh'
+  const hasScreenshot = Boolean(screenshotPreview)
+  const validationError = hasScreenshot ? '' : 'Payment screenshot is required. Please upload your receipt.'
+  const error = externalError || validationError
+  const showUploadError = Boolean(error) && !hasScreenshot
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click()
+  }
 
   return (
     <div
@@ -976,42 +981,57 @@ export function ScreenProof({
           <span className="text-slate-500">Amount</span>
           <span className="font-bold text-accent">PKR {formatPkr(amount)}</span>
         </div>
-        <div className="mt-1 flex justify-between text-[11px]">
-          <span className="text-slate-500">Bonus you will receive</span>
-          <span className="font-bold text-accent">PKR {formatPkr(bonus)}</span>
-        </div>
         <div className="mt-2 flex justify-between border-t border-slate-100 pt-2 text-[11px]">
           <span className="text-slate-500">Payment Method</span>
           <span className="font-bold text-accent">{methodLabel}</span>
         </div>
       </div>
 
-      <p className="mt-4 text-sm font-bold text-slate-800">Upload Payment Proof</p>
-      <label className="mt-2 flex cursor-pointer flex-col items-center rounded-xl border-2 border-dashed border-slate-200 px-3 py-6">
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <p className="text-sm font-bold text-slate-800">
+          Upload Payment Proof <span className="text-rose-500">*</span>
+        </p>
+        {hasScreenshot ? (
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+            Added
+          </span>
+        ) : null}
+      </div>
+      <button
+        type="button"
+        onClick={openFilePicker}
+        className={`mt-2 flex w-full cursor-pointer flex-col items-center rounded-xl border-2 border-dashed px-3 py-6 active:bg-slate-50 ${
+          showUploadError ? 'border-rose-400 bg-rose-50/40' : 'border-slate-200 bg-white'
+        }`}
+      >
         {screenshotPreview ? (
-          <img
-            src={screenshotPreview}
-            alt="Payment proof"
-            className="h-28 max-w-full rounded-lg object-contain"
-          />
+          <>
+            <img
+              src={screenshotPreview}
+              alt="Payment proof"
+              className="h-32 max-w-full rounded-lg object-contain"
+            />
+            <p className="mt-2 text-[11px] font-semibold text-accent">Tap to change screenshot</p>
+          </>
         ) : (
           <>
-            <ImageIcon className="h-8 w-8 text-accent" />
-            <p className="mt-2 text-[11px] font-semibold text-accent">Tap to upload screenshot</p>
-            <div className="mt-3 h-16 w-24 rounded-lg bg-gradient-to-br from-emerald-100 to-slate-200" />
+            <ImageIcon className="h-10 w-10 text-accent" />
+            <p className="mt-2 text-sm font-semibold text-accent">Tap to upload screenshot</p>
+            <p className="mt-1 text-[11px] text-slate-500">Required — JPG or PNG from gallery or camera</p>
           </>
         )}
-        <input
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0]
-            if (file) onScreenshotChange?.(file)
-            e.target.value = ''
-          }}
-        />
-      </label>
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/*"
+        className="sr-only"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) onScreenshotChange?.(file)
+          e.target.value = ''
+        }}
+      />
 
       <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
         <p className="text-xs font-bold text-slate-800">Account Details</p>
@@ -1049,6 +1069,9 @@ export function ScreenProof({
       </div>
 
       <div className="mt-auto grid grid-cols-2 gap-2 pt-4">
+        {error ? (
+          <p className="col-span-2 text-center text-sm font-medium text-red-600">{error}</p>
+        ) : null}
         <button
           type="button"
           onClick={onPrevious}
@@ -1060,8 +1083,8 @@ export function ScreenProof({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={submitting}
-          className="rounded-xl bg-accent py-3 text-center text-xs font-bold text-navy-dark disabled:opacity-60"
+          disabled={submitting || !hasScreenshot}
+          className="rounded-xl bg-accent py-3 text-center text-xs font-bold text-navy-dark disabled:cursor-not-allowed disabled:opacity-60"
         >
           {submitting ? 'Submitting…' : 'Submit'}
         </button>

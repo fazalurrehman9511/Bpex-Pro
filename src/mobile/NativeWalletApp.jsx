@@ -135,6 +135,7 @@ export default function NativeWalletApp() {
   const [screenshotPreview, setScreenshotPreview] = useState('')
   const [screenshotData, setScreenshotData] = useState('')
   const [withdrawFormError, setWithdrawFormError] = useState('')
+  const [depositFormError, setDepositFormError] = useState('')
   const [transactions, setTransactions] = useState(() => loadJson(TX_KEY, []))
   const [notifications, setNotifications] = useState(() => loadActiveNotices())
   const [toast, setToast] = useState('')
@@ -160,6 +161,7 @@ export default function NativeWalletApp() {
   const [regSubmitting, setRegSubmitting] = useState(false)
   const [regError, setRegError] = useState('')
   const [regCreated, setRegCreated] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
   const statusMapRef = useRef({})
   const noticeTimersRef = useRef(new Map())
   const screenRef = useRef(screen)
@@ -189,6 +191,10 @@ export default function NativeWalletApp() {
   useEffect(() => {
     setWithdrawFormError('')
   }, [withdrawAmount, holder, mobile, screen])
+
+  useEffect(() => {
+    if (screen !== 'proof') setDepositFormError('')
+  }, [screen])
 
   useEffect(() => {
     const reloadAccounts = () => {
@@ -515,20 +521,22 @@ export default function NativeWalletApp() {
 
   const onScreenshotFile = async (file) => {
     if (!file) return
+    setDepositFormError('')
     try {
       const dataUrl = await readScreenshotFile(file)
       setScreenshotData(dataUrl)
       setScreenshotPreview(dataUrl)
     } catch (err) {
-      flash(err.message || 'Screenshot upload failed')
+      setDepositFormError(err.message || 'Screenshot upload failed. Please try again.')
     }
   }
 
   const submitDeposit = async () => {
     if (!screenshotData) {
-      flash('Please upload a payment screenshot')
+      setDepositFormError('Payment screenshot is required. Please upload your receipt.')
       return
     }
+    setDepositFormError('')
     setSubmitting(true)
     try {
       const tx = await createTransaction({
@@ -545,17 +553,14 @@ export default function NativeWalletApp() {
       const mapped = mapServerTx(tx)
       statusMapRef.current[mapped.id] = mapped.status
       pushTx(mapped)
-      const bonus = Math.floor(Number(amount) * 0.1)
-      pushNotice(
-        `${username} [PENDING] Deposit PKR ${formatPkr(amount)} (+${formatPkr(bonus)} Bonus)`,
-      )
+      pushNotice(`${username} [PENDING] Deposit PKR ${formatPkr(amount)}`)
       flash('Deposit request sent successfully')
       setAmount('')
       setScreenshotData('')
       setScreenshotPreview('')
       setScreen('wallet')
     } catch (err) {
-      flash(err.message || 'Deposit failed — please check the API')
+      setDepositFormError(err.message || 'Deposit failed. Please try again.')
     } finally {
       setSubmitting(false)
     }
@@ -779,6 +784,8 @@ export default function NativeWalletApp() {
               flash('Select a payment method first')
               return
             }
+            setMethodOpen(false)
+            setDepositFormError('')
             setScreen('proof')
           }}
         />
@@ -800,6 +807,7 @@ export default function NativeWalletApp() {
           screenshotPreview={screenshotPreview}
           onScreenshotChange={onScreenshotFile}
           submitting={submitting}
+          error={depositFormError}
           onPrevious={() => setScreen('method')}
           onCopyName={() => {
             copyText(account.accountTitle)
