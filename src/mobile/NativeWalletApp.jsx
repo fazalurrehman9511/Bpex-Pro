@@ -138,7 +138,6 @@ export default function NativeWalletApp() {
   const [transactions, setTransactions] = useState(() => loadJson(TX_KEY, []))
   const [notifications, setNotifications] = useState(() => loadActiveNotices())
   const [toast, setToast] = useState('')
-  const [accountsReady, setAccountsReady] = useState(0)
   const [balance, setBalance] = useState(
     existing?.username && balanceCache?.username === existing.username ? balanceCache.balance ?? null : null,
   )
@@ -163,6 +162,11 @@ export default function NativeWalletApp() {
   const [regCreated, setRegCreated] = useState(null)
   const statusMapRef = useRef({})
   const noticeTimersRef = useRef(new Map())
+  const screenRef = useRef(screen)
+
+  useEffect(() => {
+    screenRef.current = screen
+  }, [screen])
 
   const flash = (msg) => {
     setToast(msg)
@@ -188,6 +192,7 @@ export default function NativeWalletApp() {
 
   useEffect(() => {
     const reloadAccounts = () => {
+      if (['deposit', 'method', 'proof'].includes(screenRef.current)) return
       Promise.all([loadPaymentAccounts(), loadWithdrawMethods()]).then(() => {
         setMethod((prev) => {
           const ids = getPaymentMethodOptions().map((m) => m.id)
@@ -197,7 +202,6 @@ export default function NativeWalletApp() {
         setWithdrawMethod((prev) =>
           nextWithdrawIds.includes(prev) ? prev : nextWithdrawIds[0] || prev,
         )
-        setAccountsReady((n) => n + 1)
       })
     }
     reloadAccounts()
@@ -415,7 +419,6 @@ export default function NativeWalletApp() {
   const withdrawAccount = getWithdrawMethod(withdrawMethod)
   const withdrawMethodOptions = getWithdrawMethodOptions()
   const paymentMethodOptions = getPaymentMethodOptions()
-  void accountsReady
 
   const login = async () => {
     const u = username.trim()
@@ -511,11 +514,7 @@ export default function NativeWalletApp() {
   }
 
   const onScreenshotFile = async (file) => {
-    if (!file) {
-      setScreenshotPreview('')
-      setScreenshotData('')
-      return
-    }
+    if (!file) return
     try {
       const dataUrl = await readScreenshotFile(file)
       setScreenshotData(dataUrl)

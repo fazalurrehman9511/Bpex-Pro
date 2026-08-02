@@ -1005,7 +1005,11 @@ export function ScreenProof({
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) => onScreenshotChange?.(e.target.files?.[0] || null)}
+          onChange={(e) => {
+            const file = e.target.files?.[0]
+            if (file) onScreenshotChange?.(file)
+            e.target.value = ''
+          }}
         />
       </label>
 

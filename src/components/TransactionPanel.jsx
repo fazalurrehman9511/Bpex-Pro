@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Copy,
@@ -180,6 +180,21 @@ export default function TransactionPanel({
   const [submitting, setSubmitting] = useState(false)
   const [successId, setSuccessId] = useState(null)
   const [accountsTick, setAccountsTick] = useState(0)
+  const tabRef = useRef(tab)
+  const amountRef = useRef(amount)
+  const screenshotRef = useRef(screenshot)
+
+  useEffect(() => {
+    tabRef.current = tab
+  }, [tab])
+
+  useEffect(() => {
+    amountRef.current = amount
+  }, [amount])
+
+  useEffect(() => {
+    screenshotRef.current = screenshot
+  }, [screenshot])
 
   const isDeposit = type === 'deposit'
   const methodIds = isDeposit ? getPaymentMethodIds() : getWithdrawMethodIds()
@@ -189,7 +204,6 @@ export default function TransactionPanel({
     ? account?.label || ''
     : withdrawMethod?.label || ''
   const methodMeta = isDeposit ? getPaymentMethod(methodId) : null
-  void accountsTick
 
   const availableBalance = useMemo(
     () => parseBalanceAmount(availableBalanceProp),
@@ -205,8 +219,13 @@ export default function TransactionPanel({
       )
     }
     reloadAccounts()
-    window.addEventListener('focus', reloadAccounts)
-    return () => window.removeEventListener('focus', reloadAccounts)
+    const onFocus = () => {
+      if (tabRef.current !== 'form') return
+      if (amountRef.current.trim() || screenshotRef.current) return
+      reloadAccounts()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
   }, [])
 
   useEffect(() => {
@@ -228,7 +247,12 @@ export default function TransactionPanel({
     setSuccessId(null)
     const nextIds = isDeposit ? getPaymentMethodIds() : getWithdrawMethodIds()
     setMethodId(nextIds.includes(initialPaymentMethod) ? initialPaymentMethod : nextIds[0] || '')
-  }, [type, initialPaymentMethod, isDeposit, accountsTick])
+  }, [type, initialPaymentMethod, isDeposit])
+
+  useEffect(() => {
+    const nextIds = isDeposit ? getPaymentMethodIds() : getWithdrawMethodIds()
+    setMethodId((current) => (nextIds.includes(current) ? current : nextIds[0] || current))
+  }, [accountsTick, isDeposit])
 
   const validate = () => {
     const next = {}
@@ -518,7 +542,11 @@ export default function TransactionPanel({
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={handleScreenshot}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) void handleScreenshot({ target: { files: [file] } })
+                        e.target.value = ''
+                      }}
                       className="sr-only"
                     />
                   </label>
