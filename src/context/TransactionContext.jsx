@@ -36,7 +36,7 @@ export function TransactionProvider({ children }) {
 
   useEffect(() => {
     refreshTransactions()
-    const tick = setInterval(refreshTransactions, 5000)
+    const tick = setInterval(refreshTransactions, 15_000)
     return () => clearInterval(tick)
   }, [refreshTransactions])
 

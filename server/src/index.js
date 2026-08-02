@@ -118,18 +118,29 @@ const authLimiter = rateLimit({
 
 const writeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: config.isProduction ? 60 : 500,
+  max: config.isProduction ? 40 : 500,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Too many submissions. Try again later.' },
 })
 
+/** Rate-limit POST/PUT/PATCH/DELETE only — GET polling must not count as submissions. */
+function limitWritesOnly(limiter) {
+  return (req, res, next) => {
+    const method = String(req.method || 'GET').toUpperCase()
+    if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
+      return next()
+    }
+    return limiter(req, res, next)
+  }
+}
+
 app.use('/api', apiLimiter)
 app.use('/api/admin/login', authLimiter)
 app.use('/api/bpexch/users/verify', authLimiter)
-app.use('/api/register', writeLimiter)
-app.use('/api/contact', writeLimiter)
-app.use('/api/transactions', writeLimiter)
+app.use('/api/register', limitWritesOnly(writeLimiter))
+app.use('/api/contact', limitWritesOnly(writeLimiter))
+app.use('/api/transactions', limitWritesOnly(writeLimiter))
 
 app.get('/api/health', (_req, res) => {
   res.json({
