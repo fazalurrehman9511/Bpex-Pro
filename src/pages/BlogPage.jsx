@@ -3,8 +3,9 @@ import { BookOpen, Search, Sparkles, MessageCircle, Download } from 'lucide-reac
 import { Link } from 'react-router-dom'
 import { ANDROID_APK_AVAILABLE, ANDROID_APK_URL } from '../config/androidApp'
 import { useModal } from '../context/ModalContext'
-import { blogCategories, blogPosts as staticPosts } from '../data/blogPosts'
-import { fetchBlogPosts } from '../utils/api'
+import { blogPosts as staticPosts } from '../data/blogPosts'
+import { blogCategoriesWithAll, getBlogCategoriesCache, setBlogCategoriesCache } from '../data/blogCategories'
+import { fetchBlogCategories, fetchBlogPosts } from '../utils/api'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import BlogCard from '../components/blog/BlogCard'
 import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
@@ -14,6 +15,7 @@ export default function BlogPage() {
   const [activeCategory, setActiveCategory] = useState('all')
   const [search, setSearch] = useState('')
   const [posts, setPosts] = useState(staticPosts)
+  const [categories, setCategories] = useState(() => blogCategoriesWithAll())
   const [loading, setLoading] = useState(true)
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
 
@@ -24,6 +26,20 @@ export default function BlogPage() {
   }
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
+
+  useEffect(() => {
+    let cancelled = false
+    fetchBlogCategories()
+      .then((list) => {
+        if (cancelled || !list?.length) return
+        setBlogCategoriesCache(list)
+        setCategories(blogCategoriesWithAll(list))
+      })
+      .catch(() => {
+        if (!cancelled) setCategories(blogCategoriesWithAll(getBlogCategoriesCache()))
+      })
+    return () => { cancelled = true }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -103,7 +119,7 @@ export default function BlogPage() {
 
       <section className="sticky top-[3.25rem] z-20 border-b border-emerald-200/60 bg-white/90 px-4 py-3 backdrop-blur-md sm:px-6">
         <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto scrollbar-hide">
-          {blogCategories.map(({ id, label }) => (
+          {categories.map(({ id, label }) => (
             <button
               key={id}
               type="button"
@@ -151,7 +167,7 @@ export default function BlogPage() {
                   <p className="mt-1 text-sm text-slate-500">
                     {gridPosts.length} {gridPosts.length === 1 ? 'article' : 'articles'}
                     {activeCategory !== 'all' &&
-                      ` in ${blogCategories.find((c) => c.id === activeCategory)?.label}`}
+                      ` in ${categories.find((c) => c.id === activeCategory)?.label}`}
                   </p>
                 </div>
               </div>

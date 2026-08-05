@@ -33,6 +33,15 @@ export function HomepageContentProvider({ children }) {
     return () => window.removeEventListener('online', retry)
   }, [refreshContent])
 
+  useEffect(() => {
+    const onUpdated = () => {
+      setContent(getHomepageContent())
+      refreshContent()
+    }
+    window.addEventListener('homepage-content-updated', onUpdated)
+    return () => window.removeEventListener('homepage-content-updated', onUpdated)
+  }, [refreshContent])
+
   return (
     <HomepageContentContext.Provider value={content}>
       {children}

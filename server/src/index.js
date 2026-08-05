@@ -21,6 +21,8 @@ import whatsappAgentsRouter from './routes/whatsappAgents.js'
 import bpexchBalanceRouter from './routes/bpexchBalance.js'
 import sitemapRouter from './routes/sitemap.js'
 import homepageContentRouter from './routes/homepageContent.js'
+import brandGuideContentRouter from './routes/brandGuideContent.js'
+import responsibleGamingContentRouter from './routes/responsibleGamingContent.js'
 import { startLiveEventsPoller } from './services/bpexchLive.js'
 import {
   bpexchHttpFetch,
@@ -164,6 +166,8 @@ app.use('/api/withdraw-methods', withdrawMethodsRouter)
 app.use('/api/support-contact', supportContactRouter)
 app.use('/api/whatsapp-agents', whatsappAgentsRouter)
 app.use('/api/homepage-content', homepageContentRouter)
+app.use('/api/brand-guide-content', brandGuideContentRouter)
+app.use('/api/responsible-gaming-content', responsibleGamingContentRouter)
 app.use('/api', (req, res) => {
   res.status(404).json({
     error: `API route not found: ${req.method} ${req.originalUrl || req.url}`,

@@ -3,6 +3,11 @@ import path from 'path'
 import Database from 'better-sqlite3'
 import { config } from './config.js'
 import { DEFAULT_HOMEPAGE_CONTENT, normalizeHomepageContent } from './homepageContent.js'
+import { DEFAULT_BRAND_GUIDE_CONTENT, normalizeBrandGuideContent } from './brandGuideContent.js'
+import {
+  DEFAULT_RESPONSIBLE_GAMING_CONTENT,
+  normalizeResponsibleGamingContent,
+} from './responsibleGamingContent.js'
 import { normalizeUserType } from './utils/bpexchUser.js'
 
 const dataDir = path.dirname(config.databasePath)
@@ -99,6 +104,16 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);
   CREATE INDEX IF NOT EXISTS idx_blog_posts_published_at ON blog_posts(published_at DESC);
 
+  CREATE TABLE IF NOT EXISTS blog_categories (
+    id TEXT PRIMARY KEY,
+    label TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_blog_categories_sort ON blog_categories(sort_order ASC, label ASC);
+
   CREATE TABLE IF NOT EXISTS contact_messages (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -185,6 +200,18 @@ db.exec(`
     content TEXT NOT NULL DEFAULT '{}',
     updated_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS brand_guide_content_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    content TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS responsible_gaming_content_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    content TEXT NOT NULL DEFAULT '{}',
+    updated_at TEXT NOT NULL
+  );
 `)
 
 ;(() => {
@@ -237,6 +264,22 @@ db.exec(`
       INSERT INTO homepage_content_config (id, content, updated_at)
       VALUES (1, ?, ?)
     `).run(JSON.stringify(DEFAULT_HOMEPAGE_CONTENT), new Date().toISOString())
+  }
+
+  const brandGuideRow = db.prepare('SELECT id FROM brand_guide_content_config WHERE id = 1').get()
+  if (!brandGuideRow) {
+    db.prepare(`
+      INSERT INTO brand_guide_content_config (id, content, updated_at)
+      VALUES (1, ?, ?)
+    `).run(JSON.stringify(DEFAULT_BRAND_GUIDE_CONTENT), new Date().toISOString())
+  }
+
+  const responsibleGamingRow = db.prepare('SELECT id FROM responsible_gaming_content_config WHERE id = 1').get()
+  if (!responsibleGamingRow) {
+    db.prepare(`
+      INSERT INTO responsible_gaming_content_config (id, content, updated_at)
+      VALUES (1, ?, ?)
+    `).run(JSON.stringify(DEFAULT_RESPONSIBLE_GAMING_CONTENT), new Date().toISOString())
   }
 })()
 
@@ -990,6 +1033,66 @@ export function updateHomepageContentConfig(patch = {}) {
   return getHomepageContentConfig()
 }
 
+export function getBrandGuideContentConfig() {
+  const row = db.prepare('SELECT * FROM brand_guide_content_config WHERE id = 1').get()
+  let parsed = DEFAULT_BRAND_GUIDE_CONTENT
+  if (row?.content) {
+    try {
+      parsed = JSON.parse(row.content)
+    } catch {
+      parsed = DEFAULT_BRAND_GUIDE_CONTENT
+    }
+  }
+  return {
+    content: normalizeBrandGuideContent(parsed),
+    updatedAt: row?.updated_at || null,
+    source: row?.content ? 'db' : 'default',
+  }
+}
+
+export function updateBrandGuideContentConfig(patch = {}) {
+  const next = normalizeBrandGuideContent(patch?.content ?? patch)
+  const updatedAt = new Date().toISOString()
+  db.prepare(`
+    INSERT INTO brand_guide_content_config (id, content, updated_at)
+    VALUES (1, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      content = excluded.content,
+      updated_at = excluded.updated_at
+  `).run(JSON.stringify(next), updatedAt)
+  return getBrandGuideContentConfig()
+}
+
+export function getResponsibleGamingContentConfig() {
+  const row = db.prepare('SELECT * FROM responsible_gaming_content_config WHERE id = 1').get()
+  let parsed = DEFAULT_RESPONSIBLE_GAMING_CONTENT
+  if (row?.content) {
+    try {
+      parsed = JSON.parse(row.content)
+    } catch {
+      parsed = DEFAULT_RESPONSIBLE_GAMING_CONTENT
+    }
+  }
+  return {
+    content: normalizeResponsibleGamingContent(parsed),
+    updatedAt: row?.updated_at || null,
+    source: row?.content ? 'db' : 'default',
+  }
+}
+
+export function updateResponsibleGamingContentConfig(patch = {}) {
+  const next = normalizeResponsibleGamingContent(patch?.content ?? patch)
+  const updatedAt = new Date().toISOString()
+  db.prepare(`
+    INSERT INTO responsible_gaming_content_config (id, content, updated_at)
+    VALUES (1, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      content = excluded.content,
+      updated_at = excluded.updated_at
+  `).run(JSON.stringify(next), updatedAt)
+  return getResponsibleGamingContentConfig()
+}
+
 /**
  * Verify user may log in via app/web.
  * Returns { ok, user?, error?, code? }
@@ -1031,6 +1134,188 @@ export function verifyBpexchUserForLogin({ username, password } = {}) {
       userType: row.user_type,
     },
   }
+}
+
+export function rowToContactMessage(row) {
+  if (!row) return null
+  return {
+    id: row.id,
+    name: row.name,
+    phone: row.phone,
+    email: row.email || '',
+    subject: row.subject || '',
+    message: row.message,
+    createdAt: row.created_at,
+  }
+}
+
+export function listContactMessages({ limit = 200 } = {}) {
+  const capped = Math.min(Math.max(1, Number(limit) || 200), 500)
+  const rows = db.prepare(`
+    SELECT * FROM contact_messages
+    ORDER BY created_at DESC
+    LIMIT ?
+  `).all(capped)
+  return rows.map(rowToContactMessage)
+}
+
+export function deleteContactMessage(id) {
+  const result = db.prepare('DELETE FROM contact_messages WHERE id = ?').run(id)
+  if (!result.changes) return { error: 'Message not found' }
+  return { ok: true }
+}
+
+const DEFAULT_BLOG_CATEGORIES = [
+  { id: 'cricket', label: 'Cricket', sortOrder: 1 },
+  { id: 'guides', label: 'Guides', sortOrder: 2 },
+  { id: 'payments', label: 'Payments', sortOrder: 3 },
+  { id: 'tips', label: 'Tips', sortOrder: 4 },
+]
+
+function rowToBlogCategory(row) {
+  if (!row) return null
+  return {
+    id: row.id,
+    label: row.label,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+export function seedBlogCategoriesIfEmpty() {
+  const count = db.prepare('SELECT COUNT(*) AS c FROM blog_categories').get().c
+  if (count > 0) return
+
+  const now = new Date().toISOString()
+  const insert = db.prepare(`
+    INSERT INTO blog_categories (id, label, sort_order, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+  `)
+
+  for (const category of DEFAULT_BLOG_CATEGORIES) {
+    insert.run(category.id, category.label, category.sortOrder, now, now)
+  }
+  console.log(`[db] Seeded ${DEFAULT_BLOG_CATEGORIES.length} blog categories`)
+}
+
+export function listBlogCategories() {
+  const rows = db.prepare(`
+    SELECT * FROM blog_categories
+    ORDER BY sort_order ASC, label ASC
+  `).all()
+  return rows.map(rowToBlogCategory)
+}
+
+export function getBlogCategory(id) {
+  const row = db.prepare('SELECT * FROM blog_categories WHERE id = ?').get(id)
+  return rowToBlogCategory(row)
+}
+
+export function resolveBlogCategoryLabel(id) {
+  const category = getBlogCategory(id)
+  return category?.label || id
+}
+
+export function createBlogCategory({ id, label, sortOrder } = {}) {
+  const cleanLabel = String(label || '').trim()
+  if (!cleanLabel) {
+    return { error: 'Label is required' }
+  }
+
+  const categoryId = String(id || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    || cleanLabel
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+
+  if (!categoryId) {
+    return { error: 'Category id is required' }
+  }
+  if (getBlogCategory(categoryId)) {
+    return { error: 'Category id already exists' }
+  }
+
+  const now = new Date().toISOString()
+  const order = Number.isFinite(Number(sortOrder)) ? Number(sortOrder) : 0
+
+  db.prepare(`
+    INSERT INTO blog_categories (id, label, sort_order, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(categoryId, cleanLabel, order, now, now)
+
+  return { category: getBlogCategory(categoryId) }
+}
+
+export function updateBlogCategory(id, patch = {}) {
+  const existing = db.prepare('SELECT * FROM blog_categories WHERE id = ?').get(id)
+  if (!existing) return { error: 'Category not found' }
+
+  const nextLabel = patch.label !== undefined ? String(patch.label).trim() : existing.label
+  if (!nextLabel) return { error: 'Label is required' }
+
+  const nextSortOrder = patch.sortOrder !== undefined
+    ? (Number.isFinite(Number(patch.sortOrder)) ? Number(patch.sortOrder) : existing.sort_order)
+    : existing.sort_order
+
+  const nextId = patch.id !== undefined
+    ? String(patch.id).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    : existing.id
+
+  if (!nextId) return { error: 'Category id is required' }
+
+  const now = new Date().toISOString()
+
+  if (nextId !== existing.id) {
+    if (getBlogCategory(nextId)) return { error: 'Category id already exists' }
+
+    const rename = db.transaction(() => {
+      db.prepare(`
+        UPDATE blog_categories
+        SET id = ?, label = ?, sort_order = ?, updated_at = ?
+        WHERE id = ?
+      `).run(nextId, nextLabel, nextSortOrder, now, existing.id)
+
+      db.prepare(`
+        UPDATE blog_posts
+        SET category = ?, category_label = ?, updated_at = ?
+        WHERE category = ?
+      `).run(nextId, nextLabel, now, existing.id)
+    })
+    rename()
+  } else {
+    db.prepare(`
+      UPDATE blog_categories
+      SET label = ?, sort_order = ?, updated_at = ?
+      WHERE id = ?
+    `).run(nextLabel, nextSortOrder, now, existing.id)
+
+    db.prepare(`
+      UPDATE blog_posts
+      SET category_label = ?, updated_at = ?
+      WHERE category = ?
+    `).run(nextLabel, now, existing.id)
+  }
+
+  return { category: getBlogCategory(nextId) }
+}
+
+export function deleteBlogCategory(id) {
+  const existing = getBlogCategory(id)
+  if (!existing) return { error: 'Category not found' }
+
+  const postCount = db.prepare('SELECT COUNT(*) AS c FROM blog_posts WHERE category = ?').get(id).c
+  if (postCount > 0) {
+    return { error: `Cannot delete: ${postCount} post(s) use this category` }
+  }
+
+  db.prepare('DELETE FROM blog_categories WHERE id = ?').run(id)
+  return { ok: true }
 }
 
 export function rowToBlogPost(row) {

@@ -347,6 +347,8 @@ function isFlowExchApiPath(pathname = '') {
     pathname.startsWith('/api/support-contact') ||
     pathname.startsWith('/api/whatsapp-agents') ||
     pathname.startsWith('/api/homepage-content') ||
+    pathname.startsWith('/api/brand-guide-content') ||
+    pathname.startsWith('/api/responsible-gaming-content') ||
     pathname.startsWith('/api/health')
   )
 }

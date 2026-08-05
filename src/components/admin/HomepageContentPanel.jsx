@@ -78,8 +78,13 @@ export default function HomepageContentPanel({
   }
 
   const patchSeo = (key, value) => {
-    setForm((prev) => ({ ...prev, seo: { ...prev.seo, [key]: value } }))
+    setForm((prev) => ({
+      ...prev,
+      seo: { ...(prev.seo || DEFAULT_HOMEPAGE_CONTENT.seo), [key]: value },
+    }))
   }
+
+  const seo = form.seo || DEFAULT_HOMEPAGE_CONTENT.seo
 
   return (
     <div className="space-y-4">
@@ -111,31 +116,34 @@ export default function HomepageContentPanel({
         </div>
       </div>
 
-      <SectionCard title="SEO — Meta Tags">
+      <SectionCard title="Homepage SEO — Meta Title, Description & Keywords">
+        <p className="-mt-2 text-[11px] leading-relaxed text-muted">
+          Controls the homepage title, search snippet, keywords, and social preview text (Google, Facebook, WhatsApp link previews).
+        </p>
         <Field label="Meta Title">
           <TextInput
-            value={form.seo.metaTitle}
+            value={seo.metaTitle}
             onChange={(v) => patchSeo('metaTitle', v)}
             maxLength={70}
             placeholder="Page title shown in Google search results"
           />
-          <p className="mt-1 text-[10px] text-muted">{(form.seo.metaTitle || '').length}/70 characters</p>
+          <p className="mt-1 text-[10px] text-muted">{(seo.metaTitle || '').length}/70 characters</p>
         </Field>
         <Field label="Meta Description">
           <TextArea
-            value={form.seo.metaDescription}
+            value={seo.metaDescription}
             onChange={(v) => patchSeo('metaDescription', v)}
             rows={3}
             maxLength={160}
             placeholder="Short summary for search engines and social previews"
           />
-          <p className="mt-1 text-[10px] text-muted">{(form.seo.metaDescription || '').length}/160 characters</p>
+          <p className="mt-1 text-[10px] text-muted">{(seo.metaDescription || '').length}/160 characters</p>
         </Field>
         <Field label="Meta Keywords">
           <TextInput
-            value={form.seo.metaKeywords}
+            value={seo.metaKeywords}
             onChange={(v) => patchSeo('metaKeywords', v)}
-            placeholder="BpxPro, BPX, cricket betting, JazzCash"
+            placeholder="BpxPro, cricket betting, JazzCash"
           />
           <p className="mt-1 text-[10px] text-muted">Comma-separated keywords for search engines</p>
         </Field>

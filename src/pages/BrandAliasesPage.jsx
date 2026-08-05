@@ -12,34 +12,26 @@ import {
 } from 'lucide-react'
 import SeoHead from '../components/SeoHead'
 import { useModal } from '../context/ModalContext'
+import { useBrandGuideContent } from '../context/BrandGuideContentContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 import { ANDROID_APK_AVAILABLE, ANDROID_APK_URL } from '../config/androidApp'
-import { BRAND_ALIASES, BRAND_ALIAS_TEXT, BRAND_NAME, SITE_URL } from '../config/brand'
+import { BRAND_NAME, SITE_URL } from '../config/brand'
+import { sectionLinkTarget } from '../utils/detectCountry'
 
-const aliasCards = [
-  {
-    alias: 'BPX',
-    note: 'Short brand version commonly typed in chats, direct searches and quick referrals.',
-  },
-  {
-    alias: 'BPEXCH',
-    note: 'Exchange-style shortcut that players often search when looking for the dashboard or login.',
-  },
-  {
-    alias: 'BettPro',
-    note: 'A spelling variation some users use when searching for the same betting platform.',
-  },
-]
-
-const highlights = [
-  'Same official platform, same WhatsApp agents, same betting exchange access.',
-  'Cricket, football, tennis, live casino and fast local payment options.',
-  'Direct routes for registration, app download and dashboard access.',
-]
+function linkTarget(path) {
+  const value = String(path || '').trim()
+  if (!value) return { to: '/' }
+  if (value.startsWith('/#')) {
+    return { to: sectionLinkTarget(value.slice(2)) }
+  }
+  return { to: value }
+}
 
 export default function BrandAliasesPage() {
   const { openModal } = useModal()
+  const content = useBrandGuideContent()
+  const { seo, hero, aliasCards, platform, links } = content
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
@@ -50,74 +42,66 @@ export default function BrandAliasesPage() {
     }
   }
 
-  const seoTitle = 'BpxPro, BPX, BPEXCH & BettPro | Official Brand Names'
-  const seoDescription =
-    'BpxPro is also searched as BPX, BPEXCH, BPXPRO, BettPro and Bett Pro. Same official betting exchange platform, same WhatsApp agents and same dashboard access.'
   const canonicalPath = '/bpx'
 
   return (
-    <div className="min-h-screen bg-navy">
+    <div className="min-h-screen bg-slate-50">
       <SeoHead
-        title={seoTitle}
-        description={seoDescription}
+        title={seo.metaTitle}
+        description={seo.metaDescription}
+        keywords={seo.metaKeywords}
         canonicalPath={canonicalPath}
-        ogTitle="BpxPro, BPX, BPEXCH & BettPro"
-        ogDescription={seoDescription}
-        twitterTitle="BpxPro, BPX, BPEXCH & BettPro"
-        twitterDescription={seoDescription}
+        ogTitle={seo.metaTitle}
+        ogDescription={seo.metaDescription}
+        twitterTitle={seo.metaTitle}
+        twitterDescription={seo.metaDescription}
         jsonLd={{
           '@context': 'https://schema.org',
           '@type': 'WebPage',
-          name: seoTitle,
+          name: seo.metaTitle,
           url: `${SITE_URL}${canonicalPath}`,
-          description: seoDescription,
+          description: seo.metaDescription,
           about: {
             '@type': 'Organization',
             name: BRAND_NAME,
-            alternateName: BRAND_ALIASES,
+            alternateName: hero.aliases,
           },
-          keywords: BRAND_ALIASES.join(', '),
+          keywords: seo.metaKeywords || hero.aliases.join(', '),
         }}
       />
 
-      <section className="relative overflow-hidden border-b border-border px-4 pt-10 pb-12 sm:px-6 sm:pt-14 sm:pb-16">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(37,211,102,0.14)_0%,_transparent_55%)]" />
-        <div className="pointer-events-none absolute -left-16 top-10 h-56 w-56 rounded-full bg-header-blue/10 blur-3xl" />
-
+      <section className="hero-mesh relative overflow-hidden border-b border-emerald-200/60 px-4 pt-10 pb-12 sm:px-6 sm:pt-14 sm:pb-16">
         <div className="relative mx-auto max-w-5xl">
           <Link
             to="/"
-            className="mb-6 inline-flex items-center gap-1.5 text-xs font-medium text-muted transition-colors hover:text-accent"
+            className="mb-6 inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 transition-colors hover:text-emerald-700"
           >
             <ArrowRight className="h-3.5 w-3.5 rotate-180" />
             Back to Home
           </Link>
 
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1">
-              <Search className="h-4 w-4 text-accent" />
-              <span className="text-xs font-bold uppercase tracking-wider text-accent">
-                Official Brand Guide
+            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1.5 shadow-sm">
+              <Search className="h-4 w-4 text-emerald-700" />
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                {hero.badge}
               </span>
             </div>
 
-            <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-text sm:text-4xl lg:text-5xl">
-              {BRAND_NAME}, BPX, BPEXCH, BPXPRO, BettPro &amp; Bett Pro
+            <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+              {hero.headline}
             </h1>
 
-            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
-              If you searched for {BRAND_ALIAS_TEXT}, you are looking for the same official platform.
-              {` `}
-              {BRAND_NAME} is the main brand, and these names all point to the same betting exchange,
-              WhatsApp agent service and dashboard experience.
+            <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base">
+              {hero.intro}
             </p>
           </div>
 
           <div className="mt-6 flex flex-wrap gap-2">
-            {BRAND_ALIASES.map((alias) => (
+            {hero.aliases.map((alias) => (
               <span
                 key={alias}
-                className="rounded-full border border-border bg-navy-light px-3 py-1 text-xs font-semibold text-text"
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm"
               >
                 {alias}
               </span>
@@ -129,7 +113,7 @@ export default function BrandAliasesPage() {
               <Link
                 to="/dashboard"
                 onClick={openDashboard}
-                className="inline-flex min-h-12 items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
+                className="btn-whatsapp inline-flex min-h-12 items-center justify-center gap-2.5 rounded-xl px-6 py-3.5 text-sm font-bold transition active:scale-[0.98]"
               >
                 Open Dashboard
               </Link>
@@ -137,7 +121,7 @@ export default function BrandAliasesPage() {
                 <a
                   href={ANDROID_APK_URL}
                   download="bpexpro.apk"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-sky-300 bg-sky-600 px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-sky-700"
                 >
                   <Download className="h-4 w-4 text-white" aria-hidden="true" />
                   Download App
@@ -149,7 +133,7 @@ export default function BrandAliasesPage() {
               <button
                 type="button"
                 onClick={() => openModal('register', { registerPath: 'whatsapp' })}
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2.5 rounded bg-accent px-6 py-3.5 text-sm font-bold text-navy-dark shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover"
+                className="btn-whatsapp inline-flex min-h-12 cursor-pointer items-center justify-center gap-2.5 rounded-xl px-6 py-3.5 text-sm font-bold transition active:scale-[0.98]"
               >
                 <MessageCircle className="h-5 w-5" fill="currentColor" strokeWidth={0} />
                 Register with Agent
@@ -157,16 +141,16 @@ export default function BrandAliasesPage() {
               <button
                 type="button"
                 onClick={() => openModal('register', { registerPath: 'self' })}
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded border border-border bg-navy-light px-6 py-3.5 text-sm font-bold text-text transition-colors hover:border-accent/40"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-6 py-3.5 text-sm font-bold text-slate-800 shadow-sm transition-colors hover:border-emerald-300 hover:text-emerald-800"
               >
-                <UserPlus className="h-4 w-4 text-accent" />
+                <UserPlus className="h-4 w-4 text-emerald-700" />
                 Register Myself
               </button>
               {ANDROID_APK_AVAILABLE && (
                 <a
                   href={ANDROID_APK_URL}
                   download="bpexpro.apk"
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded border border-header-blue/70 bg-header-blue px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-header-blue/20 transition-colors hover:border-header-blue hover:bg-header-blue/90"
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-sky-300 bg-sky-600 px-6 py-3.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-sky-700"
                 >
                   <Download className="h-4 w-4 text-white" aria-hidden="true" />
                   Download App
@@ -177,69 +161,59 @@ export default function BrandAliasesPage() {
         </div>
       </section>
 
-      <section className="px-4 py-8 sm:px-6 sm:py-10">
+      <section className="section-tint-emerald px-4 py-8 sm:px-6 sm:py-10">
         <div className="mx-auto grid max-w-5xl gap-4 md:grid-cols-3">
           {aliasCards.map(({ alias, note }) => (
-            <div key={alias} className="rounded-2xl border border-border bg-navy-dark p-5">
-              <p className="text-sm font-bold text-accent">{alias}</p>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{note}</p>
+            <div
+              key={alias}
+              className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+            >
+              <p className="text-sm font-bold text-emerald-700">{alias}</p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-600">{note}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <section className="px-4 pb-8 sm:px-6 sm:pb-10">
+      <section className="px-4 pb-10 sm:px-6 sm:pb-14">
         <div className="mx-auto grid max-w-5xl gap-4 lg:grid-cols-[1.15fr_.85fr]">
-          <div className="rounded-2xl border border-border bg-navy-dark p-6">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-3 py-1">
-              <Shield className="h-4 w-4 text-accent" />
-              <span className="text-xs font-bold uppercase tracking-wider text-accent">
-                Same Platform
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
+              <Shield className="h-4 w-4 text-emerald-700" />
+              <span className="text-xs font-bold uppercase tracking-wider text-emerald-800">
+                {platform.badge}
               </span>
             </div>
-            <h2 className="text-xl font-bold text-text">What these names actually mean</h2>
-            <p className="mt-3 text-sm leading-relaxed text-muted">
-              Users often search different brand spellings before they reach the right site. On
-              this project, BpxPro is the main public brand and the aliases {BRAND_ALIAS_TEXT} are
-              treated as the same platform identity.
-            </p>
+            <h2 className="text-xl font-bold text-slate-900">{platform.title}</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-600">{platform.body}</p>
             <div className="mt-5 space-y-3">
-              {highlights.map((item) => (
+              {platform.highlights.map((item) => (
                 <div key={item} className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-                  <p className="text-sm leading-relaxed text-muted">{item}</p>
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+                  <p className="text-sm leading-relaxed text-slate-600">{item}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-navy-dark p-6">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-header-blue/20 bg-header-blue/10 px-3 py-1">
-              <Globe2 className="h-4 w-4 text-header-blue" />
-              <span className="text-xs font-bold uppercase tracking-wider text-header-blue">
-                Next Steps
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1">
+              <Globe2 className="h-4 w-4 text-sky-700" />
+              <span className="text-xs font-bold uppercase tracking-wider text-sky-800">
+                {links.badge}
               </span>
             </div>
-            <h2 className="text-xl font-bold text-text">Useful links</h2>
+            <h2 className="text-xl font-bold text-slate-900">{links.title}</h2>
             <div className="mt-5 space-y-3">
-              <Link
-                to="/blog/bpx-bpexch-bettpro-brand-guide"
-                className="block rounded-xl border border-border bg-navy px-4 py-3 text-sm font-semibold text-text transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                Read the full BPX / BPEXCH / BettPro brand guide
-              </Link>
-              <Link
-                to="/blog"
-                className="block rounded-xl border border-border bg-navy px-4 py-3 text-sm font-semibold text-text transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                Explore all betting guides and payment posts
-              </Link>
-              <Link
-                to={{ pathname: '/', hash: 'faq' }}
-                className="block rounded-xl border border-border bg-navy px-4 py-3 text-sm font-semibold text-text transition-colors hover:border-accent/40 hover:text-accent"
-              >
-                Go to homepage FAQ and support section
-              </Link>
+              {links.items.map((item) => (
+                <Link
+                  key={`${item.label}-${item.path}`}
+                  {...linkTarget(item.path)}
+                  className="block rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition-colors hover:border-emerald-300 hover:text-emerald-800"
+                >
+                  {item.label}
+                </Link>
+              ))}
             </div>
           </div>
         </div>

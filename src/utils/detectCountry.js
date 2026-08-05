@@ -31,18 +31,24 @@ export function scrollToSection(id) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+/** Link target for homepage sections — scrolls without adding # to the URL. */
+export function sectionLinkTarget(sectionId) {
+  const id = String(sectionId || '').replace(/^#+/, '').trim()
+  if (!id) return { pathname: '/' }
+  return { pathname: '/', state: { scrollTo: id } }
+}
+
 export function navigateToSection(id, navigate, pathname) {
   const sectionId = String(id || '').replace(/^#+/, '').trim()
   if (!sectionId) return
 
   if (pathname !== '/') {
-    navigate({ pathname: '/', hash: sectionId })
+    navigate('/', { state: { scrollTo: sectionId } })
     return
   }
 
-  const currentHash = window.location.hash.replace(/^#+/, '')
-  if (currentHash !== sectionId) {
-    navigate({ pathname: '/', hash: sectionId }, { replace: true })
-  }
   scrollToSection(sectionId)
+  if (window.location.hash) {
+    navigate('/', { replace: true })
+  }
 }

@@ -1,16 +1,20 @@
 import { Router } from 'express'
-import { db, rowToBlogPost, seedBlogPostsIfEmpty } from '../db.js'
+import {
+  db,
+  rowToBlogPost,
+  seedBlogPostsIfEmpty,
+  seedBlogCategoriesIfEmpty,
+  listBlogCategories,
+  createBlogCategory,
+  updateBlogCategory,
+  deleteBlogCategory,
+  resolveBlogCategoryLabel,
+  getBlogCategory,
+} from '../db.js'
 import { requireAdmin } from '../middleware/auth.js'
 import { saveBlogImage } from '../utils/blogImage.js'
 
 const router = Router()
-
-const CATEGORY_LABELS = {
-  cricket: 'Cricket',
-  guides: 'Guides',
-  payments: 'Payments',
-  tips: 'Tips',
-}
 
 function slugify(text) {
   return String(text || '')
@@ -100,7 +104,16 @@ function buildPostPayload(body, existing = null) {
   if (!title) return { error: 'Title is required' }
 
   const category = String(body.category || existing?.category || 'guides').trim()
-  const categoryLabel = CATEGORY_LABELS[category] || String(body.categoryLabel || body.category_label || category)
+  const categoryRow = getBlogCategory(category)
+  if (!categoryRow) {
+    if (!existing) return { error: 'Invalid category' }
+    if (body.category !== undefined && body.category !== existing.category) {
+      return { error: 'Invalid category' }
+    }
+  }
+  const categoryLabel = categoryRow?.label
+    || resolveBlogCategoryLabel(category)
+    || String(body.categoryLabel || body.category_label || category)
   const content = normalizeContent(
     body.content,
     body.bodyText || body.body_text,
@@ -136,7 +149,65 @@ function buildPostPayload(body, existing = null) {
   }
 }
 
+seedBlogCategoriesIfEmpty()
 seedBlogPostsIfEmpty()
+
+router.get('/categories', (_req, res) => {
+  try {
+    res.json(listBlogCategories())
+  } catch (err) {
+    console.error('List blog categories error:', err)
+    res.status(500).json({ error: 'Failed to fetch blog categories' })
+  }
+})
+
+router.get('/admin/categories', requireAdmin, (_req, res) => {
+  try {
+    res.json(listBlogCategories())
+  } catch (err) {
+    console.error('Admin list blog categories error:', err)
+    res.status(500).json({ error: 'Failed to fetch blog categories' })
+  }
+})
+
+router.post('/admin/categories', requireAdmin, (req, res) => {
+  try {
+    const result = createBlogCategory(req.body || {})
+    if (result.error) return res.status(400).json({ error: result.error })
+    res.status(201).json(result.category)
+  } catch (err) {
+    console.error('Create blog category error:', err)
+    res.status(500).json({ error: 'Failed to create blog category' })
+  }
+})
+
+router.patch('/admin/categories/:id', requireAdmin, (req, res) => {
+  try {
+    const result = updateBlogCategory(req.params.id, req.body || {})
+    if (result.error) {
+      const status = result.error === 'Category not found' ? 404 : 400
+      return res.status(status).json({ error: result.error })
+    }
+    res.json(result.category)
+  } catch (err) {
+    console.error('Update blog category error:', err)
+    res.status(500).json({ error: 'Failed to update blog category' })
+  }
+})
+
+router.delete('/admin/categories/:id', requireAdmin, (req, res) => {
+  try {
+    const result = deleteBlogCategory(req.params.id)
+    if (result.error) {
+      const status = result.error === 'Category not found' ? 404 : 409
+      return res.status(status).json({ error: result.error })
+    }
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('Delete blog category error:', err)
+    res.status(500).json({ error: 'Failed to delete blog category' })
+  }
+})
 
 router.get('/posts', (_req, res) => {
   try {

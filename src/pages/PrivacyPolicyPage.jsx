@@ -7,8 +7,8 @@ const LAST_UPDATED = 'July 25, 2026'
 function Section({ title, children }) {
   return (
     <section>
-      <h2 className="text-lg font-bold text-text sm:text-xl">{title}</h2>
-      <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted sm:text-base">{children}</div>
+      <h2 className="text-lg font-bold text-slate-900 sm:text-xl">{title}</h2>
+      <div className="mt-3 space-y-3 text-sm leading-relaxed text-slate-600 sm:text-base">{children}</div>
     </section>
   )
 }
@@ -23,6 +23,7 @@ export default function PrivacyPolicyPage() {
       title="Privacy Policy"
       intro={`${BRAND_NAME}, also searched as ${BRAND_ALIAS_TEXT}, provides registration, support, payment coordination and betting platform access. This page explains what information we collect, how we use it and how we handle account-related data on the website and app.`}
       lastUpdated={LAST_UPDATED}
+      theme="light"
     >
       <SeoHead
         title={title}

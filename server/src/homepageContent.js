@@ -2,11 +2,11 @@ const BRAND_ALIAS_TEXT = 'BPX, BPEXCH, BPXPRO, BettPro and Bett Pro'
 
 export const DEFAULT_HOMEPAGE_CONTENT = {
   seo: {
-    metaTitle: 'BpxPro (BPX / BPEXCH) | Asia Betting Exchange & Cricket Odds',
+    metaTitle: 'BpxPro | Asia Betting Exchange & Cricket Odds',
     metaDescription:
-      "BpxPro, also searched as BPX, BPEXCH, BettPro and Bett Pro, is Asia's trusted betting exchange agent for cricket, football, tennis and live casino.",
+      "Asia's trusted betting exchange agent for cricket, football, tennis and live casino. Fast JazzCash & EasyPaisa deposits with 24/7 WhatsApp support.",
     metaKeywords:
-      'BpxPro, BPX, BPEXCH, BPXPRO, Bett Pro, BettPro, BPEX Pro, Asia betting exchange, cricket betting Asia, JazzCash deposit, EasyPaisa betting, WhatsApp betting agent, live odds Asia',
+      'BpxPro, Asia betting exchange, cricket betting, JazzCash deposit, EasyPaisa betting, WhatsApp betting agent, live odds, sports betting Asia',
   },
   hero: {
     badgeLive: 'LIVE — Markets Open',

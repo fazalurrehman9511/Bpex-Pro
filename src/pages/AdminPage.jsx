@@ -27,6 +27,9 @@ import {
   TrendingUp,
   Receipt,
   Loader2,
+  Globe2,
+  ShieldCheck,
+  Mail,
 } from 'lucide-react'
 import {
   formatCurrency,
@@ -46,6 +49,10 @@ import {
   updateBlogPost,
   deleteBlogPost,
   uploadBlogImage,
+  fetchAdminBlogCategories,
+  createBlogCategory,
+  updateBlogCategory,
+  deleteBlogCategory,
   screenshotUrl,
   fetchAdminPaymentAccounts,
   updateAdminPaymentAccount,
@@ -70,13 +77,34 @@ import {
   updateAdminBpexchAgent,
   fetchAdminHomepageContent,
   updateAdminHomepageContent,
+  fetchAdminBrandGuideContent,
+  updateAdminBrandGuideContent,
+  fetchAdminResponsibleGamingContent,
+  updateAdminResponsibleGamingContent,
+  fetchAdminContactMessages,
+  deleteAdminContactMessage,
 } from '../utils/api'
-import { blogCategories, formatDate } from '../data/blogPosts'
-import { DEFAULT_HOMEPAGE_CONTENT, normalizeHomepageContent } from '../data/homepageContent'
+import { formatDate } from '../data/blogPosts'
+import { DEFAULT_BLOG_CATEGORIES, setBlogCategoriesCache } from '../data/blogCategories'
+import { DEFAULT_HOMEPAGE_CONTENT, normalizeHomepageContent, setHomepageContentCache } from '../data/homepageContent'
+import {
+  DEFAULT_BRAND_GUIDE_CONTENT,
+  normalizeBrandGuideContent,
+  setBrandGuideContentCache,
+} from '../data/brandGuideContent'
+import {
+  DEFAULT_RESPONSIBLE_GAMING_CONTENT,
+  normalizeResponsibleGamingContent,
+  setResponsibleGamingContentCache,
+} from '../data/responsibleGamingContent'
 import { countryCatalog, getCatalogCountry } from '../data/countryCatalog'
 import { contentToHtml } from '../utils/blogContent'
 import BlogRichEditor from '../components/blog/BlogRichEditor'
 import HomepageContentPanel from '../components/admin/HomepageContentPanel'
+import BrandGuideContentPanel from '../components/admin/BrandGuideContentPanel'
+import ResponsibleGamingContentPanel from '../components/admin/ResponsibleGamingContentPanel'
+import BlogCategoriesPanel from '../components/admin/BlogCategoriesPanel'
+import ContactMessagesPanel from '../components/admin/ContactMessagesPanel'
 import {
   isAdminAuthenticated,
   loginAdmin,
@@ -433,7 +461,10 @@ const SIDEBAR_TABS = [
   { id: 'accounts', label: 'Payment Accounts', icon: CreditCard, section: 'settings' },
   { id: 'withdrawMethods', label: 'Withdraw Methods', icon: Wallet, section: 'settings' },
   { id: 'whatsapp', label: 'WhatsApp Agents', icon: MessageCircle, section: 'settings' },
+  { id: 'contact', label: 'Contact Messages', icon: Mail, section: 'settings' },
   { id: 'homepage', label: 'Homepage', icon: Home, section: 'blog' },
+  { id: 'brandGuide', label: 'Brand Guide', icon: Globe2, section: 'blog' },
+  { id: 'responsibleGaming', label: 'Responsible Gaming', icon: ShieldCheck, section: 'blog' },
   { id: 'blog', label: 'Blog Posts', icon: FileText, section: 'blog' },
 ]
 
@@ -447,8 +478,6 @@ const EXPENSE_CATEGORIES = [
   'transport',
   'other',
 ]
-
-const BLOG_CATEGORY_OPTIONS = blogCategories.filter((c) => c.id !== 'all')
 
 const BPEXCH_USER_TYPES = ['Bettor', 'Admin', 'Master', 'SuperMaster']
 const ADMIN_IDLE_MS = 20 * 60 * 1000
@@ -616,6 +645,7 @@ function AdminSidebar({ activeTab, onTabChange, counts, onLogout, mobileOpen, on
             </p>
             {SIDEBAR_TABS.filter((t) => t.section === 'settings').map(({ id, label, icon: Icon }) => {
               const active = activeTab === id
+              const badge = id === 'contact' ? counts.contact?.total : 0
               return (
                 <button
                   key={id}
@@ -634,6 +664,11 @@ function AdminSidebar({ activeTab, onTabChange, counts, onLogout, mobileOpen, on
                     <Icon className="h-4 w-4" />
                     {label}
                   </span>
+                  {badge > 0 && (
+                    <span className="rounded-full bg-accent/20 px-2 py-0.5 text-[10px] font-bold text-accent">
+                      {badge}
+                    </span>
+                  )}
                 </button>
               )
             })}
@@ -1255,7 +1290,7 @@ function BpexchUsersTable({ users }) {
   )
 }
 
-function BlogPostForm({ form, onChange, onSubmit, onCancel, saving, editing, editorKey }) {
+function BlogPostForm({ form, onChange, onSubmit, onCancel, saving, editing, editorKey, categoryOptions = DEFAULT_BLOG_CATEGORIES }) {
   return (
     <form onSubmit={onSubmit} className="mb-6 rounded-lg border border-border bg-navy-light p-4 sm:p-5">
       <h3 className="mb-4 text-sm font-bold text-text">
@@ -1325,7 +1360,7 @@ function BlogPostForm({ form, onChange, onSubmit, onCancel, saving, editing, edi
             onChange={(e) => onChange({ ...form, category: e.target.value })}
             className="w-full rounded border border-border bg-navy px-3 py-2 text-sm text-text focus:outline-none focus:ring-2 focus:ring-accent/50"
           >
-            {BLOG_CATEGORY_OPTIONS.map((c) => (
+            {categoryOptions.map((c) => (
               <option key={c.id} value={c.id}>{c.label}</option>
             ))}
           </select>
@@ -1415,7 +1450,7 @@ function BlogPostForm({ form, onChange, onSubmit, onCancel, saving, editing, edi
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-semibold text-text">Content</label>
           <p className="mb-2 text-[10px] text-muted">
-            Use the toolbar for font, size, bold, lists, links, and images.
+            TinyMCE editor — menu bar, font size, colors, lists, links, tables, images, and word count.
           </p>
           <BlogRichEditor
             key={editorKey}
@@ -1462,7 +1497,25 @@ function BlogPostForm({ form, onChange, onSubmit, onCancel, saving, editing, edi
   )
 }
 
-function BlogPostsPanel({ posts, search, onEdit, onDelete, showForm, form, setForm, onSubmit, onCancelForm, saving, editingId, onNew }) {
+function BlogPostsPanel({
+  posts,
+  search,
+  onEdit,
+  onDelete,
+  showForm,
+  form,
+  setForm,
+  onSubmit,
+  onCancelForm,
+  saving,
+  editingId,
+  onNew,
+  categories,
+  onCreateCategory,
+  onUpdateCategory,
+  onDeleteCategory,
+  categorySaving,
+}) {
   const filtered = posts.filter((post) => {
     const q = search.trim().toLowerCase()
     if (!q) return true
@@ -1475,6 +1528,14 @@ function BlogPostsPanel({ posts, search, onEdit, onDelete, showForm, form, setFo
 
   return (
     <>
+      <BlogCategoriesPanel
+        categories={categories}
+        onCreate={onCreateCategory}
+        onUpdate={onUpdateCategory}
+        onDelete={onDeleteCategory}
+        saving={categorySaving}
+      />
+
       <div className="mb-4 flex justify-end">
         <button
           type="button"
@@ -1495,6 +1556,7 @@ function BlogPostsPanel({ posts, search, onEdit, onDelete, showForm, form, setFo
           saving={saving}
           editing={Boolean(editingId)}
           editorKey={editingId || 'new'}
+          categoryOptions={categories.length ? categories : DEFAULT_BLOG_CATEGORIES}
         />
       )}
 
@@ -2863,6 +2925,7 @@ function AdminDashboard({ onLogout }) {
   const [allTransactions, setAllTransactions] = useState([])
   const [bpexchUsers, setBpexchUsers] = useState([])
   const [blogPosts, setBlogPosts] = useState([])
+  const [adminBlogCategories, setAdminBlogCategories] = useState(DEFAULT_BLOG_CATEGORIES)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [activeTab, setActiveTab] = useState('deposit')
@@ -2879,6 +2942,7 @@ function AdminDashboard({ onLogout }) {
   const [blogForm, setBlogForm] = useState(EMPTY_BLOG_FORM)
   const [editingBlogId, setEditingBlogId] = useState(null)
   const [blogSaving, setBlogSaving] = useState(false)
+  const [blogCategorySaving, setBlogCategorySaving] = useState(false)
   const [showBpexchForm, setShowBpexchForm] = useState(false)
   const [bpexchForm, setBpexchForm] = useState(EMPTY_BPEXCH_USER_FORM)
   const [bpexchSaving, setBpexchSaving] = useState(false)
@@ -2907,6 +2971,8 @@ function AdminDashboard({ onLogout }) {
   const [creatingWhatsapp, setCreatingWhatsapp] = useState(false)
   const [deletingWhatsappCode, setDeletingWhatsappCode] = useState('')
   const [expenses, setExpenses] = useState([])
+  const [contactMessages, setContactMessages] = useState([])
+  const [deletingContactId, setDeletingContactId] = useState('')
   const [pnlSummary, setPnlSummary] = useState(null)
   const [financeDateFrom, setFinanceDateFrom] = useState('')
   const [financeDateTo, setFinanceDateTo] = useState('')
@@ -2918,18 +2984,39 @@ function AdminDashboard({ onLogout }) {
   )
   const [homepageUpdatedAt, setHomepageUpdatedAt] = useState(null)
   const [homepageSaving, setHomepageSaving] = useState(false)
+  const [brandGuideForm, setBrandGuideForm] = useState(() =>
+    normalizeBrandGuideContent(DEFAULT_BRAND_GUIDE_CONTENT),
+  )
+  const [brandGuideUpdatedAt, setBrandGuideUpdatedAt] = useState(null)
+  const [brandGuideSaving, setBrandGuideSaving] = useState(false)
+  const [responsibleGamingForm, setResponsibleGamingForm] = useState(() =>
+    normalizeResponsibleGamingContent(DEFAULT_RESPONSIBLE_GAMING_CONTENT),
+  )
+  const [responsibleGamingUpdatedAt, setResponsibleGamingUpdatedAt] = useState(null)
+  const [responsibleGamingSaving, setResponsibleGamingSaving] = useState(false)
   const [refreshing, setRefreshing] = useState(false)
 
   const isUsersTab = activeTab === 'users'
   const isBlogTab = activeTab === 'blog'
   const isHomepageTab = activeTab === 'homepage'
+  const isBrandGuideTab = activeTab === 'brandGuide'
+  const isResponsibleGamingTab = activeTab === 'responsibleGaming'
   const isAccountsTab = activeTab === 'accounts'
   const isWithdrawMethodsTab = activeTab === 'withdrawMethods'
   const isWhatsappTab = activeTab === 'whatsapp'
+  const isContactTab = activeTab === 'contact'
   const isPnlTab = activeTab === 'pnl'
   const isExpensesTab = activeTab === 'expenses'
   const isFinanceTab = isPnlTab || isExpensesTab
-  const isSettingsPanel = isAccountsTab || isWithdrawMethodsTab || isWhatsappTab || isFinanceTab || isHomepageTab
+  const isSettingsPanel =
+    isAccountsTab ||
+    isWithdrawMethodsTab ||
+    isWhatsappTab ||
+    isContactTab ||
+    isFinanceTab ||
+    isHomepageTab ||
+    isBrandGuideTab ||
+    isResponsibleGamingTab
 
   const loadTransactions = async ({ silent = false, force = false } = {}) => {
     if (!force && (isUsersTab || isBlogTab || isSettingsPanel)) return
@@ -3051,6 +3138,17 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
+  const loadBlogCategories = async ({ force = false } = {}) => {
+    if (!force && !isBlogTab) return
+    try {
+      const list = await fetchAdminBlogCategories()
+      setAdminBlogCategories(list)
+      setBlogCategoriesCache(list)
+    } catch (err) {
+      if (isBlogTab) setLoadError(err.message)
+    }
+  }
+
   const loadHomepageContentAdmin = async ({ force = false } = {}) => {
     if (!force && !isHomepageTab) return
     setLoading(true)
@@ -3059,6 +3157,38 @@ function AdminDashboard({ onLogout }) {
       const data = await fetchAdminHomepageContent()
       setHomepageForm(normalizeHomepageContent(data?.content || DEFAULT_HOMEPAGE_CONTENT))
       setHomepageUpdatedAt(data?.updatedAt || null)
+    } catch (err) {
+      setLoadError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadBrandGuideContentAdmin = async ({ force = false } = {}) => {
+    if (!force && !isBrandGuideTab) return
+    setLoading(true)
+    setLoadError('')
+    try {
+      const data = await fetchAdminBrandGuideContent()
+      setBrandGuideForm(normalizeBrandGuideContent(data?.content || DEFAULT_BRAND_GUIDE_CONTENT))
+      setBrandGuideUpdatedAt(data?.updatedAt || null)
+    } catch (err) {
+      setLoadError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadResponsibleGamingContentAdmin = async ({ force = false } = {}) => {
+    if (!force && !isResponsibleGamingTab) return
+    setLoading(true)
+    setLoadError('')
+    try {
+      const data = await fetchAdminResponsibleGamingContent()
+      setResponsibleGamingForm(
+        normalizeResponsibleGamingContent(data?.content || DEFAULT_RESPONSIBLE_GAMING_CONTENT),
+      )
+      setResponsibleGamingUpdatedAt(data?.updatedAt || null)
     } catch (err) {
       setLoadError(err.message)
     } finally {
@@ -3132,6 +3262,20 @@ function AdminDashboard({ onLogout }) {
     }
   }
 
+  const loadContactMessages = async ({ force = false } = {}) => {
+    if (!force && !isContactTab) return
+    setLoading(true)
+    setLoadError('')
+    try {
+      const list = await fetchAdminContactMessages()
+      setContactMessages(list)
+    } catch (err) {
+      setLoadError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const loadProfitLossAdmin = async ({ force = false } = {}) => {
     if (!force && !isPnlTab) return
     setLoading(true)
@@ -3164,6 +3308,12 @@ function AdminDashboard({ onLogout }) {
         case 'homepage':
           await loadHomepageContentAdmin({ force: true })
           break
+        case 'brandGuide':
+          await loadBrandGuideContentAdmin({ force: true })
+          break
+        case 'responsibleGaming':
+          await loadResponsibleGamingContentAdmin({ force: true })
+          break
         case 'accounts':
           await loadPaymentAccountsAdmin({ force: true })
           break
@@ -3172,6 +3322,9 @@ function AdminDashboard({ onLogout }) {
           break
         case 'whatsapp':
           await loadWhatsappAgentsAdmin({ force: true })
+          break
+        case 'contact':
+          await loadContactMessages({ force: true })
           break
         case 'expenses':
           await loadExpensesAdmin({ force: true })
@@ -3201,10 +3354,19 @@ function AdminDashboard({ onLogout }) {
     }
     if (isBlogTab) {
       loadBlogPosts()
+      loadBlogCategories()
       return undefined
     }
     if (isHomepageTab) {
       loadHomepageContentAdmin()
+      return undefined
+    }
+    if (isBrandGuideTab) {
+      loadBrandGuideContentAdmin()
+      return undefined
+    }
+    if (isResponsibleGamingTab) {
+      loadResponsibleGamingContentAdmin()
       return undefined
     }
     if (isAccountsTab) {
@@ -3217,6 +3379,10 @@ function AdminDashboard({ onLogout }) {
     }
     if (isWhatsappTab) {
       loadWhatsappAgentsAdmin()
+      return undefined
+    }
+    if (isContactTab) {
+      loadContactMessages()
       return undefined
     }
     if (isExpensesTab) {
@@ -3326,6 +3492,7 @@ function AdminDashboard({ onLogout }) {
     const txs = Array.isArray(allTransactions) ? allTransactions : []
     const users = Array.isArray(bpexchUsers) ? bpexchUsers : []
     const posts = Array.isArray(blogPosts) ? blogPosts : []
+    const contacts = Array.isArray(contactMessages) ? contactMessages : []
     return {
       deposit: {
         total: txs.filter((t) => t.type === 'deposit').length,
@@ -3341,8 +3508,11 @@ function AdminDashboard({ onLogout }) {
       blog: {
         total: posts.length,
       },
+      contact: {
+        total: contacts.length,
+      },
     }
-  }, [allTransactions, bpexchUsers, blogPosts])
+  }, [allTransactions, bpexchUsers, blogPosts, contactMessages])
 
   const stats = useMemo(() => {
     const list = Array.isArray(filtered) ? filtered : []
@@ -3556,7 +3726,10 @@ function AdminDashboard({ onLogout }) {
   }
 
   const handleNewBlogPost = () => {
-    setBlogForm(EMPTY_BLOG_FORM)
+    setBlogForm({
+      ...EMPTY_BLOG_FORM,
+      category: adminBlogCategories[0]?.id || EMPTY_BLOG_FORM.category,
+    })
     setEditingBlogId(null)
     setShowBlogForm(true)
   }
@@ -3590,6 +3763,79 @@ function AdminDashboard({ onLogout }) {
       if (editingBlogId === post.id) resetBlogForm()
     } catch (err) {
       alert(err.message)
+    }
+  }
+
+  const sortBlogCategories = (list) =>
+    [...list].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || a.label.localeCompare(b.label))
+
+  const handleCreateBlogCategory = async (payload) => {
+    setBlogCategorySaving(true)
+    try {
+      const created = await createBlogCategory(payload)
+      const next = sortBlogCategories([...adminBlogCategories, created])
+      setAdminBlogCategories(next)
+      setBlogCategoriesCache(next)
+    } catch (err) {
+      alert(err.message)
+      throw err
+    } finally {
+      setBlogCategorySaving(false)
+    }
+  }
+
+  const handleUpdateBlogCategory = async (id, payload) => {
+    setBlogCategorySaving(true)
+    try {
+      const updated = await updateBlogCategory(id, payload)
+      const next = sortBlogCategories(
+        adminBlogCategories.map((c) => (c.id === id ? updated : c))
+      )
+      setAdminBlogCategories(next)
+      setBlogCategoriesCache(next)
+      if (blogForm.category === id && updated.id !== id) {
+        setBlogForm((prev) => ({ ...prev, category: updated.id }))
+      }
+      setBlogPosts((prev) =>
+        prev.map((post) =>
+          post.category === id
+            ? { ...post, category: updated.id, categoryLabel: updated.label }
+            : post
+        )
+      )
+    } catch (err) {
+      alert(err.message)
+      throw err
+    } finally {
+      setBlogCategorySaving(false)
+    }
+  }
+
+  const handleDeleteBlogCategory = async (id) => {
+    if (!window.confirm('Delete this category? Posts must be moved to another category first.')) return
+    setBlogCategorySaving(true)
+    try {
+      await deleteBlogCategory(id)
+      const next = adminBlogCategories.filter((c) => c.id !== id)
+      setAdminBlogCategories(next)
+      setBlogCategoriesCache(next)
+    } catch (err) {
+      alert(err.message)
+    } finally {
+      setBlogCategorySaving(false)
+    }
+  }
+
+  const handleDeleteContactMessage = async (id) => {
+    setDeletingContactId(id)
+    try {
+      await deleteAdminContactMessage(id)
+      setContactMessages((prev) => prev.filter((msg) => msg.id !== id))
+    } catch (err) {
+      alert(err.message)
+      throw err
+    } finally {
+      setDeletingContactId('')
     }
   }
 
@@ -3667,13 +3913,55 @@ function AdminDashboard({ onLogout }) {
     setLoadError('')
     try {
       const saved = await updateAdminHomepageContent(homepageForm)
-      setHomepageForm(normalizeHomepageContent(saved?.content || homepageForm))
+      const next = normalizeHomepageContent(saved?.content || homepageForm)
+      setHomepageForm(next)
       setHomepageUpdatedAt(saved?.updatedAt || null)
+      setHomepageContentCache(next)
+      window.dispatchEvent(new CustomEvent('homepage-content-updated'))
+      alert('Homepage saved — meta title, description and keywords are now live.')
     } catch (err) {
       setLoadError(err.message)
       alert(err.message)
     } finally {
       setHomepageSaving(false)
+    }
+  }
+
+  const handleSaveBrandGuideContent = async () => {
+    setBrandGuideSaving(true)
+    setLoadError('')
+    try {
+      const saved = await updateAdminBrandGuideContent(brandGuideForm)
+      const next = normalizeBrandGuideContent(saved?.content || brandGuideForm)
+      setBrandGuideForm(next)
+      setBrandGuideUpdatedAt(saved?.updatedAt || null)
+      setBrandGuideContentCache(next)
+      window.dispatchEvent(new CustomEvent('brand-guide-content-updated'))
+      alert('Brand guide saved — /bpx page content and SEO are now live.')
+    } catch (err) {
+      setLoadError(err.message)
+      alert(err.message)
+    } finally {
+      setBrandGuideSaving(false)
+    }
+  }
+
+  const handleSaveResponsibleGamingContent = async () => {
+    setResponsibleGamingSaving(true)
+    setLoadError('')
+    try {
+      const saved = await updateAdminResponsibleGamingContent(responsibleGamingForm)
+      const next = normalizeResponsibleGamingContent(saved?.content || responsibleGamingForm)
+      setResponsibleGamingForm(next)
+      setResponsibleGamingUpdatedAt(saved?.updatedAt || null)
+      setResponsibleGamingContentCache(next)
+      window.dispatchEvent(new CustomEvent('responsible-gaming-content-updated'))
+      alert('Responsible gaming page saved — content and SEO are now live.')
+    } catch (err) {
+      setLoadError(err.message)
+      alert(err.message)
+    } finally {
+      setResponsibleGamingSaving(false)
     }
   }
 
@@ -3725,12 +4013,18 @@ function AdminDashboard({ onLogout }) {
                         ? 'Create and manage blog articles'
                         : activeTab === 'homepage'
                           ? 'Edit public homepage marketing content'
+                          : activeTab === 'brandGuide'
+                            ? 'Edit /bpx brand guide page content and SEO'
+                            : activeTab === 'responsibleGaming'
+                              ? 'Edit /responsible-gaming page content and SEO'
                         : activeTab === 'accounts'
                           ? 'JazzCash / EasyPaisa / Bank details for the app'
                           : activeTab === 'withdrawMethods'
                             ? 'Separate withdraw payment method options'
                             : activeTab === 'whatsapp'
                               ? 'Country agents & WhatsApp numbers for register'
+                              : activeTab === 'contact'
+                                ? 'Homepage contact form submissions'
                               : activeTab === 'pnl'
                                 ? 'Deposits, withdraws & expenses overview'
                                 : activeTab === 'expenses'
@@ -3810,6 +4104,25 @@ function AdminDashboard({ onLogout }) {
               label="Hidden"
               value={whatsappAgents.filter((a) => !a.isActive).length}
               icon={X}
+            />
+          </div>
+          )}
+
+          {isContactTab && (
+          <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatCard label="Total Messages" value={contactMessages.length} icon={Mail} accent />
+            <StatCard
+              label="With Email"
+              value={contactMessages.filter((m) => m.email?.trim()).length}
+              icon={User}
+            />
+            <StatCard
+              label="This Week"
+              value={contactMessages.filter((m) => {
+                const created = new Date(m.createdAt).getTime()
+                return created >= Date.now() - 7 * 24 * 60 * 60 * 1000
+              }).length}
+              icon={Clock}
             />
           </div>
           )}
@@ -3941,9 +4254,12 @@ function AdminDashboard({ onLogout }) {
           (isUsersTab && bpexchUsers.length === 0) ||
           (isBlogTab && blogPosts.length === 0) ||
           (isHomepageTab && !homepageUpdatedAt) ||
+          (isBrandGuideTab && !brandGuideUpdatedAt) ||
+          (isResponsibleGamingTab && !responsibleGamingUpdatedAt) ||
           (isAccountsTab && paymentAccounts.length === 0) ||
           (isWithdrawMethodsTab && withdrawMethods.length === 0) ||
           (isWhatsappTab && whatsappAgents.length === 0) ||
+          (isContactTab && contactMessages.length === 0) ||
           (isExpensesTab && expenses.length === 0) ||
           (isPnlTab && !pnlSummary) ||
           (!isUsersTab && !isBlogTab && !isSettingsPanel && tabTransactions.length === 0)
@@ -3957,12 +4273,18 @@ function AdminDashboard({ onLogout }) {
                   ? 'blog posts'
                   : isHomepageTab
                     ? 'homepage content'
+                    : isBrandGuideTab
+                      ? 'brand guide content'
+                      : isResponsibleGamingTab
+                        ? 'responsible gaming content'
                   : isAccountsTab
                     ? 'payment accounts'
                     : isWithdrawMethodsTab
                       ? 'withdraw methods'
                     : isWhatsappTab
                       ? 'WhatsApp agents'
+                      : isContactTab
+                        ? 'contact messages'
                       : isExpensesTab
                         ? 'expenses'
                         : isPnlTab
@@ -4001,6 +4323,12 @@ function AdminDashboard({ onLogout }) {
               setFinanceDateFrom('')
               setFinanceDateTo('')
             }}
+          />
+        ) : isContactTab ? (
+          <ContactMessagesPanel
+            messages={contactMessages}
+            onDelete={handleDeleteContactMessage}
+            deletingId={deletingContactId}
           />
         ) : isWhatsappTab ? (
           <WhatsappAgentsPanel
@@ -4045,6 +4373,22 @@ function AdminDashboard({ onLogout }) {
             saving={homepageSaving}
             updatedAt={homepageUpdatedAt}
           />
+        ) : isBrandGuideTab ? (
+          <BrandGuideContentPanel
+            form={brandGuideForm}
+            setForm={setBrandGuideForm}
+            onSave={handleSaveBrandGuideContent}
+            saving={brandGuideSaving}
+            updatedAt={brandGuideUpdatedAt}
+          />
+        ) : isResponsibleGamingTab ? (
+          <ResponsibleGamingContentPanel
+            form={responsibleGamingForm}
+            setForm={setResponsibleGamingForm}
+            onSave={handleSaveResponsibleGamingContent}
+            saving={responsibleGamingSaving}
+            updatedAt={responsibleGamingUpdatedAt}
+          />
         ) : isBlogTab ? (
           <BlogPostsPanel
             posts={blogPosts}
@@ -4059,6 +4403,11 @@ function AdminDashboard({ onLogout }) {
             saving={blogSaving}
             editingId={editingBlogId}
             onNew={handleNewBlogPost}
+            categories={adminBlogCategories}
+            onCreateCategory={handleCreateBlogCategory}
+            onUpdateCategory={handleUpdateBlogCategory}
+            onDeleteCategory={handleDeleteBlogCategory}
+            categorySaving={blogCategorySaving}
           />
         ) : isUsersTab ? (
           <BpexchUsersPanel
@@ -4114,6 +4463,8 @@ function AdminDashboard({ onLogout }) {
                   ? `${withdrawMethods.length} withdraw payment methods`
                 : isWhatsappTab
                   ? `${whatsappAgents.length} WhatsApp agent countries`
+                  : isContactTab
+                    ? `${contactMessages.length} contact form messages`
                   : isExpensesTab
                     ? `${expenses.length} expenses`
                     : isPnlTab

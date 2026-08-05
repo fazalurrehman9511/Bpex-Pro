@@ -3,11 +3,11 @@ import { fetchHomepageContent } from '../utils/api'
 
 export const DEFAULT_HOMEPAGE_CONTENT = {
   seo: {
-    metaTitle: 'BpxPro (BPX / BPEXCH) | Asia Betting Exchange & Cricket Odds',
+    metaTitle: 'BpxPro | Asia Betting Exchange & Cricket Odds',
     metaDescription:
-      "BpxPro, also searched as BPX, BPEXCH, BettPro and Bett Pro, is Asia's trusted betting exchange agent for cricket, football, tennis and live casino.",
+      "Asia's trusted betting exchange agent for cricket, football, tennis and live casino. Fast JazzCash & EasyPaisa deposits with 24/7 WhatsApp support.",
     metaKeywords:
-      'BpxPro, BPX, BPEXCH, BPXPRO, Bett Pro, BettPro, BPEX Pro, Asia betting exchange, cricket betting Asia, JazzCash deposit, EasyPaisa betting, WhatsApp betting agent, live odds Asia',
+      'BpxPro, Asia betting exchange, cricket betting, JazzCash deposit, EasyPaisa betting, WhatsApp betting agent, live odds, sports betting Asia',
   },
   hero: {
     badgeLive: 'LIVE — Markets Open',
@@ -284,16 +284,44 @@ export function normalizeHomepageContent(raw) {
   }
 }
 
-let homepageContentCache = normalizeHomepageContent(DEFAULT_HOMEPAGE_CONTENT)
+const HOMEPAGE_CONTENT_STORAGE_KEY = 'flowexch.homepage.content.v1'
+
+function loadCachedHomepageContent() {
+  if (typeof localStorage === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(HOMEPAGE_CONTENT_STORAGE_KEY)
+    if (!raw) return null
+    return normalizeHomepageContent(JSON.parse(raw))
+  } catch {
+    return null
+  }
+}
+
+function saveCachedHomepageContent(content) {
+  if (typeof localStorage === 'undefined') return
+  try {
+    localStorage.setItem(HOMEPAGE_CONTENT_STORAGE_KEY, JSON.stringify(content))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+let homepageContentCache = loadCachedHomepageContent() || normalizeHomepageContent(DEFAULT_HOMEPAGE_CONTENT)
 
 export function getHomepageContent() {
+  return homepageContentCache
+}
+
+export function setHomepageContentCache(content) {
+  homepageContentCache = normalizeHomepageContent(content)
+  saveCachedHomepageContent(homepageContentCache)
   return homepageContentCache
 }
 
 export async function loadHomepageContent() {
   try {
     const data = await fetchHomepageContent()
-    homepageContentCache = normalizeHomepageContent(data?.content || data)
+    setHomepageContentCache(data?.content || data)
   } catch (err) {
     console.warn('Homepage content load failed, using defaults:', err.message)
   }

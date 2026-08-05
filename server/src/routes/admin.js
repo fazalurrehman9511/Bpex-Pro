@@ -28,6 +28,12 @@ import {
   updateSupportContactConfig,
   getHomepageContentConfig,
   updateHomepageContentConfig,
+  getBrandGuideContentConfig,
+  updateBrandGuideContentConfig,
+  getResponsibleGamingContentConfig,
+  updateResponsibleGamingContentConfig,
+  listContactMessages,
+  deleteContactMessage,
 } from '../db.js'
 import { config } from '../config.js'
 import { requireAdmin } from '../middleware/auth.js'
@@ -528,6 +534,89 @@ router.put('/homepage-content', requireAdmin, (req, res) => {
   } catch (err) {
     console.error('Admin update homepage content error:', err)
     res.status(500).json({ error: err.message || 'Failed to update homepage content' })
+  }
+})
+
+router.get('/brand-guide-content', requireAdmin, (_req, res) => {
+  try {
+    const cfg = getBrandGuideContentConfig()
+    res.json({
+      content: cfg.content,
+      updatedAt: cfg.updatedAt,
+      source: cfg.source,
+    })
+  } catch (err) {
+    console.error('Admin get brand guide content error:', err)
+    res.status(500).json({ error: 'Failed to fetch brand guide content' })
+  }
+})
+
+router.put('/brand-guide-content', requireAdmin, (req, res) => {
+  try {
+    const updated = updateBrandGuideContentConfig({
+      content: req.body?.content ?? req.body,
+    })
+    res.json({
+      content: updated.content,
+      updatedAt: updated.updatedAt,
+      source: updated.source,
+    })
+  } catch (err) {
+    console.error('Admin update brand guide content error:', err)
+    res.status(500).json({ error: err.message || 'Failed to update brand guide content' })
+  }
+})
+
+router.get('/responsible-gaming-content', requireAdmin, (_req, res) => {
+  try {
+    const cfg = getResponsibleGamingContentConfig()
+    res.json({
+      content: cfg.content,
+      updatedAt: cfg.updatedAt,
+      source: cfg.source,
+    })
+  } catch (err) {
+    console.error('Admin get responsible gaming content error:', err)
+    res.status(500).json({ error: 'Failed to fetch responsible gaming content' })
+  }
+})
+
+router.put('/responsible-gaming-content', requireAdmin, (req, res) => {
+  try {
+    const updated = updateResponsibleGamingContentConfig({
+      content: req.body?.content ?? req.body,
+    })
+    res.json({
+      content: updated.content,
+      updatedAt: updated.updatedAt,
+      source: updated.source,
+    })
+  } catch (err) {
+    console.error('Admin update responsible gaming content error:', err)
+    res.status(500).json({ error: err.message || 'Failed to update responsible gaming content' })
+  }
+})
+
+router.get('/contact-messages', requireAdmin, (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 200, 500)
+    res.json(listContactMessages({ limit }))
+  } catch (err) {
+    console.error('Admin list contact messages error:', err)
+    res.status(500).json({ error: 'Failed to fetch contact messages' })
+  }
+})
+
+router.delete('/contact-messages/:id', requireAdmin, (req, res) => {
+  try {
+    const result = deleteContactMessage(req.params.id)
+    if (result.error) {
+      return res.status(result.error === 'Message not found' ? 404 : 400).json({ error: result.error })
+    }
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('Admin delete contact message error:', err)
+    res.status(500).json({ error: 'Failed to delete contact message' })
   }
 })
 

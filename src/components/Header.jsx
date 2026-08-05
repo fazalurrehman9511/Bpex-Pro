@@ -56,7 +56,6 @@ const baseNavLinks = [
   { label: 'Events', id: 'events' },
   { label: 'Deposit', id: 'payments' },
   { label: 'Blog', to: '/blog' },
-  { label: 'FAQ', id: 'faq' },
   { label: 'Contact', id: 'contact' },
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
 ]

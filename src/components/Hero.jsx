@@ -2,7 +2,6 @@ import { MessageCircle, Shield, Zap, Clock, UserPlus, Download } from 'lucide-re
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ANDROID_APK_AVAILABLE, ANDROID_APK_URL } from '../config/androidApp'
-import { BRAND_ALIAS_TEXT } from '../config/brand'
 import { useHomepageContent } from '../context/HomepageContentContext'
 import { useModal } from '../context/ModalContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
@@ -51,12 +50,6 @@ export default function Hero() {
 
           <p className="mt-6 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg">
             {hero.subtitle}
-          </p>
-          <p className="mt-3 text-xs font-medium text-slate-600">
-            Also searched as {BRAND_ALIAS_TEXT}.{' '}
-            <Link to="/bpx" className="font-semibold text-emerald-700 underline-offset-4 transition-colors hover:text-teal-700 hover:underline">
-              Official brand guide
-            </Link>
           </p>
 
           {loggedIn ? (

@@ -256,6 +256,32 @@ export async function createBpexchUser(payload) {
   })
 }
 
+export async function fetchBlogCategories() {
+  return asArray(await apiFetch('/api/blog/categories'), 'blog categories')
+}
+
+export async function fetchAdminBlogCategories() {
+  return asArray(await apiFetch('/api/blog/admin/categories'), 'blog categories')
+}
+
+export async function createBlogCategory(payload) {
+  return apiFetch('/api/blog/admin/categories', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function updateBlogCategory(id, payload) {
+  return apiFetch(`/api/blog/admin/categories/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function deleteBlogCategory(id) {
+  return apiFetch(`/api/blog/admin/categories/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
 export async function fetchBlogPosts(category) {
   const params = category && category !== 'all' ? `?category=${encodeURIComponent(category)}` : ''
   return apiFetch(`/api/blog/posts${params}`)
@@ -301,6 +327,14 @@ export async function submitContact(payload) {
   })
 }
 
+export async function fetchAdminContactMessages() {
+  return asArray(await apiFetch('/api/admin/contact-messages'), 'contact messages')
+}
+
+export async function deleteAdminContactMessage(id) {
+  return apiFetch(`/api/admin/contact-messages/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
 export async function fetchPaymentAccounts() {
   return asArray(await apiFetch('/api/payment-accounts'), 'payment accounts')
 }
@@ -323,6 +357,36 @@ export async function fetchAdminHomepageContent() {
 
 export async function updateAdminHomepageContent(content) {
   return apiFetch('/api/admin/homepage-content', {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  })
+}
+
+export async function fetchBrandGuideContent() {
+  return apiFetch('/api/brand-guide-content')
+}
+
+export async function fetchAdminBrandGuideContent() {
+  return apiFetch('/api/admin/brand-guide-content')
+}
+
+export async function updateAdminBrandGuideContent(content) {
+  return apiFetch('/api/admin/brand-guide-content', {
+    method: 'PUT',
+    body: JSON.stringify({ content }),
+  })
+}
+
+export async function fetchResponsibleGamingContent() {
+  return apiFetch('/api/responsible-gaming-content')
+}
+
+export async function fetchAdminResponsibleGamingContent() {
+  return apiFetch('/api/admin/responsible-gaming-content')
+}
+
+export async function updateAdminResponsibleGamingContent(content) {
+  return apiFetch('/api/admin/responsible-gaming-content', {
     method: 'PUT',
     body: JSON.stringify({ content }),
   })

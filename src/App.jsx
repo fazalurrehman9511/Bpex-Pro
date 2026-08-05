@@ -12,6 +12,7 @@ const BlogPostPage = lazy(() => import('./pages/BlogPostPage'))
 const BrandAliasesPage = lazy(() => import('./pages/BrandAliasesPage'))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage'))
+const ResponsibleGamingPage = lazy(() => import('./pages/ResponsibleGamingPage'))
 const LoginPage = lazy(() => import('./pages/LoginPage'))
 const DashboardPage = lazy(() => import('./pages/DashboardPage'))
 const PlatformPathRedirect = lazy(() => import('./pages/PlatformPathRedirect'))
@@ -49,6 +50,7 @@ function WebsiteApp() {
                 <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
                 <Route path="/terms" element={<Navigate to="/terms-and-conditions" replace />} />
+                <Route path="/responsible-gaming" element={<ResponsibleGamingPage />} />
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/deposit" element={<DepositPage />} />

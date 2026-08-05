@@ -15,6 +15,7 @@ const baseLinks = [
   { label: 'Brand Guide', to: '/bpx' },
   { label: 'Privacy Policy', to: '/privacy-policy' },
   { label: 'Terms & Conditions', to: '/terms-and-conditions' },
+  { label: 'Responsible Gaming', to: '/responsible-gaming' },
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Blog', to: '/blog' },
   { label: 'FAQ', id: 'faq' },

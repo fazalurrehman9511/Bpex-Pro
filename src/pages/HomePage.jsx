@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { scrollToSection } from '../utils/detectCountry'
 import { useHomepageContent } from '../context/HomepageContentContext'
 import SeoHead from '../components/SeoHead'
@@ -31,6 +31,10 @@ function HomePageSeo() {
       title={seo.metaTitle}
       description={seo.metaDescription}
       keywords={seo.metaKeywords}
+      ogTitle={seo.metaTitle}
+      ogDescription={seo.metaDescription}
+      twitterTitle={seo.metaTitle}
+      twitterDescription={seo.metaDescription}
       canonicalPath="/"
     />
   )
@@ -38,14 +42,24 @@ function HomePageSeo() {
 
 export default function HomePage() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [flashMessage, setFlashMessage] = useState('')
 
   useEffect(() => {
-    if (location.hash) {
-      const id = location.hash.replace(/^#+/, '').trim()
-      if (id) setTimeout(() => scrollToSection(id), 100)
-    }
-  }, [location.hash])
+    const fromState = location.state?.scrollTo
+    const fromHash = location.hash ? location.hash.replace(/^#+/, '').trim() : ''
+    const scrollTarget = fromState || fromHash
+    if (!scrollTarget) return undefined
+
+    const timer = window.setTimeout(() => {
+      scrollToSection(scrollTarget)
+      if (fromState || fromHash) {
+        navigate('/', { replace: true, state: null })
+      }
+    }, 100)
+
+    return () => window.clearTimeout(timer)
+  }, [location.state, location.hash, navigate])
 
   useEffect(() => {
     try {

@@ -2,6 +2,8 @@ import { Suspense, lazy, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { HeaderBar } from '../components/Header'
 import { HomepageContentProvider } from '../context/HomepageContentContext'
+import { BrandGuideContentProvider } from '../context/BrandGuideContentContext'
+import { ResponsibleGamingContentProvider } from '../context/ResponsibleGamingContentContext'
 import { isPlatformEmbedRoute } from '../utils/platformPaths'
 import {
   getBpexchAuthToken,
@@ -51,6 +53,8 @@ export default function Layout() {
 
   return (
     <HomepageContentProvider>
+      <BrandGuideContentProvider>
+        <ResponsibleGamingContentProvider>
       <div className={`editorial-theme flex min-h-screen flex-col ${isBlogPost ? '' : 'pb-[4.5rem] sm:pb-0'}`}>
         <a href="#main-content" className="skip-to-content">
           Skip to main content
@@ -72,6 +76,8 @@ export default function Layout() {
           <RegistrationModal />
         </Suspense>
       </div>
+        </ResponsibleGamingContentProvider>
+      </BrandGuideContentProvider>
     </HomepageContentProvider>
   )
 }

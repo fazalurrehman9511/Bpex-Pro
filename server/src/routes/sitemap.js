@@ -122,6 +122,7 @@ export function buildSitemapLinks(posts = getPublishedPosts()) {
     { url: '/bpx', changefreq: 'weekly', priority: 0.9 },
     { url: '/privacy-policy', changefreq: 'monthly', priority: 0.5 },
     { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.5 },
+    { url: '/responsible-gaming', changefreq: 'monthly', priority: 0.5 },
     {
       url: '/blog',
       changefreq: 'weekly',
