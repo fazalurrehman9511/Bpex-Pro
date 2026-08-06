@@ -16,17 +16,6 @@ FALLBACK_SOURCE = ROOT / "public/bpexch-login-logo.jpg"
 OUTPUTS = {
     ROOT / "android/app/src/main/res/drawable-nodpi/bpexch_launcher.png": 512,
     ROOT / "public/bp-circle-icon.png": 512,
-    ROOT / "public/bpexch-login-logo.png": 512,
-    ROOT / "public/icon-512x512.png": 512,
-    ROOT / "public/icon-384x384.png": 384,
-    ROOT / "public/icon-256x256.png": 256,
-    ROOT / "public/icon-192x192.png": 192,
-    ROOT / "public/icon-144x144.png": 144,
-    ROOT / "public/icon-96x96.png": 96,
-    ROOT / "public/icon-72x72.png": 72,
-    ROOT / "public/icon-48x48.png": 48,
-    ROOT / "public/icon.png": 512,
-    ROOT / "public/apple-touch-icon.png": 180,
 }
 
 

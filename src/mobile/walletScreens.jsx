@@ -23,7 +23,7 @@ import { loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import { openSupportWhatsApp } from '../utils/whatsapp'
 import { PaymentMethodLogo } from './PaymentLogos'
 import BrandLogo from '../components/BrandLogo'
-import { BPEXCH_LOGIN_LOGO, BRAND_NAME } from '../config/brand'
+import { NATIVE_APP_LOGO, BRAND_NAME } from '../config/brand'
 import {
   DEPOSIT_PENDING_MINUTES,
   WITHDRAW_PENDING_MINUTES,
@@ -52,7 +52,7 @@ function TxCountdown({ expiresAt }) {
 }
 
 function BpxLogo({ className = 'h-7 w-7', size = 'sm' }) {
-  return <BrandLogo src={BPEXCH_LOGIN_LOGO} size={size} className={className} rounded="full" />
+  return <BrandLogo src={NATIVE_APP_LOGO} size={size} className={className} rounded="full" />
 }
 
 function WhatsAppIcon({ className = 'h-5 w-5' }) {
@@ -239,7 +239,7 @@ export function ScreenLogin({
       className={`flex ${shell} flex-col items-center justify-center bg-gradient-to-b from-[#0a2a18] via-[#0f5c32] to-[#25D366] px-8 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-[max(3.5rem,env(safe-area-inset-top))]`}
     >
       <div className="flex w-full max-w-xs flex-col items-center">
-        <BrandLogo src={BPEXCH_LOGIN_LOGO} size="lg" rounded="full" shadow className="h-28 w-28" />
+        <BrandLogo src={NATIVE_APP_LOGO} size="lg" rounded="full" shadow className="h-28 w-28" />
         <p className="mt-4 text-center text-xl font-black text-white">{BRAND_NAME}</p>
 
         <div className="mt-12 w-full space-y-6">
