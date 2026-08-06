@@ -1,11 +1,14 @@
 package com.flowexch.app;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
@@ -121,6 +124,41 @@ public class MainActivity extends BridgeActivity {
         lastChromeUrl = appUrl;
     }
 
+    private boolean launchExternalUrl(Uri uri) {
+        if (uri == null) return false;
+
+        String scheme = uri.getScheme();
+        if (scheme != null && scheme.equalsIgnoreCase("whatsapp")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }
+
+        String host = uri.getHost();
+        if (host == null) return false;
+        String lowerHost = host.toLowerCase();
+        if (lowerHost.equals("wa.me")
+                || lowerHost.equals("api.whatsapp.com")
+                || lowerHost.equals("whatsapp.com")
+                || lowerHost.endsWith(".whatsapp.com")) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent);
+                return true;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }
+
+        return false;
+    }
+
     private class ChromeAwareWebViewClient extends BridgeWebViewClient {
         ChromeAwareWebViewClient(Bridge bridge) {
             super(bridge);
@@ -129,6 +167,23 @@ public class MainActivity extends BridgeActivity {
         private void syncChrome(String url) {
             lastChromeUrl = url == null ? "" : url;
             updateChromeVisibility(url);
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            if (request != null && launchExternalUrl(request.getUrl())) {
+                return true;
+            }
+            return super.shouldOverrideUrlLoading(view, request);
+        }
+
+        @Override
+        @SuppressWarnings("deprecation")
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            if (launchExternalUrl(Uri.parse(url))) {
+                return true;
+            }
+            return super.shouldOverrideUrlLoading(view, url);
         }
 
         @Override

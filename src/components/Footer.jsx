@@ -7,12 +7,14 @@ import { useModal } from '../context/ModalContext'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import { BRAND_LOGO, BRAND_NAME, SITE_DOMAIN } from '../config/brand'
 import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
+import { useBrandGuideContent } from '../context/BrandGuideContentContext'
+import { getBrandGuidePath } from '../data/brandGuideContent'
 import SocialLinks from './SocialLinks'
 
 const baseLinks = [
   { label: 'Live Events', id: 'events' },
   { label: 'Add Balance', id: 'payments' },
-  { label: 'Brand Guide', to: '/bpx' },
+  { label: 'Brand Guide', brandGuide: true },
   { label: 'Privacy Policy', to: '/privacy-policy' },
   { label: 'Terms & Conditions', to: '/terms-and-conditions' },
   { label: 'Responsible Gaming', to: '/responsible-gaming' },
@@ -27,6 +29,8 @@ export default function Footer() {
   const location = useLocation()
   const navigate = useNavigate()
   const { footer } = useHomepageContent()
+  const brandGuideContent = useBrandGuideContent()
+  const brandGuidePath = getBrandGuidePath(brandGuideContent)
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
   const [countryList, setCountryList] = useState(() => getCountries())
 
@@ -81,12 +85,13 @@ export default function Footer() {
           <div>
             <p className="mb-3 text-xs font-bold uppercase tracking-wider text-emerald-300/80">Quick Links</p>
             <nav className="flex flex-col gap-2.5" aria-label="Footer">
-              {links.map(({ label, id, to }) =>
-                to ? (
+              {links.map(({ label, id, to, brandGuide }) => {
+                const href = brandGuide ? brandGuidePath : to
+                return href ? (
                   <Link
-                    key={to}
-                    to={to}
-                    onClick={to === '/dashboard' ? openDashboard : undefined}
+                    key={href}
+                    to={href}
+                    onClick={href === '/dashboard' ? openDashboard : undefined}
                     className="text-left text-sm text-emerald-50/90 transition-colors hover:text-[#25D366]"
                   >
                     {label}
@@ -100,8 +105,8 @@ export default function Footer() {
                   >
                     {label}
                   </button>
-                ),
-              )}
+                )
+              })}
               {!loggedIn && (
                 <>
                   <button

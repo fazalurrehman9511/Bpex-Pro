@@ -1,0 +1,13 @@
+import{H as e,ft as t}from"./api-DfGywvbi.js";import{n,r}from"./countries-CKJbn--7.js";import{t as i}from"./paymentMethods-bdDPdI8h.js";var a=`bpex_support_whatsapp`,o={PK:void 0,IN:void 0,AE:void 0,SA:void 0,GB:void 0,US:void 0,BD:void 0,SUPPORT:void 0,DEFAULT:``};function s(){try{return String(localStorage.getItem(a)||``).replace(/[^\d]/g,``)}catch{return``}}function c(e){try{e&&localStorage.setItem(a,e)}catch{}}var l=s()||o.SUPPORT||o.DEFAULT||``;function u(){return l||o.SUPPORT||o.DEFAULT}async function d(){try{let t=await e(),n=String(t?.whatsapp||``).replace(/[^\d]/g,``);if(n)return l=n,c(n),n}catch(e){console.warn(`Support WhatsApp load failed, using fallback:`,e.message)}return l||=s()||o.SUPPORT||o.DEFAULT||``,u()}var f={register:`register on BpxPro`,login:`login to my BpxPro account`,contact:`contact my betting agent`,deposit:`add balance to my account`,withdraw:`withdraw from my account`},p=[{id:`hello`,label:`Say hello`,text:`Hi BpxPro! 👋
+
+I need help with my account.
+Please assist me.`},{id:`register`,label:`Register account`,text:`Hi BpxPro! 👋
+
+I want to register a new account.
+Please help me get started.`},{id:`deposit`,label:`Add balance`,text:`Hi BpxPro! 👋
+
+I want to add balance to my account.
+Please share deposit details.`},{id:`withdraw`,label:`Withdraw`,text:`Hi BpxPro! 👋
+
+I want to make a withdrawal.
+Please assist me.`}];p[0].text,p[1].text,p[2].text,p[3].text;function m({name:e,phone:t,intent:a=`register`,countryCode:o=`PK`,paymentMethod:s}){let c=f[a]||f.register,l=n(o),u=r(o),d=`Hi, I'd like to ${c}.\n\n`;if(d+=`Country: ${l.flag} ${l.name}\n`,d+=`Name: ${e}\n`,d+=`Phone: ${t}`,s){let e=i(s);e&&(d+=`\nPayment Method: ${e.name}`)}return`https://wa.me/${u}?text=${encodeURIComponent(d)}`}function h(e,t){return`whatsapp://send?phone=${e}&text=${encodeURIComponent(t)}`}function g(e,{number:n,text:r}={}){if(!e)return;if(t.isNativePlatform()){if(t.getPlatform()===`android`&&n){window.location.href=h(n,r||``);return}window.location.href=e;return}let i=document.createElement(`a`);i.href=e,i.target=`_blank`,i.rel=`noopener noreferrer`,document.body.appendChild(i),i.click(),i.remove()}function _({name:e,phone:t,intent:n=`register`,countryCode:r=`PK`,paymentMethod:i}){window.open(m({name:e,phone:t,intent:n,countryCode:r,paymentMethod:i}),`_blank`,`noopener,noreferrer`)}async function v(e){u()||await d();let t=u()||r(`PK`);if(!t)throw Error(`Support WhatsApp number is not configured`);g(`https://wa.me/${t}?text=${encodeURIComponent(e)}`,{number:t,text:e})}export{d as i,v as n,_ as r,p as t};

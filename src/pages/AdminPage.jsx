@@ -89,6 +89,7 @@ import { DEFAULT_BLOG_CATEGORIES, setBlogCategoriesCache } from '../data/blogCat
 import { DEFAULT_HOMEPAGE_CONTENT, normalizeHomepageContent, setHomepageContentCache } from '../data/homepageContent'
 import {
   DEFAULT_BRAND_GUIDE_CONTENT,
+  getBrandGuidePath,
   normalizeBrandGuideContent,
   setBrandGuideContentCache,
 } from '../data/brandGuideContent'
@@ -3937,7 +3938,7 @@ function AdminDashboard({ onLogout }) {
       setBrandGuideUpdatedAt(saved?.updatedAt || null)
       setBrandGuideContentCache(next)
       window.dispatchEvent(new CustomEvent('brand-guide-content-updated'))
-      alert('Brand guide saved — /bpx page content and SEO are now live.')
+      alert(`Brand guide saved — ${getBrandGuidePath(next)} page content and SEO are now live.`)
     } catch (err) {
       setLoadError(err.message)
       alert(err.message)
@@ -4014,7 +4015,7 @@ function AdminDashboard({ onLogout }) {
                         : activeTab === 'homepage'
                           ? 'Edit public homepage marketing content'
                           : activeTab === 'brandGuide'
-                            ? 'Edit /bpx brand guide page content and SEO'
+                            ? `Edit ${getBrandGuidePath(brandGuideForm)} brand guide page content and SEO`
                             : activeTab === 'responsibleGaming'
                               ? 'Edit /responsible-gaming page content and SEO'
                         : activeTab === 'accounts'

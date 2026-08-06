@@ -13,6 +13,7 @@ import {
 import SeoHead from '../components/SeoHead'
 import { useModal } from '../context/ModalContext'
 import { useBrandGuideContent } from '../context/BrandGuideContentContext'
+import { getBrandGuidePath } from '../data/brandGuideContent'
 import { isBpexchLoggedIn, subscribeBpexchAuth } from '../utils/bpexchAuth'
 import { openBpexchLoginInNewTab } from '../utils/bpexchExternal'
 import { ANDROID_APK_AVAILABLE, ANDROID_APK_URL } from '../config/androidApp'
@@ -32,6 +33,7 @@ export default function BrandAliasesPage() {
   const { openModal } = useModal()
   const content = useBrandGuideContent()
   const { seo, hero, aliasCards, platform, links } = content
+  const canonicalPath = getBrandGuidePath(content)
   const [loggedIn, setLoggedIn] = useState(() => isBpexchLoggedIn())
 
   useEffect(() => subscribeBpexchAuth(setLoggedIn), [])
@@ -41,8 +43,6 @@ export default function BrandAliasesPage() {
       e?.preventDefault?.()
     }
   }
-
-  const canonicalPath = '/bpx'
 
   return (
     <div className="min-h-screen bg-slate-50">

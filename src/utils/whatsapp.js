@@ -1,7 +1,8 @@
 import { getWhatsAppNumber, getCountryByCode } from '../data/countries'
-import { getSupportWhatsAppNumber } from '../config/whatsappNumbers'
+import { getSupportWhatsAppNumber, loadSupportWhatsAppNumber } from '../config/whatsappNumbers'
 import { getPaymentMethod } from '../data/paymentMethods'
 import { detectCountryCode } from './detectCountry'
+import { Capacitor } from '@capacitor/core'
 
 const intentMessages = {
   register: 'register on BpxPro',
@@ -80,6 +81,32 @@ export function buildSupportWhatsAppUrl(text) {
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
 }
 
+function buildWhatsAppNativeUrl(number, text) {
+  return `whatsapp://send?phone=${number}&text=${encodeURIComponent(text)}`
+}
+
+/** Opens WhatsApp / external links in browser app and in Capacitor APK WebView. */
+export function openExternalUrl(url, { number, text } = {}) {
+  if (!url) return
+
+  if (Capacitor.isNativePlatform()) {
+    if (Capacitor.getPlatform() === 'android' && number) {
+      window.location.href = buildWhatsAppNativeUrl(number, text || '')
+      return
+    }
+    window.location.href = url
+    return
+  }
+
+  const link = document.createElement('a')
+  link.href = url
+  link.target = '_blank'
+  link.rel = 'noopener noreferrer'
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+}
+
 export function openWhatsApp({ name, phone, intent = 'register', countryCode = 'PK', paymentMethod }) {
   window.open(
     buildWhatsAppUrl({ name, phone, intent, countryCode, paymentMethod }),
@@ -97,10 +124,15 @@ export function openCustomWhatsApp(text) {
 }
 
 export async function openSupportWhatsApp(text) {
-  await loadSupportWhatsAppNumber()
-  const number = getSupportWhatsAppNumber()
+  if (!getSupportWhatsAppNumber()) {
+    await loadSupportWhatsAppNumber()
+  }
+
+  const number = getSupportWhatsAppNumber() || getWhatsAppNumber('PK')
   if (!number) {
     throw new Error('Support WhatsApp number is not configured')
   }
-  window.open(buildSupportWhatsAppUrl(text), '_blank', 'noopener,noreferrer')
+
+  const url = `https://wa.me/${number}?text=${encodeURIComponent(text)}`
+  openExternalUrl(url, { number, text })
 }

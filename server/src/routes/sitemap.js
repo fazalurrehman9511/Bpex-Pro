@@ -1,7 +1,8 @@
 import { Readable } from 'stream'
 import { Router } from 'express'
 import { SitemapStream, streamToPromise } from 'sitemap'
-import { db } from '../db.js'
+import { db, getBrandGuideContentConfig } from '../db.js'
+import { getBrandGuidePath } from '../brandGuideContent.js'
 
 const router = Router()
 const SITE_URL = 'https://www.bpexpro.com'
@@ -116,10 +117,11 @@ function getPublishedPosts() {
 
 export function buildSitemapLinks(posts = getPublishedPosts()) {
   const latestPostUpdate = posts[0]?.lastmod
+  const brandGuidePath = getBrandGuidePath(getBrandGuideContentConfig().content)
 
   return [
     { url: '/', changefreq: 'daily', priority: 1.0 },
-    { url: '/bpx', changefreq: 'weekly', priority: 0.9 },
+    { url: brandGuidePath, changefreq: 'weekly', priority: 0.9 },
     { url: '/privacy-policy', changefreq: 'monthly', priority: 0.5 },
     { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.5 },
     { url: '/responsible-gaming', changefreq: 'monthly', priority: 0.5 },

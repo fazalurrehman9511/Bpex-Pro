@@ -1,6 +1,12 @@
 const BRAND_ALIAS_TEXT = 'BPX, BPEXCH, BPXPRO, BettPro and Bett Pro'
 
+export const DEFAULT_BRAND_GUIDE_SLUG = 'bpx'
+
+export const BRAND_GUIDE_LEGACY_SLUGS = ['bpxpro', 'bettpro', 'bett-pro']
+
 export const DEFAULT_BRAND_GUIDE_CONTENT = {
+  slug: DEFAULT_BRAND_GUIDE_SLUG,
+  redirectSlugs: [],
   seo: {
     metaTitle: 'BpxPro, BPX, BPEXCH & BettPro | Official Brand Names',
     metaDescription:
@@ -71,6 +77,21 @@ function mergeString(value, fallback) {
   return next.trim() ? next : fallback
 }
 
+export function normalizeBrandGuideSlug(value, fallback = DEFAULT_BRAND_GUIDE_SLUG) {
+  const next = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/[^a-z0-9-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+  return next || fallback
+}
+
+export function getBrandGuidePath(content) {
+  return `/${normalizeBrandGuideSlug(content?.slug)}`
+}
+
 export function normalizeBrandGuideContent(raw) {
   const input = asObject(raw, {})
   const seoIn = asObject(input.seo, {})
@@ -101,7 +122,16 @@ export function normalizeBrandGuideContent(raw) {
     }))
     .filter((item) => item.label && item.path)
 
+  const redirectSlugs = asArray(input.redirectSlugs, defaults.redirectSlugs)
+    .map((item) => normalizeBrandGuideSlug(item, ''))
+    .filter(Boolean)
+
+  const slug = normalizeBrandGuideSlug(input.slug, defaults.slug)
+  const redirectSet = new Set(redirectSlugs.filter((item) => item !== slug))
+
   return {
+    slug,
+    redirectSlugs: [...redirectSet],
     seo: {
       metaTitle: mergeString(seoIn.metaTitle, defaults.seo.metaTitle),
       metaDescription: mergeString(seoIn.metaDescription, defaults.seo.metaDescription),

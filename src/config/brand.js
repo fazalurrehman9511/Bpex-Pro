@@ -3,12 +3,12 @@ export const BRAND_NAME = 'BpxPro'
 export const BRAND_SHORT = 'BPX'
 export const BRAND_ALIASES = ['BPX', 'BPEXCH', 'BPXPRO', 'BettPro', 'Bett Pro']
 export const BRAND_ALIAS_TEXT = 'BPX, BPEXCH, BPXPRO, BettPro and Bett Pro'
-/** Square BPX mark — use for header, favicon, PWA, app */
-export const BRAND_LOGO = '/icon-72x72.png'
+/** Square BP circle mark — PWA + native app */
+export const BRAND_LOGO = '/bp-circle-icon.png'
 export const BRAND_LOGO_MD = '/icon-192x192.png'
 export const BRAND_LOGO_LG = '/icon-512x512.png'
-/** Same mark as bpexch.xyz /Users/Login */
-export const BPEXCH_LOGIN_LOGO = '/bpexch-login-logo.jpg'
+/** Circular BP mark used on native login + exchange embed */
+export const BPEXCH_LOGIN_LOGO = '/bp-circle-icon.png'
 export const BRAND_TAGLINE = "Asia's trusted betting exchange"
 
 const viteEnv = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env : {}

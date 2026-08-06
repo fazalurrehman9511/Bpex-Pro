@@ -1,5 +1,5 @@
 import { Plus, Trash2 } from 'lucide-react'
-import { DEFAULT_BRAND_GUIDE_CONTENT, normalizeBrandGuideContent } from '../../data/brandGuideContent'
+import { DEFAULT_BRAND_GUIDE_CONTENT, getBrandGuidePath, normalizeBrandGuideContent, normalizeBrandGuideSlug } from '../../data/brandGuideContent'
 
 function Field({ label, children, className = '' }) {
   return (
@@ -61,6 +61,11 @@ export default function BrandGuideContentPanel({
   const hero = form.hero || DEFAULT_BRAND_GUIDE_CONTENT.hero
   const platform = form.platform || DEFAULT_BRAND_GUIDE_CONTENT.platform
   const links = form.links || DEFAULT_BRAND_GUIDE_CONTENT.links
+  const pagePath = getBrandGuidePath(form)
+
+  const patchRoot = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
 
   const patchSeo = (key, value) => {
     setForm((prev) => ({
@@ -94,7 +99,7 @@ export default function BrandGuideContentPanel({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-navy-light px-4 py-3">
         <div>
-          <p className="text-sm font-bold text-text">Brand Guide Page (/bpx)</p>
+          <p className="text-sm font-bold text-text">Brand Guide Page ({pagePath})</p>
           <p className="text-[10px] text-muted">
             {updatedAt
               ? `Last updated ${new Date(updatedAt).toLocaleString()}`
@@ -120,9 +125,26 @@ export default function BrandGuideContentPanel({
         </div>
       </div>
 
+      <SectionCard title="Page URL">
+        <Field label="Slug">
+          <TextInput
+            value={form.slug || ''}
+            onChange={(value) => patchRoot('slug', normalizeBrandGuideSlug(value, ''))}
+            placeholder="bpx"
+          />
+          <p className="mt-1 text-[10px] text-muted">
+            Live URL: <span className="font-mono text-text">{pagePath}</span>
+          </p>
+        </Field>
+        <p className="text-[11px] leading-relaxed text-muted">
+          Use lowercase letters, numbers, and hyphens only. Changing the slug keeps the old URL working
+          as a redirect. Legacy aliases like /bpxpro and /bettpro always redirect here too.
+        </p>
+      </SectionCard>
+
       <SectionCard title="SEO — Meta Title, Description & Keywords">
         <p className="-mt-2 text-[11px] leading-relaxed text-muted">
-          Controls search and social preview for the /bpx brand guide page.
+          Controls search and social preview for the {pagePath} brand guide page.
         </p>
         <Field label="Meta Title">
           <TextInput

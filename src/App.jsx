@@ -9,7 +9,7 @@ import { shouldUseNativeWalletApp } from './mobile/nativeAppDetect'
 
 const BlogPage = lazy(() => import('./pages/BlogPage'))
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'))
-const BrandAliasesPage = lazy(() => import('./pages/BrandAliasesPage'))
+const BrandGuideSlugPage = lazy(() => import('./pages/BrandGuideSlugPage'))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage'))
 const ResponsibleGamingPage = lazy(() => import('./pages/ResponsibleGamingPage'))
@@ -41,11 +41,6 @@ function WebsiteApp() {
               <Route path="/bpexch/*" element={<BpexchRedirectPage />} />
               <Route element={<Layout />}>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/bpx" element={<BrandAliasesPage />} />
-                <Route path="/bpexch" element={<Navigate to="/bpx" replace />} />
-                <Route path="/bpxpro" element={<Navigate to="/bpx" replace />} />
-                <Route path="/bettpro" element={<Navigate to="/bpx" replace />} />
-                <Route path="/bett-pro" element={<Navigate to="/bpx" replace />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
                 <Route path="/privacy" element={<Navigate to="/privacy-policy" replace />} />
                 <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
@@ -57,6 +52,7 @@ function WebsiteApp() {
                 <Route path="/withdraw" element={<WithdrawPage />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
+                <Route path="/:brandSlug" element={<BrandGuideSlugPage />} />
                 <Route path="/*" element={<PlatformPathRedirect />} />
               </Route>
             </Routes>

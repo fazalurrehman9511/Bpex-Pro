@@ -3,7 +3,11 @@ import path from 'path'
 import Database from 'better-sqlite3'
 import { config } from './config.js'
 import { DEFAULT_HOMEPAGE_CONTENT, normalizeHomepageContent } from './homepageContent.js'
-import { DEFAULT_BRAND_GUIDE_CONTENT, normalizeBrandGuideContent } from './brandGuideContent.js'
+import {
+  DEFAULT_BRAND_GUIDE_CONTENT,
+  normalizeBrandGuideContent,
+  normalizeBrandGuideSlug,
+} from './brandGuideContent.js'
 import {
   DEFAULT_RESPONSIBLE_GAMING_CONTENT,
   normalizeResponsibleGamingContent,
@@ -1051,7 +1055,23 @@ export function getBrandGuideContentConfig() {
 }
 
 export function updateBrandGuideContentConfig(patch = {}) {
-  const next = normalizeBrandGuideContent(patch?.content ?? patch)
+  const current = getBrandGuideContentConfig()
+  const incoming = normalizeBrandGuideContent(patch?.content ?? patch)
+  const oldSlug = normalizeBrandGuideSlug(current.content?.slug)
+  const newSlug = normalizeBrandGuideSlug(incoming.slug)
+
+  if (oldSlug !== newSlug && oldSlug) {
+    const redirects = new Set(
+      [...(current.content?.redirectSlugs || []), ...(incoming.redirectSlugs || [])]
+        .map((item) => normalizeBrandGuideSlug(item, ''))
+        .filter(Boolean),
+    )
+    redirects.add(oldSlug)
+    redirects.delete(newSlug)
+    incoming.redirectSlugs = [...redirects]
+  }
+
+  const next = normalizeBrandGuideContent(incoming)
   const updatedAt = new Date().toISOString()
   db.prepare(`
     INSERT INTO brand_guide_content_config (id, content, updated_at)
