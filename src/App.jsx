@@ -9,6 +9,9 @@ import { shouldUseNativeWalletApp } from './mobile/nativeAppDetect'
 
 const BlogPage = lazy(() => import('./pages/BlogPage'))
 const BlogPostPage = lazy(() => import('./pages/BlogPostPage'))
+const EventsPage = lazy(() => import('./pages/EventsPage'))
+const PaymentsPage = lazy(() => import('./pages/PaymentsPage'))
+const ContactPage = lazy(() => import('./pages/ContactPage'))
 const BrandGuideSlugPage = lazy(() => import('./pages/BrandGuideSlugPage'))
 const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'))
 const TermsAndConditionsPage = lazy(() => import('./pages/TermsAndConditionsPage'))
@@ -50,6 +53,9 @@ function WebsiteApp() {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/deposit" element={<DepositPage />} />
                 <Route path="/withdraw" element={<WithdrawPage />} />
+                <Route path="/events" element={<EventsPage />} />
+                <Route path="/payments" element={<PaymentsPage />} />
+                <Route path="/contact" element={<ContactPage />} />
                 <Route path="/blog" element={<BlogPage />} />
                 <Route path="/blog/:slug" element={<BlogPostPage />} />
                 <Route path="/:brandSlug" element={<BrandGuideSlugPage />} />

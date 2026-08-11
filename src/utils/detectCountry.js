@@ -31,16 +31,30 @@ export function scrollToSection(id) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
+/** Homepage sections that now have dedicated pages. */
+const SECTION_PAGE_PATHS = {
+  events: '/events',
+  payments: '/payments',
+  contact: '/contact',
+}
+
 /** Link target for homepage sections — scrolls without adding # to the URL. */
 export function sectionLinkTarget(sectionId) {
   const id = String(sectionId || '').replace(/^#+/, '').trim()
   if (!id) return { pathname: '/' }
+  if (SECTION_PAGE_PATHS[id]) return { pathname: SECTION_PAGE_PATHS[id] }
   return { pathname: '/', state: { scrollTo: id } }
 }
 
 export function navigateToSection(id, navigate, pathname) {
   const sectionId = String(id || '').replace(/^#+/, '').trim()
   if (!sectionId) return
+
+  const pagePath = SECTION_PAGE_PATHS[sectionId]
+  if (pagePath) {
+    if (pathname !== pagePath) navigate(pagePath)
+    return
+  }
 
   if (pathname !== '/') {
     navigate('/', { state: { scrollTo: sectionId } })

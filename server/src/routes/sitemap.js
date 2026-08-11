@@ -122,6 +122,9 @@ export function buildSitemapLinks(posts = getPublishedPosts()) {
   return [
     { url: '/', changefreq: 'daily', priority: 1.0 },
     { url: brandGuidePath, changefreq: 'weekly', priority: 0.9 },
+    { url: '/events', changefreq: 'hourly', priority: 0.85 },
+    { url: '/payments', changefreq: 'weekly', priority: 0.8 },
+    { url: '/contact', changefreq: 'monthly', priority: 0.7 },
     { url: '/privacy-policy', changefreq: 'monthly', priority: 0.5 },
     { url: '/terms-and-conditions', changefreq: 'monthly', priority: 0.5 },
     { url: '/responsible-gaming', changefreq: 'monthly', priority: 0.5 },

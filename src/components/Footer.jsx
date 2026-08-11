@@ -12,8 +12,8 @@ import { getBrandGuidePath } from '../data/brandGuideContent'
 import SocialLinks from './SocialLinks'
 
 const baseLinks = [
-  { label: 'Live Events', id: 'events' },
-  { label: 'Add Balance', id: 'payments' },
+  { label: 'Live Events', to: '/events' },
+  { label: 'Add Balance', to: '/payments' },
   { label: 'Brand Guide', brandGuide: true },
   { label: 'Privacy Policy', to: '/privacy-policy' },
   { label: 'Terms & Conditions', to: '/terms-and-conditions' },
@@ -21,7 +21,7 @@ const baseLinks = [
   { label: 'Dashboard', to: '/dashboard' },
   { label: 'Blog', to: '/blog' },
   { label: 'FAQ', id: 'faq' },
-  { label: 'Contact Us', id: 'contact' },
+  { label: 'Contact Us', to: '/contact' },
 ]
 
 export default function Footer() {

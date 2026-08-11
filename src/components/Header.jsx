@@ -53,10 +53,10 @@ export default function Logo() {
 }
 
 const baseNavLinks = [
-  { label: 'Events', id: 'events' },
-  { label: 'Deposit', id: 'payments' },
+  { label: 'Events', to: '/events' },
+  { label: 'Deposit', to: '/payments' },
   { label: 'Blog', to: '/blog' },
-  { label: 'Contact', id: 'contact' },
+  { label: 'Contact', to: '/contact' },
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
 ]
 
